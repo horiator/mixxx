@@ -692,6 +692,19 @@ void DlgAutoDJ::transitionValueChanged(int value) {
                    ConfigValue(value));
 }
 */
+void DlgAutoDJ::setAutoDJEnabled() {
+	pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
+	pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
+	pushButtonSkipNext->setEnabled(true);
+	pushButtonFadeNow->setEnabled(true);
+}
+
+void DlgAutoDJ::setAutoDJDisabled() {
+	pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
+	pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
+	pushButtonFadeNow->setEnabled(false);
+	pushButtonSkipNext->setEnabled(false);
+}
 
 bool DlgAutoDJ::appendTrack(int trackId) {
     return m_pAutoDJTableModel->appendTrack(trackId);

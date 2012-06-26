@@ -7,6 +7,7 @@
 #include "playerinfo.h"
 #include "library/autodj.h"
 #include "library/tracktransition.h"
+#include "ui_dlgautodj.h"
 
 AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
 		TrackCollection* pTrackCollection) :
@@ -499,7 +500,7 @@ void AutoDJ::toggleAutoDJ(double value) {
         //pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
         //pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
         qDebug() << "Auto DJ enabled";
-
+        m_pDlgAutoDJ->setAutoDJEnabled();
         //pushButtonSkipNext->setEnabled(true);
 
         //connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
@@ -535,6 +536,7 @@ void AutoDJ::toggleAutoDJ(double value) {
         //pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
         //pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
         qDebug() << "Auto DJ disabled";
+        m_pDlgAutoDJ->setAutoDJDisabled();
         m_eState = ADJ_DISABLED;
         //pushButtonFadeNow->setEnabled(false);
         //pushButtonSkipNext->setEnabled(false);
@@ -569,5 +571,9 @@ TrackPointer AutoDJ::getNextTrackFromQueue(){
 	    }
 	}
 	return nextTrack;
+}
+
+void AutoDJ::setDlgAutoDJ(DlgAutoDJ* pDlgAutoDJ) {
+	m_pDlgAutoDJ = pDlgAutoDJ;
 }
 

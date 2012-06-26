@@ -11,6 +11,7 @@
 #include "library/playlisttablemodel.h"
 
 class ControlObjectThreadMain;
+class DlgAutoDJ;
 
 class AutoDJ : public QObject {
     Q_OBJECT
@@ -21,6 +22,7 @@ public:
     ~AutoDJ();
 
     PlaylistTableModel* getTableModel();
+    void setDlgAutoDJ(DlgAutoDJ* pDlgAutoDJ);
 
 public slots:
     void setEnabled(bool);
@@ -55,6 +57,7 @@ signals:
     void loadTrackToPlayer(TrackPointer tio, QString group);
 
 private:
+    DlgAutoDJ* m_pDlgAutoDJ;
     enum ADJstates {
         ADJ_IDLE = 0,
         ADJ_P1FADING,

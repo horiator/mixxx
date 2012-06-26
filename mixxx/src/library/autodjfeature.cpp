@@ -51,6 +51,7 @@ void AutoDJFeature::bindWidget(WLibrarySidebar* /*sidebarWidget*/,
             this, SIGNAL(loadTrack(TrackPointer)));
     connect(m_pAutoDJView, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
             this, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
+    m_pAutoDJ->setDlgAutoDJ(m_pAutoDJView);
 }
 
 TreeItemModel* AutoDJFeature::getChildModel() {
