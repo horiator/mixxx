@@ -228,22 +228,7 @@ void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
 	double button = (double) buttonChecked;
 	m_pCOShufflePlaylist->slotSet(button);
-	//m_pCOShufflePlaylist->set((double) buttonChecked);
 }
-
-/*
-void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
-    Q_UNUSED(buttonChecked);
-    qDebug() << "Shuffling AutoDJ playlist";
-    int row;
-    if(m_eState == ADJ_DISABLED) {
-        row = 0;
-    } else {
-        row = 1;
-    }
-    m_pAutoDJTableModel->shuffleTracks(m_pAutoDJTableModel->index(row, 0));
-    qDebug() << "Shuffling done";
-}*/
 
 void DlgAutoDJ::skipNext(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
@@ -295,8 +280,9 @@ void DlgAutoDJ::fadeNow(bool buttonChecked) {
 }*/
 
 void DlgAutoDJ::toggleAutoDJ(bool toggle) {
-	//m_pCOToggleAutoDJ->set((double) toggle);
 	qDebug() << "toggle pushed";
+	double toggleValue = !m_pCOToggleAutoDJ->get();
+	m_pCOToggleAutoDJ->slotSet(toggleValue);
 }
 
 /*

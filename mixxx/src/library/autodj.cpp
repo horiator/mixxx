@@ -28,6 +28,10 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
                             ControlObject::getControl(ConfigKey("[Channel1]", "play")));
     m_pCOPlay2 = new ControlObjectThreadMain(
                             ControlObject::getControl(ConfigKey("[Channel2]", "play")));
+    m_pCOPlay1Fb = new ControlObjectThreadMain(
+                            ControlObject::getControl(ConfigKey("[Channel1]", "play")));
+    m_pCOPlay2Fb = new ControlObjectThreadMain(
+                            ControlObject::getControl(ConfigKey("[Channel2]", "play")));
     m_pCORepeat1 = new ControlObjectThreadMain(
                             ControlObject::getControl(ConfigKey("[Channel1]", "repeat")));
     m_pCORepeat2 = new ControlObjectThreadMain(
@@ -381,6 +385,7 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
     }
 
 void AutoDJ::shufflePlaylist(double value) {
+	// Guard to prevent shuffling twice when keyboard sends a double signal
 	if (value == 1.0) return;
    	qDebug() << "Shuffling AutoDJ playlist";
    	int row;
@@ -452,86 +457,117 @@ void AutoDJ::shufflePlaylist(double value) {
         */
     }
 
-    void AutoDJ::toggleAutoDJ(double value) {
-    	/*
-        bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
-        bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
+void AutoDJ::toggleAutoDJ(double value) {
+	qDebug() << "toggle value = " << value;
+	// Guard against double signal sent by keyboard
+	if (value == lastToggleValue){
+		lastToggleValue = -1.0;
+		return;
+	}
+	lastToggleValue = value;
+    bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
+    bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
 
-        if (toggle) {  // Enable Auto DJ
-            if (deck1Playing && deck2Playing) {
-                QMessageBox::warning(
-                    NULL, tr("Auto-DJ"),
-                    tr("One deck must be stopped to enable Auto-DJ mode."),
-                    QMessageBox::Ok);
-                qDebug() << "One deck must be stopped before enabling Auto DJ mode";
-                pushButtonAutoDJ->setChecked(false);
-                return;
-            }
-
-            // Never load the same track if it is already playing
-            if (deck1Playing) {
-                removePlayingTrackFromQueue("[Channel1]");
-            }
-            if (deck2Playing) {
-                removePlayingTrackFromQueue("[Channel2]");
-            }
-
-            TrackPointer nextTrack = getNextTrackFromQueue();
-            if (!nextTrack) {
-                qDebug() << "Queue is empty now";
-                pushButtonAutoDJ->setChecked(false);
-                return;
-            }
-
-            // Track is available so GO
-            pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
-            pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
-            qDebug() << "Auto DJ enabled";
-
-            pushButtonSkipNext->setEnabled(true);
-
-            connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-                    this, SLOT(player1PositionChanged(double)));
-            connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-                    this, SLOT(player2PositionChanged(double)));
-
-            connect(m_pCOPlay1Fb, SIGNAL(valueChanged(double)),
-                    this, SLOT(player1PlayChanged(double)));
-            connect(m_pCOPlay2Fb, SIGNAL(valueChanged(double)),
-                    this, SLOT(player2PlayChanged(double)));
-
-            if (!deck1Playing && !deck2Playing) {
-                // both decks are stopped
-                m_eState = ADJ_ENABLE_P1LOADED;
-                pushButtonFadeNow->setEnabled(false);
-                // Force Update on load Track
-                m_pCOPlayPos1->slotSet(-0.001f);
-            } else {
-                m_eState = ADJ_IDLE;
-                pushButtonFadeNow->setEnabled(true);
-                if (deck1Playing) {
-                    // deck 1 is already playing
-                    player1PlayChanged(1.0f);
-                } else {
-                    // deck 2 is already playing
-                    player2PlayChanged(1.0f);
-                }
-            }
-            // Loads into first deck If stopped else into second else not
-            emit(loadTrack(nextTrack));
-        } else {  // Disable Auto DJ
-            pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
-            pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
-            qDebug() << "Auto DJ disabled";
-            m_eState = ADJ_DISABLED;
-            pushButtonFadeNow->setEnabled(false);
-            pushButtonSkipNext->setEnabled(false);
-            m_bFadeNow = false;
-            m_pCOPlayPos1->disconnect(this);
-            m_pCOPlayPos2->disconnect(this);
-            m_pCOPlay1->disconnect(this);
-            m_pCOPlay2->disconnect(this);
+    if (value) {  // Enable Auto DJ
+        if (deck1Playing && deck2Playing) {
+            QMessageBox::warning(
+                NULL, tr("Auto-DJ"),
+                tr("One deck must be stopped to enable Auto-DJ mode."),
+                QMessageBox::Ok);
+            qDebug() << "One deck must be stopped before enabling Auto DJ mode";
+            //pushButtonAutoDJ->setChecked(false);
+            return;
         }
-        */
+
+        // Never load the same track if it is already playing
+        if (deck1Playing) {
+            removePlayingTrackFromQueue("[Channel1]");
+        }
+        if (deck2Playing) {
+            removePlayingTrackFromQueue("[Channel2]");
+        }
+
+        TrackPointer nextTrack = getNextTrackFromQueue();
+        if (!nextTrack) {
+            qDebug() << "Queue is empty now";
+            //pushButtonAutoDJ->setChecked(false);
+            //m_pCOToggleAutoDJ->slotSet(0.0);
+            return;
+        }
+
+        // Track is available so GO
+        //pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
+        //pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
+        qDebug() << "Auto DJ enabled";
+
+        //pushButtonSkipNext->setEnabled(true);
+
+        //connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
+                //this, SLOT(player1PositionChanged(double)));
+        //connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
+                //this, SLOT(player2PositionChanged(double)));
+
+         connect(m_pCOPlay1Fb, SIGNAL(valueChanged(double)),
+                 this, SLOT(player1PlayChanged(double)));
+         connect(m_pCOPlay2Fb, SIGNAL(valueChanged(double)),
+                 this, SLOT(player2PlayChanged(double)));
+
+         if (!deck1Playing && !deck2Playing) {
+            // both decks are stopped
+            m_eState = ADJ_ENABLE_P1LOADED;
+            //pushButtonFadeNow->setEnabled(false);
+            // Force Update on load Track
+            //m_pCOPlayPos1->slotSet(-0.001f);
+         } else {
+            m_eState = ADJ_IDLE;
+            //pushButtonFadeNow->setEnabled(true);
+            if (deck1Playing) {
+                // deck 1 is already playing
+                player1PlayChanged(1.0f);
+            } else {
+                // deck 2 is already playing
+                player2PlayChanged(1.0f);
+            }
+        }
+        // Loads into first deck If stopped else into second else not
+        emit(loadTrack(nextTrack));
+    } else {  // Disable Auto DJ
+        //pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
+        //pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
+        qDebug() << "Auto DJ disabled";
+        m_eState = ADJ_DISABLED;
+        //pushButtonFadeNow->setEnabled(false);
+        //pushButtonSkipNext->setEnabled(false);
+        //m_bFadeNow = false;
+        //m_pCOPlayPos1->disconnect(this);
+        //m_pCOPlayPos2->disconnect(this);
+        m_pCOPlay1->disconnect(this);
+        m_pCOPlay2->disconnect(this);
     }
+}
+
+TrackPointer AutoDJ::getNextTrackFromQueue(){
+	// Get the track at the top of the playlist...
+	TrackPointer nextTrack;
+
+	while (true) {
+	    nextTrack = m_pAutoDJTableModel->getTrack(
+	        m_pAutoDJTableModel->index(0, 0));
+
+	    if (nextTrack) {
+	        if (nextTrack->exists()) {
+	            // found a valid Track
+	            return nextTrack;
+	        } else {
+	            // Remove missing song from auto DJ playlist
+	            m_pAutoDJTableModel->removeTrack(
+	                m_pAutoDJTableModel->index(0, 0));
+	        }
+	    } else {
+	        // we are running out of tracks
+	        break;
+	    }
+	}
+	return nextTrack;
+}
 

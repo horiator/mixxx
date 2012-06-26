@@ -74,10 +74,14 @@ private:
     bool m_bPlayer1Primed, m_bPlayer2Primed;
     // TODO(tom__m) This is hacky
     bool m_bPlayer1Cued, m_bPlayer2Cued;
+    // Checks for a double signal sent by keyboard press
+    double lastToggleValue;
 
     ConfigObject<ConfigValue>* m_pConfig;
     ControlObjectThreadMain* m_pCOPlay1;
     ControlObjectThreadMain* m_pCOPlay2;
+    ControlObjectThreadMain* m_pCOPlay1Fb;
+    ControlObjectThreadMain* m_pCOPlay2Fb;
     ControlObjectThreadMain* m_pCORepeat1;
     ControlObjectThreadMain* m_pCORepeat2;
     ControlObjectThreadMain* m_pCOPlayPosSamples1;
@@ -111,6 +115,8 @@ private:
     // Tracks are loaded at the default cue point, so AutoDJ doesn't need to
     // do anyting extra (smstewart)
     void cueTrackToFadeIn(QString group);
+
+    TrackPointer getNextTrackFromQueue();
 
 };
 
