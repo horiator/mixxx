@@ -381,6 +381,7 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
     }
 
 void AutoDJ::shufflePlaylist(double value) {
+	if (value == 1.0) return;
    	qDebug() << "Shuffling AutoDJ playlist";
    	int row;
    	if(m_eState == ADJ_DISABLED) {
