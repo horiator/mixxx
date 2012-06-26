@@ -16,7 +16,6 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pTrackCollection(pTrackCollection),
     m_playlistDao(pTrackCollection->getPlaylistDAO()){
 
-	qDebug() << "Creating AutoDJ object";
     m_bPlayer1Primed = false;
     m_bPlayer2Primed = false;
     m_bPlayer1Cued = false;

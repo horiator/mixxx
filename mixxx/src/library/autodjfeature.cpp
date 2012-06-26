@@ -23,7 +23,6 @@ AutoDJFeature::AutoDJFeature(QObject* parent,
           m_pConfig(pConfig),
           m_pTrackCollection(pTrackCollection),
           m_playlistDao(pTrackCollection->getPlaylistDAO()) {
-	qDebug() << "Creating AutoDJFeature";
     m_pAutoDJView = NULL;
     m_pAutoDJ = new AutoDJ(this, m_pConfig, m_pTrackCollection);
 }

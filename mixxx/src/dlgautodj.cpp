@@ -30,7 +30,6 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
           //m_eState(ADJ_DISABLED),
           //m_posThreshold1(1.0f),
           /*m_posThreshold2(1.0f)*/ {
-	qDebug() << "Creating DlgAutoDJ object";
     setupUi(this);
 
     m_pTrackTableView->installEventFilter(pKeyboard);
@@ -75,16 +74,16 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     // TODO(smstewart): These COs should be instantiated in AutoDJ
 
     m_pCOShufflePlaylist = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[AutoDJ]", "shuffle_playlist")));
+    		ControlObject::getControl(ConfigKey("[AutoDJ]", "shuffle_playlist")));
 
     connect(pushButtonShuffle, SIGNAL(clicked(bool)),
-            m_pCOShufflePlaylist, SLOT(set( (double) bool)));
+            this, SLOT(shufflePlaylist(bool)));
 
     m_pCOSkipNext = new ControlObjectThreadMain(
-    	ControlObject::getControl(ConfigKey("[AutoDJ]", "skip_next")));
+    		ControlObject::getControl(ConfigKey("[AutoDJ]", "skip_next")));
 
     connect(pushButtonSkipNext, SIGNAL(clicked(bool)),
-            m_pCOSkipNext, SLOT(set( (double) bool)));
+            this, SLOT(skipNext(bool)));
 
     /*m_pCOFadeNowRight = new ControlObjectThreadMain(
     	ControlObject::getControl(ConfigKey("[AutoDJ]", "fade_now_right")));
@@ -99,10 +98,10 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
             m_pCOFadeNowLeft, SLOT(set( (double) bool)));*/
 
     m_pCOToggleAutoDJ = new ControlObjectThreadMain(
-    	ControlObject::getControl(ConfigKey("[AutoDJ]", "toggle_autodj")));
+    		ControlObject::getControl(ConfigKey("[AutoDJ]", "toggle_autodj")));
 
     connect(pushButtonAutoDJ, SIGNAL(toggled(bool)),
-            m_pCOToggleAutoDJ, SLOT(set( (double) bool))); _blah;
+            this, SLOT(toggleAutoDJ(bool))); _blah;
 
     // playposition is from -0.14 to + 1.14
     // ControlObjects are now handled by AutoDJ
@@ -161,13 +160,11 @@ DlgAutoDJ::~DlgAutoDJ() {
 
 // Doesn't need to be changed
 void DlgAutoDJ::onShow() {
-	qDebug() << "Calling onShow()";
     m_pAutoDJTableModel->select();
 }
 
 // Doesn't need to be changed
 void DlgAutoDJ::setup(QDomNode node) {
-	qDebug() << "Calling setup()";
     QPalette pal = palette();
 
     // Row colors
@@ -229,6 +226,8 @@ void DlgAutoDJ::moveSelection(int delta) {
 
 void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
+	double button = (double) buttonChecked;
+	m_pCOShufflePlaylist->slotSet(button);
 	//m_pCOShufflePlaylist->set((double) buttonChecked);
 }
 
@@ -248,6 +247,7 @@ void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
 
 void DlgAutoDJ::skipNext(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
+	qDebug() << "skip pushed";
 	//m_pCOSkipNext->set((double) buttonChecked);
 }
 
@@ -296,6 +296,7 @@ void DlgAutoDJ::fadeNow(bool buttonChecked) {
 
 void DlgAutoDJ::toggleAutoDJ(bool toggle) {
 	//m_pCOToggleAutoDJ->set((double) toggle);
+	qDebug() << "toggle pushed";
 }
 
 /*
