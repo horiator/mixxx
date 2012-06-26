@@ -8,11 +8,15 @@
 #include "library/autodj.h"
 #include "library/tracktransition.h"
 
-AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig) :
+AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
+		TrackCollection* pTrackCollection) :
     QObject(parent),
     m_bEnabled(false),
-    m_pConfig(pConfig) {
+    m_pConfig(pConfig),
+    m_pTrackCollection(pTrackCollection),
+    m_playlistDao(pTrackCollection->getPlaylistDAO()){
 
+	qDebug() << "Creating AutoDJ object";
     m_bPlayer1Primed = false;
     m_bPlayer2Primed = false;
     m_bPlayer1Cued = false;
@@ -38,6 +42,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig) :
     m_pCOSampleRate2 = new ControlObjectThreadMain(
                             ControlObject::getControl(ConfigKey("[Channel2]", "track_samplerate")));
 
+    // Setting up ControlPushButtons
     m_pCOSkipNext = new ControlPushButton(
                     ConfigKey("[AutoDJ]", "skip_next"));
     m_pCOSkipNext->setButtonMode(ControlPushButton::PUSH);
@@ -67,6 +72,16 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig) :
     m_pCOToggleAutoDJ->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_pCOToggleAutoDJ, SIGNAL(valueChanged(double)),
         this, SLOT(toggleAutoDJ(double)));
+
+    // Setting up Playlist
+    m_pAutoDJTableModel = new PlaylistTableModel(this, pTrackCollection,
+                                                     "mixxx.db.model.autodj");
+    int playlistId = m_playlistDao.getPlaylistIdFromName(AUTODJ_TABLE);
+    if (playlistId < 0) {
+        playlistId = m_playlistDao.createPlaylist(AUTODJ_TABLE,
+                                                  PlaylistDAO::PLHT_AUTO_DJ);
+    }
+    m_pAutoDJTableModel->setPlaylist(playlistId);
 }
 
 AutoDJ::~AutoDJ() {
@@ -78,6 +93,10 @@ AutoDJ::~AutoDJ() {
     delete m_pCORepeat2;
     delete m_pCOSampleRate1;
     delete m_pCOSampleRate2;
+}
+
+PlaylistTableModel* AutoDJ::getTableModel() {
+	return m_pAutoDJTableModel;
 }
 
 void AutoDJ::setEnabled(bool enable) {
@@ -362,20 +381,17 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
                        */
     }
 
-    void AutoDJ::shufflePlaylist(double value) {
-    	/*
-    	Q_UNUSED(buttonChecked);
-    	qDebug() << "Shuffling AutoDJ playlist";
-    	int row;
-    	if(m_eState == ADJ_DISABLED) {
-    	    row = 0;
-    	} else {
-    	    row = 1;
-    	}
-    	m_pAutoDJTableModel->shuffleTracks(m_pAutoDJTableModel->index(row, 0));
-    	qDebug() << "Shuffling done";
-    	*/
-    }
+void AutoDJ::shufflePlaylist(double value) {
+   	qDebug() << "Shuffling AutoDJ playlist";
+   	int row;
+   	if(m_eState == ADJ_DISABLED) {
+   	    row = 0;
+   	} else {
+   	    row = 1;
+   	}
+   	m_pAutoDJTableModel->shuffleTracks(m_pAutoDJTableModel->index(row, 0));
+   	qDebug() << "Shuffling done";
+}
 
     void AutoDJ::skipNext(double value) {
     	/*

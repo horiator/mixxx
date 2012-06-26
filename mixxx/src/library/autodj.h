@@ -6,6 +6,9 @@
 #include "dlgautodj.h"
 #include "library/tracktransition.h"
 #include "controlpushbutton.h"
+#include "library/dao/playlistdao.h"
+#include "library/trackcollection.h"
+#include "library/playlisttablemodel.h"
 
 class ControlObjectThreadMain;
 
@@ -13,12 +16,16 @@ class AutoDJ : public QObject {
     Q_OBJECT
 
 public:
-    AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig);
+    AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
+    		TrackCollection* pTrackCollection);
     ~AutoDJ();
+
+    PlaylistTableModel* getTableModel();
 
 public slots:
     void setEnabled(bool);
     void setEndOfPlaylist(bool);
+    // Slot for Transition Combo Box
     //void transitionIndex(int index);
     void receiveNextTrack(TrackPointer nextTrack);
     void player1PositionChanged(double samplePos1);
@@ -48,9 +55,20 @@ signals:
     void loadTrackToPlayer(TrackPointer tio, QString group);
 
 private:
+    enum ADJstates {
+        ADJ_IDLE = 0,
+        ADJ_P1FADING,
+        ADJ_P2FADING,
+        ADJ_ENABLE_P1LOADED,
+        ADJ_ENABLE_P1PLAYING,
+        ADJ_DISABLED
+    };
+    enum ADJstates m_eState;
     bool m_bEnabled;
     bool m_bEndOfPlaylist;
-
+    TrackCollection* m_pTrackCollection;
+    PlaylistDAO& m_playlistDao;
+    PlaylistTableModel* m_pAutoDJTableModel;
     // This variables (PlayerN) may be changed due to implementation,
     // but I am leaving them for now until I need to change them (smstewart)
     bool m_bPlayer1Primed, m_bPlayer2Primed;

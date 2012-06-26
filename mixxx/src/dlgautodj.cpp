@@ -17,18 +17,20 @@ const int kTransitionPreferenceDefault = 10;
 
 DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
                      TrackCollection* pTrackCollection,
-                     MixxxKeyboard* pKeyboard)
+                     MixxxKeyboard* pKeyboard, AutoDJ* pAutoDJ)
         : QWidget(parent),
           Ui::DlgAutoDJ(),
           m_pConfig(pConfig),
           m_pTrackCollection(pTrackCollection),
           m_pTrackTableView(
               new WTrackTableView(this, pConfig, m_pTrackCollection)),
-          m_playlistDao(pTrackCollection->getPlaylistDAO())
+          m_playlistDao(pTrackCollection->getPlaylistDAO()),
+          m_pAutoDJ(pAutoDJ)
           //m_bFadeNow(false),
           //m_eState(ADJ_DISABLED),
           //m_posThreshold1(1.0f),
           /*m_posThreshold2(1.0f)*/ {
+	qDebug() << "Creating DlgAutoDJ object";
     setupUi(this);
 
     m_pTrackTableView->installEventFilter(pKeyboard);
@@ -44,14 +46,14 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     box->insertWidget(1, m_pTrackTableView);
 
     // TODO(smstewart): Create model in AutoDJ and get from there
-    m_pAutoDJTableModel = new PlaylistTableModel(this, pTrackCollection,
-                                                 "mixxx.db.model.autodj");
+    m_pAutoDJTableModel = m_pAutoDJ->getTableModel();
+    /*
     int playlistId = m_playlistDao.getPlaylistIdFromName(AUTODJ_TABLE);
     if (playlistId < 0) {
         playlistId = m_playlistDao.createPlaylist(AUTODJ_TABLE,
                                                   PlaylistDAO::PLHT_AUTO_DJ);
     }
-    m_pAutoDJTableModel->setPlaylist(playlistId);
+    m_pAutoDJTableModel->setPlaylist(playlistId);*/
     m_pTrackTableView->loadTrackModel(m_pAutoDJTableModel);
 
     // Override some playlist-view properties:
@@ -159,11 +161,13 @@ DlgAutoDJ::~DlgAutoDJ() {
 
 // Doesn't need to be changed
 void DlgAutoDJ::onShow() {
+	qDebug() << "Calling onShow()";
     m_pAutoDJTableModel->select();
 }
 
 // Doesn't need to be changed
 void DlgAutoDJ::setup(QDomNode node) {
+	qDebug() << "Calling setup()";
     QPalette pal = palette();
 
     // Row colors

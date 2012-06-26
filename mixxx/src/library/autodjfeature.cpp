@@ -23,8 +23,9 @@ AutoDJFeature::AutoDJFeature(QObject* parent,
           m_pConfig(pConfig),
           m_pTrackCollection(pTrackCollection),
           m_playlistDao(pTrackCollection->getPlaylistDAO()) {
+	qDebug() << "Creating AutoDJFeature";
     m_pAutoDJView = NULL;
-    m_pAutoDJ = new AutoDJ(this, m_pConfig);
+    m_pAutoDJ = new AutoDJ(this, m_pConfig, m_pTrackCollection);
 }
 
 AutoDJFeature::~AutoDJFeature() {
@@ -44,7 +45,7 @@ void AutoDJFeature::bindWidget(WLibrarySidebar* /*sidebarWidget*/,
     m_pAutoDJView = new DlgAutoDJ(libraryWidget,
                                   m_pConfig,
                                   m_pTrackCollection,
-                                  keyboard);
+                                  keyboard, m_pAutoDJ);
     m_pAutoDJView->installEventFilter(keyboard);
     libraryWidget->registerView(m_sAutoDJViewName, m_pAutoDJView);
     connect(m_pAutoDJView, SIGNAL(loadTrack(TrackPointer)),

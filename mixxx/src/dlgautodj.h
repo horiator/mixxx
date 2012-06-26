@@ -9,18 +9,21 @@
 #include "library/libraryview.h"
 #include "library/trackcollection.h"
 #include "mixxxkeyboard.h"
+#include "library/autodj.h"
 
 class PlaylistTableModel;
 class WTrackTableView;
 class AnalyserQueue;
 class QSqlTableModel;
 class ControlObjectThreadMain;
+class AutoDJ;
 
 class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryView {
     Q_OBJECT
   public:
     DlgAutoDJ(QWidget *parent, ConfigObject<ConfigValue>* pConfig,
-              TrackCollection* pTrackCollection, MixxxKeyboard* pKeyboard);
+              TrackCollection* pTrackCollection, MixxxKeyboard* pKeyboard,
+              AutoDJ* pAutoDJ);
     virtual ~DlgAutoDJ();
 
     virtual void setup(QDomNode node);
@@ -72,6 +75,7 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     WTrackTableView* m_pTrackTableView;
     PlaylistTableModel* m_pAutoDJTableModel;
     PlaylistDAO& m_playlistDao;
+    AutoDJ* m_pAutoDJ;
 
     // Makes our Auto DJ logic assume the next track that should be played is
     // already loaded. We need this flag to make our
