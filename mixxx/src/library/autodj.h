@@ -77,6 +77,7 @@ private:
     bool m_bPlayer1Primed, m_bPlayer2Primed;
     // TODO(tom__m) This is hacky
     bool m_bPlayer1Cued, m_bPlayer2Cued;
+    // TODO(smstewart): Find better way to block out double keyboard signals
     // Checks for a double signal sent by keyboard press
     double lastToggleValue;
 
@@ -101,6 +102,7 @@ private:
     ControlPushButton* m_pCOShufflePlaylist;
     ControlPushButton* m_pCOToggleAutoDJ;
 
+    float m_fadeDuration1, m_fadeDuration2, m_posThreshold1, m_posThreshold2;
     // This is effectively our "on deck" track for AutoDJ.
     TrackPointer m_pNextTrack;
 
@@ -120,6 +122,7 @@ private:
     void cueTrackToFadeIn(QString group);
 
     TrackPointer getNextTrackFromQueue();
+    bool loadNextTrackFromQueue();
 
 };
 

@@ -34,9 +34,9 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
 
     m_pTrackTableView->installEventFilter(pKeyboard);
     connect(m_pTrackTableView, SIGNAL(loadTrack(TrackPointer)),
-            this, SIGNAL(loadTrack(TrackPointer)));
+            m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)));
     connect(m_pTrackTableView, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
-            this, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
+            m_pAutoDJ, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
 
     QBoxLayout* box = dynamic_cast<QBoxLayout*>(layout());
     Q_ASSERT(box); //Assumes the form layout is a QVBox/QHBoxLayout!

@@ -25,6 +25,10 @@ AutoDJFeature::AutoDJFeature(QObject* parent,
           m_playlistDao(pTrackCollection->getPlaylistDAO()) {
     m_pAutoDJView = NULL;
     m_pAutoDJ = new AutoDJ(this, m_pConfig, m_pTrackCollection);
+    connect(m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)),
+            this, SIGNAL(loadTrack(TrackPointer)));
+    connect(m_pAutoDJ, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
+            this, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
 }
 
 AutoDJFeature::~AutoDJFeature() {
@@ -47,10 +51,10 @@ void AutoDJFeature::bindWidget(WLibrarySidebar* /*sidebarWidget*/,
                                   keyboard, m_pAutoDJ);
     m_pAutoDJView->installEventFilter(keyboard);
     libraryWidget->registerView(m_sAutoDJViewName, m_pAutoDJView);
-    connect(m_pAutoDJView, SIGNAL(loadTrack(TrackPointer)),
-            this, SIGNAL(loadTrack(TrackPointer)));
-    connect(m_pAutoDJView, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
-            this, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
+    //connect(m_pAutoDJView, SIGNAL(loadTrack(TrackPointer)),
+            //this, SIGNAL(loadTrack(TrackPointer)));
+    //connect(m_pAutoDJView, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
+            //this, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
     m_pAutoDJ->setDlgAutoDJ(m_pAutoDJView);
 }
 
