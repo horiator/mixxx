@@ -25,7 +25,7 @@ public:
     void setDlgAutoDJ(DlgAutoDJ* pDlgAutoDJ);
 
 public slots:
-    void setEnabled(bool);
+    //void setEnabled(bool);
     void setEndOfPlaylist(bool);
     // Slot for Transition Combo Box
     //void transitionIndex(int index);
@@ -52,7 +52,6 @@ signals:
     void disableAutoDJ();
     // Emitted so the currently playing track in the specified group will be removed from
     // the AutoDJ queue. This is connected to DlgAutoDJ::slotRemovePlayingTrackFromQueue(QString).
-    void removePlayingTrackFromQueue(QString group);
     void loadTrack(TrackPointer tio);
     void loadTrackToPlayer(TrackPointer tio, QString group);
 
@@ -123,6 +122,7 @@ private:
 
     TrackPointer getNextTrackFromQueue();
     bool loadNextTrackFromQueue();
+    bool removePlayingTrackFromQueue(QString group);
 
 };
 

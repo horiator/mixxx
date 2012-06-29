@@ -105,8 +105,7 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
 
     // playposition is from -0.14 to + 1.14
     // ControlObjects are now handled by AutoDJ
-    /*
-    m_pCOPlayPos1 = new ControlObjectThreadMain(
+    /*m_pCOPlayPos1 = new ControlObjectThreadMain(
         ControlObject::getControl(ConfigKey("[Channel1]", "playposition")));
     m_pCOPlayPos2 = new ControlObjectThreadMain(
         ControlObject::getControl(ConfigKey("[Channel2]", "playposition")));

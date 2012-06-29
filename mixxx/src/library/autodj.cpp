@@ -2,6 +2,7 @@
 
 #include <QtDebug>
 
+#include "configobject.h"
 #include "controlobject.h"
 #include "controlobjectthreadmain.h"
 #include "playerinfo.h"
@@ -24,11 +25,11 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_bEndOfPlaylist = false;
 
     //m_pTrackTransition = new TrackTransition(this, m_pConfig);
-
+    // Most of these COs won't be needed once TrackTransition exists
     m_pCOPlay1 = new ControlObjectThreadMain(
-                            ControlObject::getControl(ConfigKey("[Channel1]", "play")));
+            ControlObject::getControl(ConfigKey("[Channel1]","play")));
     m_pCOPlay2 = new ControlObjectThreadMain(
-                            ControlObject::getControl(ConfigKey("[Channel2]", "play")));
+                            ControlObject::getControl(ConfigKey("[Channel2]","play")));
     m_pCOPlay1Fb = new ControlObjectThreadMain(
                             ControlObject::getControl(ConfigKey("[Channel1]", "play")));
     m_pCOPlay2Fb = new ControlObjectThreadMain(
@@ -38,15 +39,17 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCORepeat2 = new ControlObjectThreadMain(
                             ControlObject::getControl(ConfigKey("[Channel2]", "repeat")));
     m_pCOPlayPosSamples1 = new ControlObjectThreadMain(
-                            ControlObject::getControl(ConfigKey("[Channel1]", "playposition_samples")));
+                            ControlObject::getControl(ConfigKey("[Channel1]", "playposition")));
     m_pCOPlayPosSamples2 = new ControlObjectThreadMain(
-                            ControlObject::getControl(ConfigKey("[Channel2]", "playposition_samples")));
+                            ControlObject::getControl(ConfigKey("[Channel2]", "playposition")));
     m_pCOSampleRate1 = new ControlObjectThreadMain(
                             ControlObject::getControl(ConfigKey("[Channel1]", "track_samplerate")));
     m_pCOSampleRate2 = new ControlObjectThreadMain(
                             ControlObject::getControl(ConfigKey("[Channel2]", "track_samplerate")));
+    m_pCOCrossfader = new ControlObjectThreadMain(
+    		ControlObject::getControl(ConfigKey("[Master]", "crossfader")));
 
-    // Setting up ControlPushButtons
+        // Setting up ControlPushButtons
     m_pCOSkipNext = new ControlPushButton(
                     ConfigKey("[AutoDJ]", "skip_next"));
     m_pCOSkipNext->setButtonMode(ControlPushButton::PUSH);
@@ -89,108 +92,26 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
 }
 
 AutoDJ::~AutoDJ() {
+	qDebug() << "~AutoDJ()";
     delete m_pCOPlayPosSamples1;
     delete m_pCOPlayPosSamples2;
     delete m_pCOPlay1;
     delete m_pCOPlay2;
+    delete m_pCOPlay1Fb;
+    delete m_pCOPlay2Fb;
     delete m_pCORepeat1;
     delete m_pCORepeat2;
     delete m_pCOSampleRate1;
     delete m_pCOSampleRate2;
+    delete m_pCOSkipNext;
+    delete m_pCOFadeNowRight;
+    delete m_pCOFadeNowLeft;
+    delete m_pCOShufflePlaylist;
+    delete m_pCOToggleAutoDJ;
 }
 
 PlaylistTableModel* AutoDJ::getTableModel() {
 	return m_pAutoDJTableModel;
-}
-
-void AutoDJ::setEnabled(bool enable) {
-
-    // Check if we have yet to receive a track to load
-    if(m_pNextTrack == NULL) {
-        emit needNextTrack();
-    }
-
-    if(enable) {
-        qDebug() << "AutoDJ Enabled";
-        // Begin AutoDJ...
-        if (m_pCOPlay1->get() == 1.0f && m_pCOPlay2->get() == 1.0f) {
-            qDebug() << "One player must be stopped before enabling Auto DJ mode";
-            emit disableAutoDJ();
-            return;
-        }
-
-        // Never load the same track if it is already playing
-        if (m_pCOPlay1->get() == 1.0f) {
-            emit removePlayingTrackFromQueue("[Channel1]");
-        }
-        if (m_pCOPlay2->get() == 1.0f) {
-            emit removePlayingTrackFromQueue("[Channel2]");
-        }
-
-        m_bEnabled = enable;
-
-        // Right now we are just using deck 1 and 2, in the future this will be
-        // determined by which decks the user wants to use for AutoDJ
-        connect(m_pCOPlayPosSamples1, SIGNAL(valueChanged(double)),
-        this, SLOT(player1PositionChanged(double)));
-        connect(m_pCOPlayPosSamples2, SIGNAL(valueChanged(double)),
-        this, SLOT(player2PositionChanged(double)));
-
-        m_bPlayer1Primed = false;
-        m_bPlayer2Primed = false;
-        m_bPlayer1Cued = false;
-        m_bPlayer2Cued = false;
-
-        // If only one of the players is playing...
-        if ((m_pCOPlay1->get() == 1.0f && m_pCOPlay2->get() == 0.0f) ||
-            (m_pCOPlay1->get() == 0.0f && m_pCOPlay2->get() == 1.0f)) {
-
-            // Load the first song from the queue.
-            if (m_bEndOfPlaylist) {
-                // Queue is empty. Disable and return.
-                emit disableAutoDJ();
-                return;
-            }
-            loadNextTrack();
-
-            // Set the primed flags so the crossfading algorithm knows
-            // that it doesn't need to load a track into whatever player.
-            if (m_pCOPlay1->get() == 1.0f) {
-                m_bPlayer1Primed = true;
-            }
-            if (m_pCOPlay2->get() == 1.0f) {
-                m_bPlayer2Primed = true;
-            }
-        }
-
-        // If both players are stopped, start the first one
-        else if (m_pCOPlay1->get() == 0.0f && m_pCOPlay2->get() == 0.0f) {
-            // Load the first song from the queue.
-            if (m_bEndOfPlaylist) {
-                // Queue was empty. Disable and return.
-                emit disableAutoDJ();
-                return;
-            }
-            loadNextTrack();
-
-            m_pCORepeat1->slotSet(1.0f); // Turn on repeat mode to avoid race condition between async load
-            m_pCOPlay1->slotSet(1.0f);  // Play the track in player 1
-            m_pTrackTransition->m_pCOCrossfader->slotSet(-1.0f);
-
-            // Remove the track in Player 1 from the queue
-           //emit removePlayingTrackFromQueue("[Channel1]");
-        }
-    }
-    else {
-        // Disable AutoDJ
-        emit disableAutoDJ();
-        qDebug() << "Auto DJ disabled";
-        m_bEnabled = false;
-        m_pCOPlayPosSamples1->disconnect(this);
-        m_pCOPlayPosSamples2->disconnect(this);
-        m_pCORepeat1->slotSet(0.0f); //Turn off repeat mode
-        m_pCORepeat2->slotSet(0.0f); //Turn off repeat mode
-    }
 }
 
 void AutoDJ::player1PositionChanged(double value) {
@@ -200,20 +121,18 @@ void AutoDJ::player1PositionChanged(double value) {
     // 0.05; // 5% playback is crossfade duration
     const float fadeDuration = m_fadeDuration1;
 
-    // qDebug() << "player1PositionChanged(" << value << ")";
     if (m_eState == ADJ_DISABLED) {
         //nothing to do
         return;
     }
-
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
     bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
-
     if (m_eState == ADJ_ENABLE_P1LOADED) {
         // Auto DJ Start
         if (!deck1Playing && !deck2Playing) {
             m_pCOCrossfader->slotSet(-1.0f);  // Move crossfader to the left!
-            m_pCOPlay1->slotSet(1.0f);  // Play the track in player 1
+            // Play the track in player 1
+            m_pCOPlay1->slotSet(1.0f);
             removePlayingTrackFromQueue("[Channel1]");
         } else {
             m_eState = ADJ_IDLE;
@@ -617,10 +536,10 @@ void AutoDJ::toggleAutoDJ(double value) {
         m_pDlgAutoDJ->setAutoDJEnabled();
         //pushButtonSkipNext->setEnabled(true);
 
-        //connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-                //this, SLOT(player1PositionChanged(double)));
-        //connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-                //this, SLOT(player2PositionChanged(double)));
+        connect(m_pCOPlayPosSamples1, SIGNAL(valueChanged(double)),
+                this, SLOT(player1PositionChanged(double)));
+        connect(m_pCOPlayPosSamples2, SIGNAL(valueChanged(double)),
+                this, SLOT(player2PositionChanged(double)));
 
          connect(m_pCOPlay1Fb, SIGNAL(valueChanged(double)),
                  this, SLOT(player1PlayChanged(double)));
@@ -632,7 +551,7 @@ void AutoDJ::toggleAutoDJ(double value) {
             m_eState = ADJ_ENABLE_P1LOADED;
             //pushButtonFadeNow->setEnabled(false);
             // Force Update on load Track
-            //m_pCOPlayPos1->slotSet(-0.001f);
+            player1PositionChanged(-0.001f);
          } else {
             m_eState = ADJ_IDLE;
             //pushButtonFadeNow->setEnabled(true);
@@ -701,6 +620,37 @@ bool AutoDJ::loadNextTrackFromQueue() {
 
     emit(loadTrack(nextTrack));
     return true;
+}
+
+bool AutoDJ::removePlayingTrackFromQueue(QString group) {
+    TrackPointer nextTrack, loadedTrack;
+	int nextId = 0, loadedId = 0;
+
+	// Get the track at the top of the playlist...
+	nextTrack = m_pAutoDJTableModel->getTrack(m_pAutoDJTableModel->index(0, 0));
+	if (nextTrack) {
+	    nextId = nextTrack->getId();
+	}
+
+	// Get loaded track
+	loadedTrack = PlayerInfo::Instance().getTrackInfo(group);
+	if (loadedTrack) {
+	    loadedId = loadedTrack->getId();
+	}
+
+	// When enable auto DJ and Topmost Song is already on second deck, nothing to do
+	//BaseTrackPlayer::getLoadedTrack()
+	//pTrack = PlayerInfo::Instance().getCurrentPlayingTrack();
+
+	if (loadedId != nextId) {
+	    // Do not remove when the user has loaded a track manually
+	    return false;
+	}
+
+	// remove the top track
+	m_pAutoDJTableModel->removeTrack(m_pAutoDJTableModel->index(0, 0));
+
+	return true;
 }
 
 void AutoDJ::setDlgAutoDJ(DlgAutoDJ* pDlgAutoDJ) {

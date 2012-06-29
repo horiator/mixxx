@@ -24,11 +24,7 @@ AutoDJFeature::AutoDJFeature(QObject* parent,
           m_pTrackCollection(pTrackCollection),
           m_playlistDao(pTrackCollection->getPlaylistDAO()) {
     m_pAutoDJView = NULL;
-    m_pAutoDJ = new AutoDJ(this, m_pConfig, m_pTrackCollection);
-    connect(m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)),
-            this, SIGNAL(loadTrack(TrackPointer)));
-    connect(m_pAutoDJ, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
-            this, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
+    m_pAutoDJ = NULL;
 }
 
 AutoDJFeature::~AutoDJFeature() {
@@ -45,6 +41,14 @@ QIcon AutoDJFeature::getIcon() {
 void AutoDJFeature::bindWidget(WLibrarySidebar* /*sidebarWidget*/,
                                WLibrary* libraryWidget,
                                MixxxKeyboard* keyboard) {
+	// Cannot create AutoDJ in AutoDJFeature() because ControlObjects
+	// that AutoDJ uses are not initialized yet
+	m_pAutoDJ = new AutoDJ(this, m_pConfig, m_pTrackCollection);
+    connect(m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)),
+            this, SIGNAL(loadTrack(TrackPointer)));
+    connect(m_pAutoDJ, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
+            this, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
+
     m_pAutoDJView = new DlgAutoDJ(libraryWidget,
                                   m_pConfig,
                                   m_pTrackCollection,
