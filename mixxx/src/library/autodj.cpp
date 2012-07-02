@@ -79,6 +79,8 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCOToggleAutoDJ->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_pCOToggleAutoDJ, SIGNAL(valueChanged(double)),
         this, SLOT(toggleAutoDJ(double)));
+    m_pCOToggleAutoDJThread = new ControlObjectThreadMain(
+    		ControlObject::getControl(ConfigKey("[AutoDJ]", "toggle_autodj")));
 
     // Setting up Playlist
     m_pAutoDJTableModel = new PlaylistTableModel(this, pTrackCollection,
@@ -433,20 +435,19 @@ void AutoDJ::shufflePlaylist(double value) {
    	qDebug() << "Shuffling done";
 }
 
-    void AutoDJ::skipNext(double value) {
-    	/*
-        Q_UNUSED(buttonChecked);
-        qDebug() << "Skip Next";
-        // Load the next song from the queue.
-        if (m_pCOPlay1Fb->get() == 0.0f) {
-            removePlayingTrackFromQueue("[Channel1]");
-            loadNextTrackFromQueue();
-        } else if (m_pCOPlay2Fb->get() == 0.0f) {
-            removePlayingTrackFromQueue("[Channel2]");
-            loadNextTrackFromQueue();
-        }
-        */
+void AutoDJ::skipNext(double value) {
+	// Guard to prevent shuffling twice when keyboard sends a double signal
+	if (value == 1.0 || m_pCOToggleAutoDJThread->get() == 0.0) return;
+    qDebug() << "Skip Next";
+    // Load the next song from the queue.
+    if (m_pCOPlay1Fb->get() == 0.0f) {
+        removePlayingTrackFromQueue("[Channel1]");
+        loadNextTrackFromQueue();
+    } else if (m_pCOPlay2Fb->get() == 0.0f) {
+        removePlayingTrackFromQueue("[Channel2]");
+        loadNextTrackFromQueue();
     }
+}
 
     void AutoDJ::fadeNowRight(double value) {
     	/*
@@ -499,6 +500,7 @@ void AutoDJ::toggleAutoDJ(double value) {
 		return;
 	}
 	lastToggleValue = value;
+
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
     bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
 
@@ -510,6 +512,8 @@ void AutoDJ::toggleAutoDJ(double value) {
                 QMessageBox::Ok);
             qDebug() << "One deck must be stopped before enabling Auto DJ mode";
             //pushButtonAutoDJ->setChecked(false);
+            m_pCOToggleAutoDJThread->slotSet(!value);
+            lastToggleValue = -1.0;
             return;
         }
 
@@ -525,7 +529,8 @@ void AutoDJ::toggleAutoDJ(double value) {
         if (!nextTrack) {
             qDebug() << "Queue is empty now";
             //pushButtonAutoDJ->setChecked(false);
-            //m_pCOToggleAutoDJ->slotSet(0.0);
+            m_pCOToggleAutoDJThread->slotSet(0.0);
+            lastToggleValue = -1.0;
             return;
         }
 

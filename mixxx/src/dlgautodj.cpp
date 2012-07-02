@@ -232,7 +232,8 @@ void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
 void DlgAutoDJ::skipNext(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
 	qDebug() << "skip pushed";
-	//m_pCOSkipNext->set((double) buttonChecked);
+	double button = (double) buttonChecked;
+	m_pCOSkipNext->slotSet(button);
 }
 
 /*
