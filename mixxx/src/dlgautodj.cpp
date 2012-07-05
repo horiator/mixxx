@@ -67,7 +67,7 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     pushButtonSkipNext->setEnabled(false);
 
     connect(spinBoxTransition, SIGNAL(valueChanged(int)),
-            this, SLOT(transitionValueChanged(int)));
+            m_pAutoDJ, SLOT(transitionValueChanged(int)));
 
 
 
@@ -125,13 +125,14 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
         ControlObject::getControl(ConfigKey("[Master]", "crossfader")));
 	*/
 
-    QString str_autoDjTransition = m_pConfig->getValueString(
+    // This should be moved to AutoDJ
+    /*QString str_autoDjTransition = m_pConfig->getValueString(
         ConfigKey(CONFIG_KEY, kTransitionPreferenceName));
     if (str_autoDjTransition.isEmpty()) {
         spinBoxTransition->setValue(kTransitionPreferenceDefault);
     } else {
         spinBoxTransition->setValue(str_autoDjTransition.toInt());
-    }
+    }*/
 }
 
 DlgAutoDJ::~DlgAutoDJ() {

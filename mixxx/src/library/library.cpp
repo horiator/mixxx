@@ -15,7 +15,7 @@
 #include "library/recording/recordingfeature.h"
 #include "library/itunes/itunesfeature.h"
 #include "library/mixxxlibraryfeature.h"
-#include "library/autodjfeature.h"
+#include "library/autodj/autodjfeature.h"
 #include "library/playlistfeature.h"
 #include "library/preparefeature.h"
 #include "library/promotracksfeature.h"

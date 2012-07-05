@@ -9,7 +9,7 @@
 #include "library/libraryview.h"
 #include "library/trackcollection.h"
 #include "mixxxkeyboard.h"
-#include "library/autodj.h"
+#include "library/autodj/autodj.h"
 
 class PlaylistTableModel;
 class WTrackTableView;
