@@ -133,7 +133,7 @@ void TrackTransition::cueTransition(double value) {
     	}
     	double crossfadePos = -1.0 + 2.0 * ((1.0f * currentPos) - m_icuePoint) /
     				          (fadeEnd - m_icuePoint);
-    	qDebug() << "(top) crossfade position = " << crossfadePos;
+    	//qDebug() << "(top) crossfade position = " << crossfadePos;
     	m_pCOCrossfader->slotSet(crossfadePos);
     	if (crossfadePos >= 1.0) {
     		m_pCOCrossfader->slotSet(1.0);
@@ -160,7 +160,7 @@ void TrackTransition::cueTransition(double value) {
     	}
     	double crossfadePos = 1.0 - 2.0 * ((1.0f * currentPos) - m_icuePoint) /
     				          (fadeEnd - m_icuePoint);
-    	qDebug() << "(bottom) crossfade position = " << crossfadePos;
+    	//qDebug() << "(bottom) crossfade position = " << crossfadePos;
     	m_pCOCrossfader->slotSet(crossfadePos);
     	if (crossfadePos <= -1.0) {
     		m_pCOCrossfader->slotSet(-1.0);
@@ -172,7 +172,7 @@ void TrackTransition::cueTransition(double value) {
 
 void TrackTransition::cdTransition(double value) {
 	if (value == 1.0) {
-		qDebug() << "m_groupA = " << m_groupA << " and m_groupB = " << m_groupB;
+		//qDebug() << "m_groupA = " << m_groupA << " and m_groupB = " << m_groupB;
 		if (m_groupA == "[Channel1]") {
 			m_pCOPlayPos2->slotSet(0.0);
 			m_pCOPlay2->slotSet(1.0);
