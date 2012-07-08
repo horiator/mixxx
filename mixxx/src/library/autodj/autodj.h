@@ -30,7 +30,7 @@ public slots:
     //void setEnabled(bool);
     void setEndOfPlaylist(bool);
     // Slot for Transition Combo Box
-    //void transitionIndex(int index);
+    void transitionSelect(int index);
     void receiveNextTrack(TrackPointer nextTrack);
     void player1PositionChanged(double samplePos1);
     void player2PositionChanged(double samplePos2);
@@ -46,6 +46,7 @@ public slots:
     void setCueOut2(double value);
     void deleteCueOut1(double value);
     void deleteCueOut2(double value);
+    void setTransitionDone();
 
 signals:
     // Emitted whenever AutoDJ is ready for the next track from the queue.
@@ -72,8 +73,14 @@ private:
         ADJ_DISABLED
     };
     enum ADJstates m_eState;
+    enum TranSelect {
+    	CD = 0,
+    	CUE
+    };
+    enum TranSelect m_eTransition;
     bool m_bEnabled;
     bool m_bEndOfPlaylist;
+    bool m_btransitionDone;
     TrackCollection* m_pTrackCollection;
     PlaylistDAO& m_playlistDao;
     PlaylistTableModel* m_pAutoDJTableModel;
@@ -98,6 +105,8 @@ private:
     ControlObjectThreadMain* m_pCOPlayPos2;
     ControlObjectThreadMain* m_pCOSampleRate1;
     ControlObjectThreadMain* m_pCOSampleRate2;
+    ControlObjectThreadMain* m_pCOTrackSamples1;
+    ControlObjectThreadMain* m_pCOTrackSamples2;
     ControlObjectThreadMain* m_pCOCrossfader;
     ControlObjectThreadMain* m_pCOSync;
     ControlObjectThreadMain* m_pPitchControl;
@@ -138,6 +147,7 @@ private:
     bool removePlayingTrackFromQueue(QString group);
     void setCueOut(double value, int channel);
     void deleteCueOut(double value, int channel);
+    void startAutoDJ();
 };
 
 #endif // AUTODJ_H

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>560</width>
+    <width>610</width>
     <height>399</height>
    </rect>
   </property>
@@ -67,13 +67,17 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButtonFadeNow">
-       <property name="toolTip">
-        <string>Trigger the transition to the next track.</string>
-       </property>
-       <property name="text">
-        <string>Fade Now</string>
-       </property>
+      <widget class="QComboBox" name="comboBoxTransition">
+       <item>
+        <property name="text">
+         <string>CD Mode</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Cue Transition</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>

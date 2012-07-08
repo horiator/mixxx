@@ -63,12 +63,13 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     // Disallow sorting.
     m_pTrackTableView->disableSorting();
 
-    pushButtonFadeNow->setEnabled(false);
+    //pushButtonFadeNow->setEnabled(false);
     pushButtonSkipNext->setEnabled(false);
 
     connect(spinBoxTransition, SIGNAL(valueChanged(int)),
             m_pAutoDJ, SLOT(transitionValueChanged(int)));
-
+    connect(comboBoxTransition, SIGNAL(currentIndexChanged(int)),
+    		m_pAutoDJ, SLOT(transitionSelect(int)));
 
 
     // TODO(smstewart): These COs should be instantiated in AutoDJ
@@ -697,13 +698,13 @@ void DlgAutoDJ::setAutoDJEnabled() {
 	pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
 	pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
 	pushButtonSkipNext->setEnabled(true);
-	pushButtonFadeNow->setEnabled(true);
+	//pushButtonFadeNow->setEnabled(true);
 }
 
 void DlgAutoDJ::setAutoDJDisabled() {
 	pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
 	pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
-	pushButtonFadeNow->setEnabled(false);
+	//pushButtonFadeNow->setEnabled(false);
 	pushButtonSkipNext->setEnabled(false);
 }
 
