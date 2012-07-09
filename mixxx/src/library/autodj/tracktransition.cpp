@@ -84,10 +84,10 @@ void TrackTransition::setGroups(QString groupA, QString groupB) {
 	        	ConfigKey("[Auto DJ]", "Transition")).toInt();
 	    	if (m_groupA == "[Channel1]") {
 	    		m_icuePoint = m_pCOTrackSamples1->get() -
-	    				(m_trackA->getSampleRate() * fadelength);
+	    				(m_trackA->getSampleRate() * fadelength * 2.0);
 	    	} else {
 	    		m_icuePoint = m_pCOTrackSamples2->get() -
-	    				(m_trackA->getSampleRate() * fadelength);
+	    				(m_trackA->getSampleRate() * fadelength * 2.0);
 	    	}
 	    	qDebug() << "Track A calculated cue point = " << m_icuePoint;
 	    }
@@ -131,7 +131,7 @@ void TrackTransition::cueTransition(double value) {
     	if (fadeEnd > trackSamples) {
     		fadeEnd = trackSamples;
     	}
-    	double crossfadePos = -1.0 + 2.0 * ((1.0f * currentPos) - m_icuePoint) /
+    	double crossfadePos = -1.0 + ((1.0f * currentPos) - m_icuePoint) /
     				          (fadeEnd - m_icuePoint);
     	//qDebug() << "(top) crossfade position = " << crossfadePos;
     	m_pCOCrossfader->slotSet(crossfadePos);
@@ -158,7 +158,7 @@ void TrackTransition::cueTransition(double value) {
     	if (fadeEnd > trackSamples) {
     		fadeEnd = trackSamples;
     	}
-    	double crossfadePos = 1.0 - 2.0 * ((1.0f * currentPos) - m_icuePoint) /
+    	double crossfadePos = 1.0 - ((1.0f * currentPos) - m_icuePoint) /
     				          (fadeEnd - m_icuePoint);
     	//qDebug() << "(bottom) crossfade position = " << crossfadePos;
     	m_pCOCrossfader->slotSet(crossfadePos);
