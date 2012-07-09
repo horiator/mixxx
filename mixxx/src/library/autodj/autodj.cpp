@@ -787,10 +787,12 @@ void AutoDJ::transitionSelect(int index) {
 	case 0:
 		m_eTransition = CD;
 		qDebug() << "Transition changed to CD";
+		m_pDlgAutoDJ->spinBoxTransition->setEnabled(false);
 		break;
 	case 1:
 		m_eTransition = CUE;
 		qDebug() << "Transition changed to CUE";
+		m_pDlgAutoDJ->spinBoxTransition->setEnabled(true);
 		break;
 	}
 }

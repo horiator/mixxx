@@ -70,7 +70,14 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
             m_pAutoDJ, SLOT(transitionValueChanged(int)));
     connect(comboBoxTransition, SIGNAL(currentIndexChanged(int)),
     		m_pAutoDJ, SLOT(transitionSelect(int)));
-
+	switch(comboBoxTransition->currentIndex()) {
+		case 0:
+			spinBoxTransition->setEnabled(false);
+			break;
+		case 1:
+			spinBoxTransition->setEnabled(true);
+			break;
+	}
 
     // TODO(smstewart): These COs should be instantiated in AutoDJ
 
