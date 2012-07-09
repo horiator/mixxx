@@ -164,6 +164,13 @@ void AutoDJ::player1PositionChanged(double value) {
         //nothing to do
         return;
     }
+    if (m_eState == ADJ_WAITING) {
+    	// Waiting for a deck to stop and deck 1 is finished
+    	qDebug() << "value = " << value;
+    	qDebug() << "Should be turning AutoDJ on";
+    	m_pCOToggleAutoDJ->set(1.0);
+    	qDebug() << "CO = " << m_pCOToggleAutoDJ->get();
+    }
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
     bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
 
@@ -281,6 +288,12 @@ void AutoDJ::player2PositionChanged(double value) {
     if (m_eState == ADJ_DISABLED) {
         //nothing to do
         return;
+    }
+    if (m_eState == ADJ_WAITING && value == 1.0) {
+    	// Waiting for a deck to stop and deck 2 is finished
+    	qDebug() << "Should be turning AutoDJ on";
+    	m_pCOToggleAutoDJ->set(1.0);
+    	qDebug() << "CO = " << m_pCOToggleAutoDJ->get();
     }
 
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
@@ -439,6 +452,7 @@ void AutoDJ::loadNextTrack() {
     emit needNextTrack();
 }
 
+/*
 void AutoDJ::cueTrackToFadeIn(QString group) {
 
     TrackPointer pTrack = PlayerInfo::Instance().getTrackInfo(group);
@@ -484,7 +498,7 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
         // Cue up the fadeIn point
         m_pTrackTransition->m_pCOPlayPos2->slotSet(fadeIn);
     }
-}
+}*/
 
 void AutoDJ::transitionValueChanged(int value) {
 	//qDebug() << "Transition values starts at " << transitionValue;
@@ -586,15 +600,24 @@ void AutoDJ::toggleAutoDJ(double value) {
     bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
 
     if (value) {  // Enable Auto DJ
+        qDebug() << "Auto DJ enabled";
+        m_pDlgAutoDJ->setAutoDJEnabled();
         if (deck1Playing && deck2Playing) {
             /*QMessageBox::warning(
                 NULL, tr("Auto-DJ"),
                 tr("One deck must be stopped to enable Auto-DJ mode."),
                 QMessageBox::Ok);*/
-            qDebug() << "One deck must be stopped before enabling Auto DJ mode";
+            qDebug() << "AutoDJ waiting for one deck to stop";
             //pushButtonAutoDJ->setChecked(false);
-            m_pCOToggleAutoDJ->set(0.0);
+            //m_pCOToggleAutoDJ->set(0.0);
             lastToggleValue = -1.0;
+            m_eState = ADJ_WAITING;
+            qDebug() << "set to waiting. CO = " << m_pCOToggleAutoDJ->get() <<
+            		" and m_eState = " << m_eState;
+            connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
+                    this, SLOT(player1PositionChanged(double)));
+            connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
+                    this, SLOT(player2PositionChanged(double)));
             return;
         }
 
@@ -618,8 +641,6 @@ void AutoDJ::toggleAutoDJ(double value) {
         // Track is available so GO
         //pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
         //pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
-        qDebug() << "Auto DJ enabled";
-        m_pDlgAutoDJ->setAutoDJEnabled();
         //pushButtonSkipNext->setEnabled(true);
 
         connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
@@ -662,8 +683,8 @@ void AutoDJ::toggleAutoDJ(double value) {
         //pushButtonFadeNow->setEnabled(false);
         //pushButtonSkipNext->setEnabled(false);
         //m_bFadeNow = false;
-        //m_pCOPlayPos1->disconnect(this);
-        //m_pCOPlayPos2->disconnect(this);
+        m_pCOPlayPos1->disconnect(this);
+        m_pCOPlayPos2->disconnect(this);
         m_pCOPlay1->disconnect(this);
         m_pCOPlay2->disconnect(this);
     }

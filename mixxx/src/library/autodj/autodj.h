@@ -70,7 +70,8 @@ private:
         ADJ_P2FADING,
         ADJ_ENABLE_P1LOADED,
         ADJ_ENABLE_P1PLAYING,
-        ADJ_DISABLED
+        ADJ_DISABLED,
+        ADJ_WAITING
     };
     enum ADJstates m_eState;
     enum TranSelect {
@@ -140,7 +141,7 @@ private:
     // where X is the user defined crossfade length
     // Tracks are loaded at the default cue point, so AutoDJ doesn't need to
     // do anyting extra (smstewart)
-    void cueTrackToFadeIn(QString group);
+    //void cueTrackToFadeIn(QString group);
 
     TrackPointer getNextTrackFromQueue();
     bool loadNextTrackFromQueue();
