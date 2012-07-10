@@ -47,6 +47,8 @@ public slots:
     void deleteCueOut1(double value);
     void deleteCueOut2(double value);
     void setTransitionDone();
+    void cueOutPos1(double value);
+    void cueOutPos2(double value);
 
 signals:
     // Emitted whenever AutoDJ is ready for the next track from the queue.
@@ -96,6 +98,8 @@ private:
     int transitionValue;
 
     ConfigObject<ConfigValue>* m_pConfig;
+    ControlObject* m_pCOCueOutPosition1;
+    ControlObject* m_pCOCueOutPosition2;
     ControlObjectThreadMain* m_pCOPlay1;
     ControlObjectThreadMain* m_pCOPlay2;
     ControlObjectThreadMain* m_pCOPlay1Fb;

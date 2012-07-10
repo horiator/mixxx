@@ -125,6 +125,19 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
 
     transitionValue = m_pConfig->getValueString(
             ConfigKey("[Auto DJ]", "Transition")).toInt();
+
+    // Setting up ControlObjects for the GUI
+    m_pCOCueOutPosition1 =
+            new ControlObject(ConfigKey("[Channel1]", "autodj_cue_out_position1"));
+    //m_pCOLoopStartPosition->set(kNoTrigger);
+    connect(m_pCOCueOutPosition1, SIGNAL(valueChanged(double)),
+            this, SLOT(cueOutPos1(double)));
+
+    m_pCOCueOutPosition2 =
+            new ControlObject(ConfigKey("[Channel2]", "autodj_cue_out_position2"));
+    //m_pCOLoopStartPosition->set(kNoTrigger);
+    connect(m_pCOCueOutPosition2, SIGNAL(valueChanged(double)),
+            this, SLOT(cueOutPos2(double)));
 }
 
 AutoDJ::~AutoDJ() {
@@ -806,11 +819,14 @@ void AutoDJ::setCueOut(double value, int channel) {
 	Cue* pCue = NULL;
 	int pos = 0;
 	TrackPointer track;
+	ControlObject* pCOcuePos;
 	if (channel == 1) {
 		track = PlayerInfo::Instance().getTrackInfo("[Channel1]");
+		pCOcuePos = m_pCOCueOutPosition1;
 	}
 	if (channel == 2) {
 		track = PlayerInfo::Instance().getTrackInfo("[Channel2]");
+		pCOcuePos = m_pCOCueOutPosition2;
 	}
 	if (track) {
 		pos = value * m_pCOTrackSamples1->get();
@@ -820,6 +836,7 @@ void AutoDJ::setCueOut(double value, int channel) {
 		if (pos % 2 != 0) pos--;
 		//qDebug() << "cue pos = " << pos;
 		pCue->setPosition(pos);
+		pCOcuePos->set(pos);
 	} else {
 		qDebug() << "Null trackpointer - no cue added";
 	}
@@ -831,11 +848,14 @@ void AutoDJ::deleteCueOut(double value, int channel) {
 	TrackPointer track;
 	Cue* pCue = NULL;
 	QList<Cue*> cuePoints;
+	ControlObject* pCOcuePos;
 	if (channel == 1) {
 		track = PlayerInfo::Instance().getTrackInfo("[Channel1]");
+		pCOcuePos = m_pCOCueOutPosition1;
 	}
 	if (channel == 2) {
 		track = PlayerInfo::Instance().getTrackInfo("[Channel2]");
+		pCOcuePos = m_pCOCueOutPosition2;
 	}
 	if (track) {
 		cuePoints = track->getCuePoints();
@@ -848,6 +868,7 @@ void AutoDJ::deleteCueOut(double value, int channel) {
         }
         if (pCue != NULL) {
         	track->removeCue(pCue);
+        	pCOcuePos->set(-1);
         }
 	} else {
 		qDebug() << "Null trackpointer - no cue deleted";
@@ -870,4 +891,12 @@ void AutoDJ::deleteCueOut1(double value) {
 
 void AutoDJ::deleteCueOut2(double value) {
 	deleteCueOut(value, 2);
+}
+
+void AutoDJ::cueOutPos1(double value) {
+
+}
+
+void AutoDJ::cueOutPos2(double value) {
+
 }

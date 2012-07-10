@@ -38,6 +38,7 @@ class SkinLoader;
 class VinylControlManager;
 class DlgPreferences;
 class SoundManager;
+class AutoDJ;
 
 #include "configobject.h"
 
@@ -148,6 +149,7 @@ class MixxxApp : public QMainWindow {
     LibraryScanner* m_pLibraryScanner;
     // The library management object
     Library* m_pLibrary;
+    AutoDJ* m_pAutoDJ;
 
     /** file_menu contains all items of the menubar entry "File" */
     QMenu *m_pFileMenu;

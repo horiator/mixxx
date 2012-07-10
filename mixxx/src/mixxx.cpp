@@ -32,6 +32,7 @@
 #include "dlgpreferences.h"
 #include "engine/enginemaster.h"
 #include "engine/enginemicrophone.h"
+#include "library/autodj/autodj.h"
 #include "library/library.h"
 #include "library/libraryscanner.h"
 #include "library/librarytablemodel.h"
@@ -306,6 +307,9 @@ MixxxApp::MixxxApp(QApplication *a, struct CmdlineArgs args)
                              bFirstRun || bUpgraded,
                              m_pRecordingManager);
     qRegisterMetaType<TrackPointer>("TrackPointer");
+    //m_pAutoDJ = new AutoDJ(this, m_pConfig, m_pLibrary->getTrackCollection());
+    //m_pConfig->set(ConfigKey("[Auto DJ]", "Instance"),
+    		//ConfigValue(QString::number((long)m_pAutoDJ)));
 
     // Create the player manager.
     m_pPlayerManager = new PlayerManager(m_pConfig, m_pEngine, m_pLibrary);
