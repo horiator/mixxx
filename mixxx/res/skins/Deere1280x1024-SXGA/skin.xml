@@ -3699,6 +3699,13 @@
 					<TextColor>#FFFFFF</TextColor>
 					<Text>C</Text>
 				</Mark>
+				<Mark>
+				    <Control>autodj_cue_out_position1</Control>
+				    <Align>top</Align>
+				    <Color>#FF001C</Color>
+                    <TextColor>#FFFFFF</TextColor>
+                    <Text>O</Text>
+                </Mark>
 				<Connection>
 					<ConfigKey>[Channel1],playposition</ConfigKey>
 					<EmitOnDownPress>false</EmitOnDownPress>
@@ -4759,6 +4766,13 @@
 					<TextColor>#FFFFFF</TextColor>
 					<Text>C</Text>
 				</Mark>
+				<Mark>
+                    <Control>autodj_cue_out_position2</Control>
+                    <Align>top</Align>
+                    <Color>#FF001C</Color>
+                    <TextColor>#FFFFFF</TextColor>
+                    <Text>O</Text>
+                </Mark>
 				<Connection>
 					<ConfigKey>[Channel2],playposition</ConfigKey>
 					<EmitOnDownPress>false</EmitOnDownPress>
