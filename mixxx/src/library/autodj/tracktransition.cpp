@@ -59,7 +59,7 @@ void TrackTransition::setGroups(QString groupA, QString groupB) {
 		QListIterator<Cue*> it(cuePoints);
 	    while (it.hasNext()) {
 	        Cue* pCurrentCue = it.next();
-	        if (pCurrentCue->getType() == Cue::AUTODJ) {
+	        if (pCurrentCue->getType() == Cue::CUEOUT) {
 	            pCueOut = pCurrentCue;
 	        } else if(pCurrentCue->getType() == Cue::LOAD) {
 	        	loadCue = pCurrentCue;
@@ -100,7 +100,7 @@ void TrackTransition::setGroups(QString groupA, QString groupB) {
 		QListIterator<Cue*> it(cuePoints);
 	    while (it.hasNext()) {
 	        Cue* pCurrentCue = it.next();
-	        if (pCurrentCue->getType() == Cue::AUTODJ) {
+	        if (pCurrentCue->getType() == Cue::CUEOUT) {
 	            pCue = pCurrentCue;
 	        }
 	    }

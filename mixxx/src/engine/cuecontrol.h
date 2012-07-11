@@ -136,6 +136,7 @@ class CueControl : public EngineControl {
     ControlObject* m_pTrackSamples;
     ControlObject* m_pCuePoint;
     ControlObject* m_pCueMode;
+    ControlObject* m_pAutoDJCueOut;
     ControlPushButton* m_pCueSet;
     ControlPushButton* m_pCueSimple;
     ControlPushButton* m_pCueCDJ;

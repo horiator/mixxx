@@ -3624,7 +3624,7 @@
 							<TextColor>#FFFFFF</TextColor>
 						</Mark>
 						<Mark>
-						    <Control>autodj_cue_out_position1</Control>
+						    <Control>autodj_cue_out_position</Control>
 						    <Pixmap>marker_cueout1.png</Pixmap>
 						    <Text>CUEOUT</Text>
 						    <Align>bottom</Align>
@@ -3700,7 +3700,7 @@
 					<Text>C</Text>
 				</Mark>
 				<Mark>
-				    <Control>autodj_cue_out_position1</Control>
+				    <Control>autodj_cue_out_position</Control>
 				    <Align>top</Align>
 				    <Color>#FF001C</Color>
                     <TextColor>#FFFFFF</TextColor>
@@ -4690,7 +4690,7 @@
 							<TextColor>#FFFFFF</TextColor>
 						</Mark>
 						<Mark>
-                            <Control>autodj_cue_out_position2</Control>
+                            <Control>autodj_cue_out_position</Control>
                             <Pixmap>marker_cueout2.png</Pixmap>
                             <Text>CUEOUT</Text>
                             <Align>bottom</Align>
@@ -4767,7 +4767,7 @@
 					<Text>C</Text>
 				</Mark>
 				<Mark>
-                    <Control>autodj_cue_out_position2</Control>
+                    <Control>autodj_cue_out_position</Control>
                     <Align>top</Align>
                     <Color>#FF001C</Color>
                     <TextColor>#FFFFFF</TextColor>

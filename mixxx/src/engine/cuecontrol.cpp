@@ -35,6 +35,8 @@ CueControl::CueControl(const char * _group,
     m_pCuePoint = new ControlObject(ConfigKey(_group, "cue_point"));
     m_pCueMode = new ControlObject(ConfigKey(_group, "cue_mode"));
     m_pCuePoint->set(-1);
+    m_pAutoDJCueOut = new ControlObject(
+    		ConfigKey(_group, "autodj_cue_out_position"));
 
     m_pCueSet = new ControlPushButton(ConfigKey(_group, "cue_set"));
     connect(m_pCueSet, SIGNAL(valueChanged(double)),
@@ -173,12 +175,15 @@ void CueControl::loadTrack(TrackPointer pTrack) {
             Qt::DirectConnection);
 
     Cue* loadCue = NULL;
+    Cue* autoDJCue = NULL;
     const QList<Cue*>& cuePoints = pTrack->getCuePoints();
     QListIterator<Cue*> it(cuePoints);
     while (it.hasNext()) {
         Cue* pCue = it.next();
         if (pCue->getType() == Cue::LOAD) {
             loadCue = pCue;
+        } else if (pCue->getType() == Cue::CUEOUT) {
+        	autoDJCue = pCue;
         } else if (pCue->getType() != Cue::CUE) {
             continue;
         }
@@ -191,6 +196,10 @@ void CueControl::loadTrack(TrackPointer pTrack) {
         m_pCuePoint->set(loadCue->getPosition());
     } else {
         m_pCuePoint->set(0.0f);
+    }
+
+    if (autoDJCue != NULL) {
+    	m_pAutoDJCueOut->set(autoDJCue->getPosition());
     }
 
     int cueRecall = getConfig()->getValueString(

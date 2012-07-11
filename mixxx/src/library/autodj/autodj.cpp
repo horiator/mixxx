@@ -127,17 +127,17 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
             ConfigKey("[Auto DJ]", "Transition")).toInt();
 
     // Setting up ControlObjects for the GUI
-    m_pCOCueOutPosition1 =
-            new ControlObject(ConfigKey("[Channel1]", "autodj_cue_out_position1"));
+    m_pCOCueOutPosition1 = ControlObject::getControl(
+    		ConfigKey("[Channel1]", "autodj_cue_out_position"));
     //m_pCOLoopStartPosition->set(kNoTrigger);
-    connect(m_pCOCueOutPosition1, SIGNAL(valueChanged(double)),
-            this, SLOT(cueOutPos1(double)));
+    //connect(m_pCOCueOutPosition1, SIGNAL(valueChanged(double)),
+            //this, SLOT(cueOutPos1(double)));
 
-    m_pCOCueOutPosition2 =
-            new ControlObject(ConfigKey("[Channel2]", "autodj_cue_out_position2"));
+    m_pCOCueOutPosition2 = ControlObject::getControl(
+    		ConfigKey("[Channel2]", "autodj_cue_out_position"));
     //m_pCOLoopStartPosition->set(kNoTrigger);
-    connect(m_pCOCueOutPosition2, SIGNAL(valueChanged(double)),
-            this, SLOT(cueOutPos2(double)));
+    //connect(m_pCOCueOutPosition2, SIGNAL(valueChanged(double)),
+            //this, SLOT(cueOutPos2(double)));
 }
 
 AutoDJ::~AutoDJ() {
@@ -832,7 +832,7 @@ void AutoDJ::setCueOut(double value, int channel) {
 		pos = value * m_pCOTrackSamples1->get();
 		pCue = track->addCue();
 		//qDebug() << "cue added!";
-		pCue->setType(Cue::AUTODJ);
+		pCOCuePos->setType(Cue::CUEOUT);
 		if (pos % 2 != 0) pos--;
 		//qDebug() << "cue pos = " << pos;
 		pCue->setPosition(pos);
@@ -862,7 +862,7 @@ void AutoDJ::deleteCueOut(double value, int channel) {
 		QListIterator<Cue*> it(cuePoints);
         while (it.hasNext()) {
             Cue* pCurrentCue = it.next();
-            if (pCurrentCue->getType() == Cue::AUTODJ) {
+            if (pCurrentCue->getType() == Cue::CUEOUT) {
                 pCue = pCurrentCue;
             }
         }
