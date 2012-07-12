@@ -523,7 +523,7 @@ void AutoDJ::transitionValueChanged(int value) {
             player2PlayChanged(1.0f);
         }
     }
-    m_pConfig->set(ConfigKey("[Auto DJ]", "Transition"),//kTransitionPreferenceName),
+    m_pConfig->set(ConfigKey("[Auto DJ]", "Transition"),
                    ConfigValue(value));
     transitionValue = value;
     qDebug() << "Transition value changed to " << value;
@@ -615,6 +615,12 @@ void AutoDJ::toggleAutoDJ(double value) {
     if (value) {  // Enable Auto DJ
         qDebug() << "Auto DJ enabled";
         m_pDlgAutoDJ->setAutoDJEnabled();
+        m_iCueRecall = m_pConfig->getValueString(
+        		ConfigKey("[Controls]" ,"CueRecall")).toInt();
+        if (m_eTransition == CD) {
+        	m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
+        	               ConfigValue(1));
+        }
         if (deck1Playing && deck2Playing) {
             /*QMessageBox::warning(
                 NULL, tr("Auto-DJ"),
@@ -693,6 +699,8 @@ void AutoDJ::toggleAutoDJ(double value) {
         qDebug() << "Auto DJ disabled";
         m_pDlgAutoDJ->setAutoDJDisabled();
         m_eState = ADJ_DISABLED;
+        m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
+        		ConfigValue(m_iCueRecall));
         //pushButtonFadeNow->setEnabled(false);
         //pushButtonSkipNext->setEnabled(false);
         //m_bFadeNow = false;
@@ -801,11 +809,15 @@ void AutoDJ::transitionSelect(int index) {
 		m_eTransition = CD;
 		qDebug() << "Transition changed to CD";
 		m_pDlgAutoDJ->spinBoxTransition->setEnabled(false);
+	    m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
+	                   ConfigValue(1));
 		break;
 	case 1:
 		m_eTransition = CUE;
 		qDebug() << "Transition changed to CUE";
 		m_pDlgAutoDJ->spinBoxTransition->setEnabled(true);
+		m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
+			           ConfigValue(0));
 		break;
 	}
 }
@@ -832,7 +844,7 @@ void AutoDJ::setCueOut(double value, int channel) {
 		pos = value * m_pCOTrackSamples1->get();
 		pCue = track->addCue();
 		//qDebug() << "cue added!";
-		pCOCuePos->setType(Cue::CUEOUT);
+		pCue->setType(Cue::CUEOUT);
 		if (pos % 2 != 0) pos--;
 		//qDebug() << "cue pos = " << pos;
 		pCue->setPosition(pos);

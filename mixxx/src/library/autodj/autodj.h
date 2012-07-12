@@ -96,6 +96,7 @@ private:
     // Checks for a double signal sent by keyboard press
     double lastToggleValue;
     int transitionValue;
+    int m_iCueRecall;
 
     ConfigObject<ConfigValue>* m_pConfig;
     ControlObject* m_pCOCueOutPosition1;

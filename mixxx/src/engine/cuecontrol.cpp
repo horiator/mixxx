@@ -200,6 +200,8 @@ void CueControl::loadTrack(TrackPointer pTrack) {
 
     if (autoDJCue != NULL) {
     	m_pAutoDJCueOut->set(autoDJCue->getPosition());
+    } else {
+    	m_pAutoDJCueOut->set(-1);
     }
 
     int cueRecall = getConfig()->getValueString(

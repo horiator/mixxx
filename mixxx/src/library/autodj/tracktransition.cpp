@@ -174,12 +174,12 @@ void TrackTransition::cdTransition(double value) {
 	if (value == 1.0) {
 		//qDebug() << "m_groupA = " << m_groupA << " and m_groupB = " << m_groupB;
 		if (m_groupA == "[Channel1]") {
-			m_pCOPlayPos2->slotSet(0.0);
+			//m_pCOPlayPos2->slotSet(0.0);
 			m_pCOPlay2->slotSet(1.0);
 			m_pCOCrossfader->slotSet(1.0);
 			m_pCOPlay1->slotSet(0.0);
 		} else if (m_groupA == "[Channel2]") {
-			m_pCOPlayPos1->slotSet(0.0);
+			//m_pCOPlayPos1->slotSet(0.0);
 			m_pCOPlay1->slotSet(1.0);
 			m_pCOCrossfader->slotSet(-1.0);
 			m_pCOPlay2->slotSet(0.0);
