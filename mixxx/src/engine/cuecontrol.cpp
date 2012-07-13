@@ -246,6 +246,8 @@ void CueControl::unloadTrack(TrackPointer pTrack) {
         }
         loadCue->setPosition(cuePoint);
     }
+    m_pAutoDJCueOut->set(-1);
+    m_pCuePoint->set(-1);
 
     m_pLoadedTrack.clear();
 }
