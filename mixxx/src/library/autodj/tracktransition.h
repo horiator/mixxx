@@ -16,7 +16,7 @@ public:
     TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pConfig);
     virtual ~TrackTransition();
     void setGroups(QString groupA, QString groupB);
-    void setTransitionDoneFalse();
+    void calculateCue();
 
 public slots:
 	void checkForUserInput(double value);
@@ -32,12 +32,14 @@ private:
     };
     bool m_buserTakeOver;
     bool m_btransitionDone;
+    //bool m_bPastCue;
     QString m_groupA;
     QString m_groupB;
     TrackPointer m_trackA;
     TrackPointer m_trackB;
     //int m_iTrackACue;
     int m_icuePoint;
+    int m_iEndPoint;
     //int m_iTrackBCue;
     // This is the transition function used by AutoDJ to crossfade from the desired
     // deckA to deckB

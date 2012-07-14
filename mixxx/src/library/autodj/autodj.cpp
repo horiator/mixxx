@@ -527,6 +527,7 @@ void AutoDJ::transitionValueChanged(int value) {
                    ConfigValue(value));
     transitionValue = value;
     qDebug() << "Transition value changed to " << value;
+    m_pTrackTransition->calculateCue();
 }
 
 void AutoDJ::shufflePlaylist(double value) {
@@ -852,6 +853,7 @@ void AutoDJ::setCueOut(double value, int channel) {
 	} else {
 		qDebug() << "Null trackpointer - no cue added";
 	}
+	m_pTrackTransition->calculateCue();
 }
 
 void AutoDJ::deleteCueOut(double value, int channel) {
