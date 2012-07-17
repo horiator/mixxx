@@ -17,7 +17,6 @@ public:
     virtual ~TrackTransition();
     void setGroups(QString groupA, QString groupB);
     void calculateCue();
-    void calculateShortCue(QString channel);
 
 public slots:
 	void checkForUserInput(double value);
@@ -50,6 +49,7 @@ private:
     //int m_iTrackBCue;
     // This is the transition function used by AutoDJ to crossfade from the desired
     // deckA to deckB
+    void calculateShortCue();
     void cueTransition(double value);
     void cdTransition(double value);
     // The user defined crossfade length
