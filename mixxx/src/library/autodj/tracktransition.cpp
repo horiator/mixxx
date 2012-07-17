@@ -53,6 +53,17 @@ void TrackTransition::setGroups(QString groupA, QString groupB) {
 	if (m_trackA) {
 		calculateCue();
 	}
+	/*if (m_groupA == "[Channel1]") {
+	    connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
+    		this, SLOT(currentPlayPos(double)));
+	    disconnect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
+	    		this, SLOT(currentPlayPos(double)));
+	} else if (m_groupA == "[Channel2]") {
+	    connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
+	    	this, SLOT(currentPlayPos(double)));
+	    disconnect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
+    		this, SLOT(currentPlayPos(double)));
+	}*/
 }
 
 void TrackTransition::calculateCue() {
@@ -99,7 +110,18 @@ void TrackTransition::calculateCue() {
 		if (pCueOut == NULL || !laterThanLoad) {// || m_bPastCue) {
 			m_icuePoint = m_iEndPoint;
 		}
-			/*int trackduration = m_trackA->getDuration();
+		if (m_groupA == "[Channel1]" &&
+				m_pCOPlayPos1->get() * m_pCOTrackSamples1->get() > m_iEndPoint) {
+			calculateShortCue(m_groupA);
+			m_iEndPoint = m_iShortCue;
+		}
+		if (m_groupA == "[Channel2]" &&
+				m_pCOPlayPos2->get() * m_pCOTrackSamples2->get() > m_iEndPoint) {
+			calculateShortCue(m_groupA);
+			m_iEndPoint = m_iShortCue;
+		}
+
+		/*int trackduration = m_trackA->getDuration();
 			int fadelength = m_pConfig->getValueString(
 					ConfigKey("[Auto DJ]", "Transition")).toInt();
 			if (m_groupA == "[Channel1]") {
@@ -115,11 +137,25 @@ void TrackTransition::calculateCue() {
 	}
 }
 
+void TrackTransition::calculateShortCue(QString channel) {
+	if (channel == m_groupA) { // Short cue at end of song
+		if (m_groupA == "[Channel1]") {
+			m_iShortCue = m_pCOPlayPos1->get() * m_pCOTrackSamples1->get();
+		} else { // m_groupA == "[Channel2]"
+			m_iShortCue = m_pCOPlayPos2->get() * m_pCOTrackSamples2->get();
+		}
+	}
+	if (channel == m_groupB) {
+		if (m_groupA == "[Channel1]") {
+
+		}
+	}
+	m_bShortCue = true;
+}
+
 void TrackTransition::cueTransition(double value) {
 	int currentPos;
-	int fadeEnd;
 	int trackSamples;
-	int fadestart;
     // Crossfading from Player 1 to Player 2
     if (m_groupA == "[Channel1]" && m_groupB == "[Channel2]") {
     	trackSamples = m_pCOTrackSamples1->get();
@@ -128,20 +164,26 @@ void TrackTransition::cueTransition(double value) {
         	ConfigKey("[Auto DJ]", "Transition")).toInt() *
         	m_trackA->getSampleRate();
 
-    	if (currentPos >= m_icuePoint && currentPos < m_icuePoint + m_iFadeLength * 2 * 1.1) {
-    		fadestart = m_icuePoint;
-    	} else if (currentPos >= m_iEndPoint) {
-    		fadestart = m_iEndPoint;
-    	} else {
+        bool afterCue = currentPos >= m_icuePoint;
+        bool beforeFadeEnd = currentPos < m_icuePoint + m_iFadeLength * 2 * 1.1;
+        bool afterEndPoint = currentPos >= m_iEndPoint;
+    	if (!afterEndPoint && !(afterCue && beforeFadeEnd)) {
     		return;
     	}
+        if (afterCue && beforeFadeEnd) {
+    		m_iFadeStart = m_icuePoint;
+    	}
+    	if (afterEndPoint) {
+    		m_iFadeStart = m_iEndPoint;
+    	}
 
-        fadeEnd = fadestart + m_iFadeLength;
-        if (fadeEnd > trackSamples) {
-        	fadeEnd = trackSamples;
+        m_iFadeEnd = m_iFadeStart + 2.0 * m_iFadeLength;
+        if (m_iFadeEnd > trackSamples) {
+        	m_iFadeEnd = trackSamples;
         }
-        double crossfadePos = -1.0 + ((1.0f * currentPos) - fadestart) /
-        		(fadeEnd - fadestart);
+        double crossfadePos = -1.0 + 2.0 * ((1.0f * currentPos) - m_iFadeStart) /
+        		(m_iFadeEnd - m_iFadeStart);
+        qDebug() << "crossfade position = " << crossfadePos;
         if (crossfadePos > 1.1) {
         	// Passed by the cue out - wait until end of song to fade
         	return;
@@ -156,34 +198,6 @@ void TrackTransition::cueTransition(double value) {
     		emit(transitionDone());
     	}
     }
-/*    	if (m_pCOPlay2->get() != 1.0) {
-    		m_pCOPlay2->slotSet(1.0);
-    	}
-    	// fade length in samples
-    	m_iFadeLength = m_pConfig->getValueString(
-    		ConfigKey("[Auto DJ]", "Transition")).toInt() *
-    		m_trackA->getSampleRate();
-    	fadeEnd = m_icuePoint + m_iFadeLength;
-    	if (fadeEnd > trackSamples) {
-    		fadeEnd = trackSamples;
-    	}
-    	double crossfadePos = -1.0 + ((1.0f * currentPos) - m_icuePoint) /
-    				          (fadeEnd - m_icuePoint);
-    	//qDebug() << "(top) crossfade position = " << crossfadePos;
-    	if(crossfadePos > 1.1) {
-    		//m_bPastCue = true;
-    		calculateCue();
-    		return;
-    	}
-    	m_pCOCrossfader->slotSet(crossfadePos);
-    	if (crossfadePos >= 1.0) {
-    		m_pCOCrossfader->slotSet(1.0);
-    		m_pCOPlay1->slotSet(0.0);
-    		emit(transitionDone());
-    		//m_bPastCue = false;
-    	}
-    }*/
-
     // Crossfading from Player2 to Player 1
     if (m_groupA == "[Channel2]" && m_groupB == "[Channel1]") {
     	trackSamples = m_pCOTrackSamples2->get();
@@ -193,9 +207,9 @@ void TrackTransition::cueTransition(double value) {
         	m_trackA->getSampleRate();
 
     	if (currentPos >= m_icuePoint && currentPos < m_icuePoint + m_iFadeLength * 2 * 1.1) {
-    		fadestart = m_icuePoint;
+    		m_iFadeStart = m_icuePoint;
     	} else if (currentPos >= m_iEndPoint) {
-    		fadestart = m_iEndPoint;
+    		m_iFadeStart = m_iEndPoint;
     	} else {
     		return;
     	}
@@ -203,12 +217,13 @@ void TrackTransition::cueTransition(double value) {
         m_iFadeLength = m_pConfig->getValueString(
         	ConfigKey("[Auto DJ]", "Transition")).toInt() *
         	m_trackA->getSampleRate();
-        fadeEnd = fadestart + m_iFadeLength;
-        if (fadeEnd > trackSamples) {
-        	fadeEnd = trackSamples;
+        m_iFadeEnd = m_iFadeStart + 2.0 * m_iFadeLength;
+        if (m_iFadeEnd > trackSamples) {
+        	m_iFadeEnd = trackSamples;
         }
-        double crossfadePos = 1.0 - ((1.0f * currentPos) - fadestart) /
-        		(fadeEnd - fadestart);
+        double crossfadePos = 1.0 - 2.0 * ((1.0f * currentPos) - m_iFadeStart) /
+        		(m_iFadeEnd - m_iFadeStart);
+        qDebug() << "crossfadePos = " << crossfadePos;
         if (crossfadePos < -1.1) {
         	// Passed by the cue out - wait until end of song to fade
         	return;

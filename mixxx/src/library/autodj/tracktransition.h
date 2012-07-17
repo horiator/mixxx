@@ -17,6 +17,7 @@ public:
     virtual ~TrackTransition();
     void setGroups(QString groupA, QString groupB);
     void calculateCue();
+    void calculateShortCue(QString channel);
 
 public slots:
 	void checkForUserInput(double value);
@@ -30,23 +31,28 @@ private:
     	CD = 0,
     	CUE
     };
+    double m_dCurrentPlayPos;
     bool m_buserTakeOver;
     bool m_btransitionDone;
+    bool m_bShortCue;
     //bool m_bPastCue;
     QString m_groupA;
     QString m_groupB;
     TrackPointer m_trackA;
     TrackPointer m_trackB;
     //int m_iTrackACue;
+    int m_iShortCue;
     int m_icuePoint;
     int m_iEndPoint;
+    int m_iFadeStart;
+    int m_iFadeEnd;
+    int m_iFadeLength;
     //int m_iTrackBCue;
     // This is the transition function used by AutoDJ to crossfade from the desired
     // deckA to deckB
     void cueTransition(double value);
     void cdTransition(double value);
     // The user defined crossfade length
-    int m_iFadeLength;
 
     ConfigObject<ConfigValue>* m_pConfig;
     ControlObjectThreadMain* m_pCOCrossfader;

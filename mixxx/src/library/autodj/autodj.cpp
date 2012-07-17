@@ -819,6 +819,7 @@ void AutoDJ::transitionSelect(int index) {
 		m_pDlgAutoDJ->spinBoxTransition->setEnabled(true);
 		m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
 			           ConfigValue(0));
+		m_pTrackTransition->calculateCue();
 		break;
 	}
 }
