@@ -233,13 +233,11 @@ void DlgAutoDJ::moveSelection(int delta) {
 }
 
 void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
-	Q_UNUSED(buttonChecked);
 	double button = (double) buttonChecked;
 	m_pCOShufflePlaylist->slotSet(button);
 }
 
 void DlgAutoDJ::skipNext(bool buttonChecked) {
-	Q_UNUSED(buttonChecked);
 	qDebug() << "skip pushed";
 	double button = (double) buttonChecked;
 	m_pCOSkipNext->slotSet(button);

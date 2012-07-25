@@ -24,7 +24,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_bPlayer2Cued = false;
     m_bEndOfPlaylist = false;
     m_btransitionDone = false;
-    // Should eventually be changed to transition length style initialization
+    // Should eventually be changed to m_pconfig value initialization
     m_eTransition = CD;
 
     m_pTrackTransition = new TrackTransition(this, m_pConfig);
@@ -247,6 +247,9 @@ void AutoDJ::player1PositionChanged(double value) {
     	case CUE:
     		m_pTrackTransition->cueTransition(value);
     		break;
+        case BEAT:
+            m_pTrackTransition->beatTransition(value);
+            break;
     }
     /*
     if (value >= m_posThreshold1) {
@@ -346,6 +349,9 @@ void AutoDJ::player2PositionChanged(double value) {
     	case CUE:
     		m_pTrackTransition->cueTransition(value);
     		break;
+        case BEAT:
+            m_pTrackTransition->beatTransition(value);
+            break;
     }
 
     /*
@@ -821,6 +827,14 @@ void AutoDJ::transitionSelect(int index) {
 			           ConfigValue(0));
 		m_pTrackTransition->calculateCue();
 		break;
+	case 2:
+		m_eTransition = BEAT;
+		qDebug() << "Transition changed to BEAT";
+		m_pDlgAutoDJ->spinBoxTransition->setEnabled(true);
+		m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
+			           ConfigValue(0));
+		m_pTrackTransition->calculateCue();
+		break;
 	}
 }
 
@@ -828,7 +842,7 @@ void AutoDJ::setCueOut(double value, int channel) {
 	if (value == 0) return;
 	// Enforcing uniqueness - Will make this better later
 	qDebug() << "Deleting old AutoDJ cue to enforce uniqueness";
-	deleteCueOut(1.0, channel);
+	//deleteCueOut(1.0, channel);
 	qDebug() << "Setting AutoDJ cue out for channel " << channel;
 	Cue* pCue = NULL;
 	int pos = 0;
@@ -851,6 +865,7 @@ void AutoDJ::setCueOut(double value, int channel) {
 		//qDebug() << "cue pos = " << pos;
 		pCue->setPosition(pos);
 		pCOcuePos->set(pos);
+		track->setCuePoint(pos);
 	} else {
 		qDebug() << "Null trackpointer - no cue added";
 	}

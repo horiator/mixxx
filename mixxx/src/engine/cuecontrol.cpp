@@ -266,9 +266,13 @@ void CueControl::trackCuesUpdated() {
 
     const QList<Cue*>& cuePoints = m_pLoadedTrack->getCuePoints();
     QListIterator<Cue*> it(cuePoints);
+    Cue* autoDJCue = NULL;
     while (it.hasNext()) {
         Cue* pCue = it.next();
 
+        if (pCue->getType() == Cue::CUEOUT) {
+        	autoDJCue = pCue;
+        }
         if (pCue->getType() != Cue::CUE && pCue->getType() != Cue::LOAD)
             continue;
 
@@ -299,6 +303,13 @@ void CueControl::trackCuesUpdated() {
             // Add the hotcue to the list of active hotcues
             active_hotcues.insert(hotcue);
         }
+    }
+    if (autoDJCue != NULL) {
+    	qDebug() << "Called trackCuesUpdated and value = " << autoDJCue->getPosition();
+    	m_pAutoDJCueOut->set(autoDJCue->getPosition());
+    } else {
+    	qDebug() << "Set to NULL";
+    	m_pAutoDJCueOut->set(-1);
     }
 
     // Detach all hotcues that are no longer present
