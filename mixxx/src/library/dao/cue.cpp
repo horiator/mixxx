@@ -35,6 +35,7 @@ Cue::Cue(int id, int trackId, Cue::CueType type, int position, int length,
           m_label(label) {
     qDebug() << "Cue(...)";
     qDebug() << "type = " << type;
+    qDebug() << "position = " << position;
 }
 
 int Cue::getId() {

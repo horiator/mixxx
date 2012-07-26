@@ -66,7 +66,8 @@ private:
     ControlObjectThreadMain* m_pCOTrackSamples2;
     ControlObjectThreadMain* m_pCOSync1;
     ControlObjectThreadMain* m_pCOSync2;
-
+    ControlObjectThreadMain* m_pCOCueOut1;
+    ControlObjectThreadMain* m_pCOCueOut2;
 
     friend class AutoDJ;
 

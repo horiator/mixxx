@@ -9,7 +9,7 @@
 TrackTransition::TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pConfig) :
     QObject(parent),
     m_pConfig(pConfig) {
-
+	m_bShortCue = false;
     // TODO(tom__m) This needs to be updated when the preferences are changed.
     //m_iFadeLength = m_pConfig->getValueString(
                             //ConfigKey("[Auto DJ]", "CrossfadeLength")).toInt();
@@ -32,6 +32,10 @@ TrackTransition::TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pCo
             ControlObject::getControl(ConfigKey("[Channel1]", "beatsync")));
     m_pCOSync2 = new ControlObjectThreadMain(
             ControlObject::getControl(ConfigKey("[Channel2]", "beatsync")));
+    m_pCOCueOut1 = new ControlObjectThreadMain(
+            ControlObject::getControl(ConfigKey("[Channel1]", "autodj_cue_out_position")));
+    m_pCOCueOut2 = new ControlObjectThreadMain(
+            ControlObject::getControl(ConfigKey("[Channel2]", "autodj_cue_out_position")));
 }
 
 TrackTransition::~TrackTransition() {
@@ -74,76 +78,43 @@ void TrackTransition::calculateCue() {
 	if (m_trackA) {
 		// Setting m_iEndPoint
 		int trackduration = m_trackA->getDuration();
-		int fadelength = m_pConfig->getValueString(
-				ConfigKey("[Auto DJ]", "Transition")).toInt() * 2;
+		m_iFadeLength = m_pConfig->getValueString(
+				ConfigKey("[Auto DJ]", "Transition")).toInt() *
+				m_trackA->getSampleRate() * 2;
 		if (m_groupA == "[Channel1]") {
-			m_iEndPoint = m_pCOTrackSamples1->get() -
-					(m_trackA->getSampleRate() * fadelength);
+			m_iEndPoint = m_pCOTrackSamples1->get() - m_iFadeLength;
 		} else {
-			m_iEndPoint = m_pCOTrackSamples2->get() -
-					(m_trackA->getSampleRate() * fadelength);
+			m_iEndPoint = m_pCOTrackSamples2->get() - m_iFadeLength;
 		}
 
 		// Setting m_icuePoint
-		Cue* pCueOut = NULL;
-		Cue* loadCue = NULL;
-		QList<Cue*> cuePoints = m_trackA->getCuePoints();
-		QListIterator<Cue*> it(cuePoints);
-		while (it.hasNext()) {
-			Cue* pCurrentCue = it.next();
-			if (pCurrentCue->getType() == Cue::CUEOUT) {
-				pCueOut = pCurrentCue;
-			} else if(pCurrentCue->getType() == Cue::LOAD) {
-				loadCue = pCurrentCue;
-			}
-		}
-		bool laterThanLoad = true;
-		if (pCueOut != NULL) {// && !m_bPastCue) {
-			if (loadCue !=NULL) {
-				// Cue out has to be later in the song than the loading cue
-				// and later than the current play position
-				laterThanLoad = loadCue->getPosition() < pCueOut->getPosition();
-				qDebug() << "loadcue position = " << loadCue->getPosition() <<
-    				" and cueout position = " << pCueOut->getPosition();
-			}
-			if (laterThanLoad) {
-				m_icuePoint = pCueOut->getPosition();
-				qDebug() << "Track A cue point = " << m_icuePoint;
-			}
-		}
-		if (pCueOut == NULL || !laterThanLoad) {// || m_bPastCue) {
-			m_icuePoint = m_iEndPoint;
-		}
+		int cueOutPoint;
 		int pos;
 		int samples;
-		if (m_groupA == "[Channel1]") {
+        if (m_groupA == "[Channel1]") {
+        	cueOutPoint = m_pCOCueOut1->get();
 			samples = m_pCOTrackSamples1->get();
 			pos = m_pCOPlayPos1->get() * samples;
-		}
-		if (m_groupA == "[Channel2]") {
+        } else if (m_groupA == "[Channel2]") {
+        	cueOutPoint = m_pCOCueOut2->get();
 			samples = m_pCOTrackSamples2->get();
 			pos = m_pCOPlayPos2->get() * samples;
+        }
+		bool laterThanLoad = true;
+		if (cueOutPoint > -1) {
+			m_icuePoint = cueOutPoint;
+		} else {
+			m_icuePoint = m_iEndPoint;
 		}
 		if (pos > m_iEndPoint) {
+			qDebug() << "calculating short cue end point";
 			calculateShortCue();
 			m_iEndPoint = m_iShortCue;
 		} else if (pos > m_icuePoint &&
-					pos < m_icuePoint + fadelength * samples) {
+					pos < m_icuePoint + m_iFadeLength) {
+			qDebug() << "calculating short cue cue point";
 			calculateShortCue();
 		}
-
-		/*int trackduration = m_trackA->getDuration();
-			int fadelength = m_pConfig->getValueString(
-					ConfigKey("[Auto DJ]", "Transition")).toInt();
-			if (m_groupA == "[Channel1]") {
-				m_icuePoint = m_pCOTrackSamples1->get() -
-						(m_trackA->getSampleRate() * fadelength * 2.0);
-			} else {
-				m_icuePoint = m_pCOTrackSamples2->get() -
-						(m_trackA->getSampleRate() * fadelength * 2.0);
-			}
-			qDebug() << "Track A calculated cue point = " << m_icuePoint;
-		}*/
 		qDebug() << "Cue Point A analyzed";
 	}
 }
@@ -161,68 +132,43 @@ bool TrackTransition::transitioning(double value) {
     int trackSamples;
 	if (m_groupA == "[Channel1]") {
     	trackSamples = m_pCOTrackSamples1->get();
-    	m_iCurrentPos = value * trackSamples;
-        m_iFadeLength = m_pConfig->getValueString(
-        	ConfigKey("[Auto DJ]", "Transition")).toInt() *
-        	m_trackA->getSampleRate() * 2;
-        bool afterCue = m_iCurrentPos >= m_icuePoint;
-        bool beforeFadeEnd = m_iCurrentPos < m_icuePoint + m_iFadeLength * 1.1;
-        bool afterEndPoint = m_iCurrentPos >= m_iEndPoint;
-    	if (!afterEndPoint && !(afterCue && beforeFadeEnd)) {
-    		return false;
-    	}
-        if (afterCue && beforeFadeEnd) {
-    		m_iFadeStart = m_icuePoint;
-    	}
-    	if (afterEndPoint) {
-    		m_iFadeStart = m_iEndPoint;
-    	}
-
-        m_iFadeEnd = m_iFadeStart + m_iFadeLength;
-        if (m_iFadeEnd > trackSamples) {
-        	m_iFadeEnd = trackSamples;
-        }
-        if (m_bShortCue) {
-        	m_iFadeStart = m_iShortCue;
-        }
-        return true;
 	} else if (m_groupA == "[Channel2]") {
 	    trackSamples = m_pCOTrackSamples2->get();
-	    m_iCurrentPos = value * trackSamples;
-	    m_iFadeLength = m_pConfig->getValueString(
-	       	ConfigKey("[Auto DJ]", "Transition")).toInt() *
-	       	m_trackA->getSampleRate() * 2;
-        bool afterCue = m_iCurrentPos >= m_icuePoint;
-        bool beforeFadeEnd = m_iCurrentPos < m_icuePoint + m_iFadeLength * 1.1;
-        bool afterEndPoint = m_iCurrentPos >= m_iEndPoint;
-    	if (!afterEndPoint && !(afterCue && beforeFadeEnd)) {
-    		return false;
-    	}
-        if (afterCue && beforeFadeEnd) {
-    		m_iFadeStart = m_icuePoint;
-    	}
-    	if (afterEndPoint) {
-    		m_iFadeStart = m_iEndPoint;
-    	}
-	    m_iFadeEnd = m_iFadeStart + m_iFadeLength;
-	    if (m_iFadeEnd > trackSamples) {
-	       	m_iFadeEnd = trackSamples;
-	    }
-	    if (m_bShortCue) {
-	       	m_iFadeStart = m_iShortCue;
-	    }
-	    return true;
 	} else {
 		return false;
 	}
+	m_iCurrentPos = value * trackSamples;
+    bool afterCue = m_iCurrentPos >= m_icuePoint;
+    bool beforeFadeEnd = m_iCurrentPos < m_icuePoint + m_iFadeLength * 1.1;
+    bool afterEndPoint = m_iCurrentPos >= m_iEndPoint;
+    if (!afterEndPoint && !(afterCue && beforeFadeEnd)) {
+    	return false;
+   	}
+    if (afterEndPoint) {
+    	m_iFadeStart = m_iEndPoint;
+    } else {
+    	m_iFadeStart = m_icuePoint;
+    }
+	m_iFadeEnd = m_iFadeStart + m_iFadeLength;
+	if (m_iFadeEnd > trackSamples) {
+	   	m_iFadeEnd = trackSamples;
+	}
+	if (m_bShortCue) {
+		qDebug() << "m_bshortcue returned true";
+	   	m_iFadeStart = m_iShortCue;
+	}
+	return true;
 }
 
 void TrackTransition::cueTransition(double value) {
     // Crossfading from Player 1 to Player 2
     if (m_groupA == "[Channel1]" && transitioning(value)) {
+    	if (m_pCOCrossfader->get() == -1.0) {
+    		qDebug() << "currentPos = " << m_iCurrentPos << " and fadestart = " << m_iFadeStart;
+    	}
         double crossfadePos = -1.0 + 2.0 * ((1.0f * m_iCurrentPos) - m_iFadeStart) /
         		(m_iFadeEnd - m_iFadeStart);
-        qDebug() << "crossfade position = " << crossfadePos;
+        //qDebug() << "crossfade position = " << crossfadePos;
         //if (crossfadePos > 1.1) {
         	// Passed by the cue out - wait until end of song to fade
         	//return;
@@ -241,9 +187,12 @@ void TrackTransition::cueTransition(double value) {
     }
     // Crossfading from Player2 to Player 1
     if (m_groupA == "[Channel2]" && transitioning(value)) {
+    	if (m_pCOCrossfader->get() == 1.0) {
+    		qDebug() << "currentPos = " << m_iCurrentPos << " and fadestart = " << m_iFadeStart;
+    	}
         double crossfadePos = 1.0 - 2.0 * ((1.0f * m_iCurrentPos) - m_iFadeStart) /
         		(m_iFadeEnd - m_iFadeStart);
-        qDebug() << "crossfadePos = " << crossfadePos;
+        //qDebug() << "crossfadePos = " << crossfadePos;
         //if (crossfadePos < -1.1) {
         	// Passed by the cue out - wait until end of song to fade
         	//return;
@@ -269,6 +218,7 @@ void TrackTransition::beatTransition(double value) {
         if (m_pCOPlay2->get() != 1.0) {
         	m_pCOPlay2->slotSet(1.0);
         	m_pCOSync2->slotSet(1.0);
+        	m_pCOSync2->slotSet(0.0);
         }
         m_pCOCrossfader->slotSet(crossfadePos);
     	if (crossfadePos >= 1.0) {
@@ -284,6 +234,7 @@ void TrackTransition::beatTransition(double value) {
         if (m_pCOPlay1->get() != 1.0) {
         	m_pCOPlay1->slotSet(1.0);
         	m_pCOSync1->slotSet(1.0);
+        	m_pCOSync1->slotSet(0.0);
         }
         m_pCOCrossfader->slotSet(crossfadePos);
     	if (crossfadePos <= -1.0) {

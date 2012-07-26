@@ -152,7 +152,7 @@ private:
     TrackPointer getNextTrackFromQueue();
     bool loadNextTrackFromQueue();
     bool removePlayingTrackFromQueue(QString group);
-    void setCueOut(double value, int channel);
+    void setCueOut(double position, int channel);
     void deleteCueOut(double value, int channel);
     void startAutoDJ();
 };

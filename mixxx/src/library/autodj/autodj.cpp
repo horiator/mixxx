@@ -838,11 +838,10 @@ void AutoDJ::transitionSelect(int index) {
 	}
 }
 
-void AutoDJ::setCueOut(double value, int channel) {
-	if (value == 0) return;
-	// Enforcing uniqueness - Will make this better later
+void AutoDJ::setCueOut(double position, int channel) {
+	// Enforcing uniqueness
 	qDebug() << "Deleting old AutoDJ cue to enforce uniqueness";
-	//deleteCueOut(1.0, channel);
+	deleteCueOut(1.0, channel);
 	qDebug() << "Setting AutoDJ cue out for channel " << channel;
 	Cue* pCue = NULL;
 	int pos = 0;
@@ -851,13 +850,14 @@ void AutoDJ::setCueOut(double value, int channel) {
 	if (channel == 1) {
 		track = PlayerInfo::Instance().getTrackInfo("[Channel1]");
 		pCOcuePos = m_pCOCueOutPosition1;
+		pos = position * m_pCOTrackSamples1->get();
 	}
 	if (channel == 2) {
 		track = PlayerInfo::Instance().getTrackInfo("[Channel2]");
 		pCOcuePos = m_pCOCueOutPosition2;
+		pos = position * m_pCOTrackSamples2->get();
 	}
 	if (track) {
-		pos = value * m_pCOTrackSamples1->get();
 		pCue = track->addCue();
 		//qDebug() << "cue added!";
 		pCue->setType(Cue::CUEOUT);
@@ -866,6 +866,7 @@ void AutoDJ::setCueOut(double value, int channel) {
 		pCue->setPosition(pos);
 		pCOcuePos->set(pos);
 		track->setCuePoint(pos);
+		qDebug() << "cue position set at " << pos;
 	} else {
 		qDebug() << "Null trackpointer - no cue added";
 	}
@@ -906,11 +907,13 @@ void AutoDJ::deleteCueOut(double value, int channel) {
 }
 
 void AutoDJ::setCueOut1(double value) {
+	if (value == 0) return;
 	double position = m_pCOPlayPos1->get();
 	setCueOut(position, 1);
 }
 
 void AutoDJ::setCueOut2(double value) {
+	if (value == 0) return;
 	double position = m_pCOPlayPos2->get();
 	setCueOut(position, 2);
 }
