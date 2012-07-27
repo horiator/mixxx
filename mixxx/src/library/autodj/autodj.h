@@ -73,13 +73,14 @@ private:
         ADJ_ENABLE_P1LOADED,
         ADJ_ENABLE_P1PLAYING,
         ADJ_DISABLED,
-        ADJ_WAITING
+        ADJ_WAITING,
+        ADJ_FADENOW
     };
     enum ADJstates m_eState;
     enum TranSelect {
-    	CD = 0,
-    	CUE,
-    	BEAT
+    	CUE = 0,
+    	BEAT,
+    	CD
     };
     enum TranSelect m_eTransition;
     bool m_bEnabled;

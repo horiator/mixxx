@@ -70,17 +70,17 @@
       <widget class="QComboBox" name="comboBoxTransition">
        <item>
         <property name="text">
-         <string>CD Mode</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
          <string>Cue Transition</string>
         </property>
        </item>
        <item>
         <property name="text">
          <string>Beatmatching</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CD Mode</string>
         </property>
        </item>
       </widget>

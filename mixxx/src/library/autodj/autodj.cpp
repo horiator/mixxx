@@ -25,7 +25,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_bEndOfPlaylist = false;
     m_btransitionDone = false;
     // Should eventually be changed to m_pconfig value initialization
-    m_eTransition = CD;
+    m_eTransition = CUE;
 
     m_pTrackTransition = new TrackTransition(this, m_pConfig);
     connect(m_pTrackTransition, SIGNAL(transitionDone()),
@@ -75,7 +75,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
                        ConfigKey("[AutoDJ]", "fade_now_left"));
     m_pCOFadeNowLeft->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCOFadeNowLeft, SIGNAL(valueChanged(double)),
-        this, SLOT(fadeNow(double)));
+        this, SLOT(fadeNowLeft(double)));
 
     m_pCOShufflePlaylist = new ControlPushButton(
                            ConfigKey("[AutoDJ]", "shuffle_playlist"));
@@ -88,6 +88,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCOToggleAutoDJ->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_pCOToggleAutoDJ, SIGNAL(valueChanged(double)),
         this, SLOT(toggleAutoDJ(double)));
+    m_pCOToggleAutoDJThread = new ControlObjectThreadMain(m_pCOToggleAutoDJ);
 
     m_pCOSetCueOut1 = new ControlPushButton(
     		      ConfigKey("[AutoDJ]", "set_cue_out_1"));
@@ -129,15 +130,15 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     // Setting up ControlObjects for the GUI
     m_pCOCueOutPosition1 = ControlObject::getControl(
     		ConfigKey("[Channel1]", "autodj_cue_out_position"));
-    //m_pCOLoopStartPosition->set(kNoTrigger);
-    //connect(m_pCOCueOutPosition1, SIGNAL(valueChanged(double)),
-            //this, SLOT(cueOutPos1(double)));
 
     m_pCOCueOutPosition2 = ControlObject::getControl(
     		ConfigKey("[Channel2]", "autodj_cue_out_position"));
-    //m_pCOLoopStartPosition->set(kNoTrigger);
-    //connect(m_pCOCueOutPosition2, SIGNAL(valueChanged(double)),
-            //this, SLOT(cueOutPos2(double)));
+
+    connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
+            this, SLOT(player1PositionChanged(double)));
+    connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
+            this, SLOT(player2PositionChanged(double)));
+
 }
 
 AutoDJ::~AutoDJ() {
@@ -177,11 +178,30 @@ void AutoDJ::player1PositionChanged(double value) {
         //nothing to do
         return;
     }
+    if (m_eState == ADJ_FADENOW) {
+    	qDebug() << "fadenow state set";
+    	if (m_btransitionDone) {
+    	    m_eState == ADJ_DISABLED;
+    	    m_btransitionDone = false;
+    	    return;
+    	}
+    	switch (m_eTransition) {
+    	    case CD:
+    	    	m_pTrackTransition->cdTransition(value);
+    	    	break;
+    	    case CUE:
+    	    	m_pTrackTransition->cueTransition(value);
+    	    	break;
+    	    case BEAT:
+    	        m_pTrackTransition->beatTransition(value);
+    	        break;
+    	}
+    }
     if (m_eState == ADJ_WAITING) {
     	// Waiting for a deck to stop and deck 1 is finished
     	qDebug() << "value = " << value;
     	qDebug() << "Should be turning AutoDJ on";
-    	m_pCOToggleAutoDJ->set(1.0);
+    	m_pCOToggleAutoDJThread->slotSet(1.0);
     	qDebug() << "CO = " << m_pCOToggleAutoDJ->get();
     }
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
@@ -213,7 +233,7 @@ void AutoDJ::player1PositionChanged(double value) {
         return;
     }
 
-    if (m_btransitionDone) {//m_eState == ADJ_P2FADING) {
+    if (m_btransitionDone && m_pCOToggleAutoDJ->get() == 1) {//m_eState == ADJ_P2FADING) {
     	//qDebug() << "transition done = true";
         if (deck1Playing && !deck2Playing) {
         	//qDebug() << "1 not 2";
@@ -241,15 +261,15 @@ void AutoDJ::player1PositionChanged(double value) {
     }
     // Fading - Use transition class here
     switch (m_eTransition) {
-    	case CD:
-    		m_pTrackTransition->cdTransition(value);
-    		break;
     	case CUE:
     		m_pTrackTransition->cueTransition(value);
     		break;
         case BEAT:
             m_pTrackTransition->beatTransition(value);
             break;
+    	case CD:
+    		m_pTrackTransition->cdTransition(value);
+    		break;
     }
     /*
     if (value >= m_posThreshold1) {
@@ -305,17 +325,36 @@ void AutoDJ::player2PositionChanged(double value) {
         //nothing to do
         return;
     }
+    if (m_eState == ADJ_FADENOW) {
+    	qDebug() << "fadenow state set";
+    	if (m_btransitionDone) {
+    	    m_eState == ADJ_DISABLED;
+    	    m_btransitionDone = false;
+    	    return;
+    	}
+    	switch (m_eTransition) {
+    	    case CUE:
+    	    	m_pTrackTransition->cueTransition(value);
+    	    	break;
+    	    case BEAT:
+    	        m_pTrackTransition->beatTransition(value);
+    	        break;
+    	    case CD:
+    	    	m_pTrackTransition->cdTransition(value);
+    	    	break;
+    	}
+    }
     if (m_eState == ADJ_WAITING && value == 1.0) {
     	// Waiting for a deck to stop and deck 2 is finished
     	qDebug() << "Should be turning AutoDJ on";
-    	m_pCOToggleAutoDJ->set(1.0);
+    	m_pCOToggleAutoDJThread->slotSet(1.0);
     	qDebug() << "CO = " << m_pCOToggleAutoDJ->get();
     }
 
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
     bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
 
-    if (m_btransitionDone) {//m_eState == ADJ_P1FADING) {
+    if (m_btransitionDone && m_pCOToggleAutoDJ->get() == 1) {//m_eState == ADJ_P1FADING) {
     	//qDebug() << "transition done = true";
         if (!deck1Playing && deck2Playing) {
         	//qDebug() << "not 1 - 2";
@@ -343,15 +382,15 @@ void AutoDJ::player2PositionChanged(double value) {
     }
     // Fading starts here
     switch(m_eTransition) {
-    	case CD:
-    		m_pTrackTransition->cdTransition(value);
-    		break;
     	case CUE:
     		m_pTrackTransition->cueTransition(value);
     		break;
         case BEAT:
             m_pTrackTransition->beatTransition(value);
             break;
+    	case CD:
+    		m_pTrackTransition->cdTransition(value);
+    		break;
     }
 
     /*
@@ -564,49 +603,15 @@ void AutoDJ::skipNext(double value) {
     }
 }
 
-    void AutoDJ::fadeNowRight(double value) {
-    	/*
-        Q_UNUSED(buttonChecked);
-        qDebug() << "Fade Now";
-        if (m_eState == ADJ_IDLE) {
-            m_bFadeNow = true;
-            double crossfader = m_pCOCrossfader->get();
-            if (crossfader <= 0.3f && m_pCOPlay1Fb->get() == 1.0f) {
-                m_posThreshold1 = m_pCOPlayPos1->get() -
-                        ((crossfader + 1.0f) / 2 * (m_fadeDuration1));
-                // Repeat is disabled by FadeNow but disables auto Fade
-                m_pCORepeat1->slotSet(0.0f);
-            } else if (crossfader >= -0.3f && m_pCOPlay2Fb->get() == 1.0f) {
-                m_posThreshold2 = m_pCOPlayPos2->get() -
-                        ((1.0f - crossfader) / 2 * (m_fadeDuration2));
-                // Repeat is disabled by FadeNow but disables auto Fade
-                m_pCORepeat2->slotSet(0.0f);
-            }
-        }
-        */
-    }
+void AutoDJ::fadeNowRight(double value) {
+    m_pTrackTransition->fadeNowRight();
+}
 
-    void AutoDJ::fadeNowLeft(double value) {
-    	/*
-        Q_UNUSED(buttonChecked);
-        qDebug() << "Fade Now";
-        if (m_eState == ADJ_IDLE) {
-            m_bFadeNow = true;
-            double crossfader = m_pCOCrossfader->get();
-            if (crossfader <= 0.3f && m_pCOPlay1Fb->get() == 1.0f) {
-                m_posThreshold1 = m_pCOPlayPos1->get() -
-                        ((crossfader + 1.0f) / 2 * (m_fadeDuration1));
-                // Repeat is disabled by FadeNow but disables auto Fade
-                m_pCORepeat1->slotSet(0.0f);
-            } else if (crossfader >= -0.3f && m_pCOPlay2Fb->get() == 1.0f) {
-                m_posThreshold2 = m_pCOPlayPos2->get() -
-                        ((1.0f - crossfader) / 2 * (m_fadeDuration2));
-                // Repeat is disabled by FadeNow but disables auto Fade
-                m_pCORepeat2->slotSet(0.0f);
-            }
-        }
-        */
-    }
+void AutoDJ::fadeNowLeft(double value) {
+	qDebug() << "fading to the left...";
+    m_pTrackTransition->fadeNowLeft();
+    m_eState = ADJ_FADENOW;
+}
 
 void AutoDJ::toggleAutoDJ(double value) {
 	// Guard against double signal sent by keyboard
@@ -659,7 +664,7 @@ void AutoDJ::toggleAutoDJ(double value) {
         if (!nextTrack) {
             qDebug() << "Queue is empty now";
             //pushButtonAutoDJ->setChecked(false);
-            m_pCOToggleAutoDJ->set(0.0);
+            m_pCOToggleAutoDJThread->slotSet(0.0);
             lastToggleValue = -1.0;
             return;
         }
@@ -748,6 +753,8 @@ bool AutoDJ::loadNextTrackFromQueue() {
 
     // We ran out of tracks in the queue...
     if (!nextTrack) {
+    	qDebug() << "Got to this part, but nothing is happening....";
+    	m_pCOToggleAutoDJThread->slotSet(0.0);
         // Disable auto DJ and return...
         //pushButtonAutoDJ->setChecked(false);
         // And eject track as "End of auto DJ warning"
@@ -813,13 +820,6 @@ void AutoDJ::transitionSelect(int index) {
 	//qDebug() << "transitionSelect called";
 	switch (index) {
 	case 0:
-		m_eTransition = CD;
-		qDebug() << "Transition changed to CD";
-		m_pDlgAutoDJ->spinBoxTransition->setEnabled(false);
-	    m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
-	                   ConfigValue(1));
-		break;
-	case 1:
 		m_eTransition = CUE;
 		qDebug() << "Transition changed to CUE";
 		m_pDlgAutoDJ->spinBoxTransition->setEnabled(true);
@@ -827,13 +827,20 @@ void AutoDJ::transitionSelect(int index) {
 			           ConfigValue(0));
 		m_pTrackTransition->calculateCue();
 		break;
-	case 2:
+	case 1:
 		m_eTransition = BEAT;
 		qDebug() << "Transition changed to BEAT";
 		m_pDlgAutoDJ->spinBoxTransition->setEnabled(true);
 		m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
 			           ConfigValue(0));
 		m_pTrackTransition->calculateCue();
+		break;
+	case 2:
+		m_eTransition = CD;
+		qDebug() << "Transition changed to CD";
+		m_pDlgAutoDJ->spinBoxTransition->setEnabled(false);
+	    m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
+	                   ConfigValue(1));
 		break;
 	}
 }

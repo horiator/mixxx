@@ -19,21 +19,18 @@ public:
     void calculateCue();
 
 public slots:
-	void checkForUserInput(double value);
+	void crossfaderChange(double value);
 
 signals:
 	void transitionDone();
 
 private:
 	double m_dcrossfadePosition;
-    enum m_etransitionSelect {
-    	CD = 0,
-    	CUE
-    };
     double m_dCurrentPlayPos;
-    bool m_buserTakeOver;
-    bool m_btransitionDone;
+    bool m_bUserTakeOver;
+    bool m_bTransitioning;
     bool m_bShortCue;
+    bool m_bFadeNow;
     //bool m_bPastCue;
     QString m_groupA;
     QString m_groupB;
@@ -42,12 +39,13 @@ private:
     //int m_iTrackACue;
     int m_iCurrentPos;
     int m_iShortCue;
-    int m_icuePoint;
+    int m_iCuePoint;
     int m_iEndPoint;
     int m_iFadeStart;
     int m_iFadeEnd;
     int m_iFadeLength;
-    bool transitioning(double value);
+    double m_dCrossfaderStart;
+    bool transitioning();
     void calculateShortCue();
     //int m_iTrackBCue;
     // This is the transition function used by AutoDJ to crossfade from the desired
@@ -55,6 +53,9 @@ private:
     void cueTransition(double value);
     void cdTransition(double value);
     void beatTransition(double value);
+
+    void fadeNowRight();
+    void fadeNowLeft();
 
     ConfigObject<ConfigValue>* m_pConfig;
     ControlObjectThreadMain* m_pCOCrossfader;

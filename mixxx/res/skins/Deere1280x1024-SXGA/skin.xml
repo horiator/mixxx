@@ -2832,7 +2832,57 @@
 							<ButtonState>RightButton</ButtonState>
 						</Connection>
 					</PushButton>
-
+                    
+                    <!--
+                    ****************************************
+					 Button- FadeNow
+					****************************************
+					-->
+                    <PushButton>
+						<TooltipId></TooltipId>
+						<Style></Style>
+						<NumberStates>2</NumberStates>
+						<RightClickIsPushButton>false</RightClickIsPushButton>
+						<State>
+							<Number>0</Number>
+							<Pressed>btn_fadenow.png</Pressed>
+							<Unpressed>btn_fadenow.png</Unpressed>
+						</State>
+						<State>
+							<Number>1</Number>
+							<Pressed>btn_fadenow.png</Pressed>
+							<Unpressed>btn_fadenow.png</Unpressed>
+						</State>
+						<Pos>113,311</Pos>
+						<Connection>
+							<ConfigKey>[AutoDJ],fade_now_left</ConfigKey>
+							<EmitOnDownPress>true</EmitOnDownPress>
+							<ButtonState>LeftButton</ButtonState>
+						</Connection>
+					</PushButton>
+                    <PushButton>
+						<TooltipId></TooltipId>
+						<Style></Style>
+						<NumberStates>2</NumberStates>
+						<RightClickIsPushButton>false</RightClickIsPushButton>
+						<State>
+							<Number>0</Number>
+							<Pressed>btn_fadenow.png</Pressed>
+							<Unpressed>btn_fadenow.png</Unpressed>
+						</State>
+						<State>
+							<Number>1</Number>
+							<Pressed>btn_fadenow.png</Pressed>
+							<Unpressed>btn_fadenow.png</Unpressed>
+						</State>
+						<Pos>316,311</Pos>
+						<Connection>
+							<ConfigKey>[AutoDJ],fade_now_right</ConfigKey>
+							<EmitOnDownPress>true</EmitOnDownPress>
+							<ButtonState>LeftButton</ButtonState>
+						</Connection>
+					</PushButton>
+    
 					<!--
 					****************************************
 					 Button- Play
@@ -2853,7 +2903,7 @@
 							<Pressed>btn_play1_over.png</Pressed>
 							<Unpressed>btn_play1_over.png</Unpressed>
 						</State>
-						<Pos>75,311</Pos>
+						<Pos>58,311</Pos>
 						<Connection>
 							<ConfigKey>[Channel1],play</ConfigKey>
 							<EmitOnDownPress>true</EmitOnDownPress>
@@ -2881,7 +2931,7 @@
 							<Pressed>btn_play2_over.png</Pressed>
 							<Unpressed>btn_play2_over.png</Unpressed>
 						</State>
-						<Pos>392,311</Pos>
+						<Pos>396,311</Pos>
 						<Connection>
 							<ConfigKey>[Channel2],play</ConfigKey>
 							<EmitOnDownPress>true</EmitOnDownPress>
@@ -2909,7 +2959,7 @@
 							<Pressed>btn_cue1_over.png</Pressed>
 							<Unpressed>btn_cue1.png</Unpressed>
 						</State>
-						<Pos>7,311</Pos>
+						<Pos>3,311</Pos>
 						<Connection>
 							<ConfigKey>[Channel1],cue_default</ConfigKey>
 							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
@@ -2930,7 +2980,7 @@
 							<Pressed>btn_cue2_over.png</Pressed>
 							<Unpressed>btn_cue2.png</Unpressed>
 						</State>
-						<Pos>324,311</Pos>
+						<Pos>341,311</Pos>
 						<Connection>
 							<ConfigKey>[Channel2],cue_default</ConfigKey>
 							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
