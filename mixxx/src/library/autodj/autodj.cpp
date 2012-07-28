@@ -26,6 +26,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_btransitionDone = false;
     // Should eventually be changed to m_pconfig value initialization
     m_eTransition = CUE;
+    m_eState = ADJ_DISABLED;
 
     // Most of these COs won't be needed once TrackTransition exists
     m_pCOPlay1 = new ControlObjectThreadMain(
@@ -617,7 +618,11 @@ void AutoDJ::fadeNowRight(double value) {
 	}
 	if (m_pCOPlay1->get() == 1) {
         m_pTrackTransition->fadeNowRight();
-        m_eState = ADJ_FADENOW;
+        if (m_pCOToggleAutoDJ->get() == 0) {
+        	m_eState = ADJ_FADENOW;
+        } else {
+        	m_pCOFadeNowRightThread->slotSet(0.0);
+        }
 	} else {
 		m_pCOFadeNowRightThread->slotSet(0.0);
 	}
@@ -643,7 +648,11 @@ void AutoDJ::fadeNowLeft(double value) {
 	}
 	if (m_pCOPlay2->get() == 1) {
         m_pTrackTransition->fadeNowLeft();
-        m_eState = ADJ_FADENOW;
+        if (m_pCOToggleAutoDJ->get() == 0) {
+        	m_eState = ADJ_FADENOW;
+        } else {
+        	m_pCOFadeNowLeftThread->slotSet(0.0);
+        }
 	} else {
 		m_pCOFadeNowLeftThread->slotSet(0.0);
 	}
@@ -681,10 +690,10 @@ void AutoDJ::toggleAutoDJ(double value) {
             m_eState = ADJ_WAITING;
             qDebug() << "set to waiting. CO = " << m_pCOToggleAutoDJ->get() <<
             		" and m_eState = " << m_eState;
-            connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-                    this, SLOT(player1PositionChanged(double)));
-            connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-                    this, SLOT(player2PositionChanged(double)));
+            //connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
+                    //this, SLOT(player1PositionChanged(double)));
+            //connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
+                    //this, SLOT(player2PositionChanged(double)));
             return;
         }
 
@@ -710,10 +719,10 @@ void AutoDJ::toggleAutoDJ(double value) {
         //pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
         //pushButtonSkipNext->setEnabled(true);
 
-        connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-                this, SLOT(player1PositionChanged(double)));
-        connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-                this, SLOT(player2PositionChanged(double)));
+        //connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
+                //this, SLOT(player1PositionChanged(double)));
+        //connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
+                //this, SLOT(player2PositionChanged(double)));
 
          connect(m_pCOPlay1Fb, SIGNAL(valueChanged(double)),
                  this, SLOT(player1PlayChanged(double)));
@@ -752,10 +761,10 @@ void AutoDJ::toggleAutoDJ(double value) {
         //pushButtonFadeNow->setEnabled(false);
         //pushButtonSkipNext->setEnabled(false);
         //m_bFadeNow = false;
-        m_pCOPlayPos1->disconnect(this);
-        m_pCOPlayPos2->disconnect(this);
-        m_pCOPlay1->disconnect(this);
-        m_pCOPlay2->disconnect(this);
+        //m_pCOPlayPos1->disconnect(this);
+        //m_pCOPlayPos2->disconnect(this);
+        //m_pCOPlay1->disconnect(this);
+        //m_pCOPlay2->disconnect(this);
     }
 }
 

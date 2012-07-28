@@ -196,11 +196,11 @@ void TrackTransition::cueTransition(double value) {
     		m_dCrossfaderStart = 1.0;
     		if (m_pCOFadeNowRight->get() == 0.0) {
     		    m_pCOPlay1->slotSet(0.0);
-        		emit(transitionDone());
     		} else {
     			m_pCOFadeNowRight->slotSet(0.0);
     		}
     		m_bShortCue = false;
+    		emit(transitionDone());
     		qDebug() << "Transition now done";
     	}
     }
@@ -223,10 +223,10 @@ void TrackTransition::cueTransition(double value) {
     		m_dCrossfaderStart = -1.0;
     		if (m_pCOFadeNowLeft->get() == 0) {
     		    m_pCOPlay2->slotSet(0.0);
-    		    emit(transitionDone());
     		} else {
     			m_pCOFadeNowLeft->slotSet(0.0);
     		}
+    		emit(transitionDone());
     		m_bShortCue = false;
     		qDebug() << "Transition now done";
     	}
@@ -250,10 +250,10 @@ void TrackTransition::beatTransition(double value) {
     		m_dCrossfaderStart = 1.0;
     		if (m_pCOFadeNowRight->get() == 0) {
     		    m_pCOPlay1->slotSet(0.0);
-        		emit(transitionDone());
     		} else {
     			m_pCOFadeNowRight->slotSet(0.0);
     		}
+    		emit(transitionDone());
     		m_bShortCue = false;
     		qDebug() << "Transition now done";
     	}
@@ -272,10 +272,10 @@ void TrackTransition::beatTransition(double value) {
     		m_dCrossfaderStart = -1.0;
     		if (m_pCOFadeNowLeft->get() == 0) {
     		    m_pCOPlay2->slotSet(0.0);
-        		emit(transitionDone());
     		} else {
     			m_pCOFadeNowLeft->slotSet(0.0);
     		}
+    		emit(transitionDone());
     		m_bShortCue = false;
     		qDebug() << "Transition now done";
     	}
@@ -291,7 +291,6 @@ void TrackTransition::cdTransition(double value) {
 			m_pCOCrossfader->slotSet(1.0);
 			if (m_pCOFadeNowRight->get() == 0) {
 			    m_pCOPlay1->slotSet(0.0);
-				emit(transitionDone());
 			} else {
 				m_pCOFadeNowRight->slotSet(0.0);
 			}
@@ -301,11 +300,11 @@ void TrackTransition::cdTransition(double value) {
 			m_pCOCrossfader->slotSet(-1.0);
 			if (m_pCOFadeNowLeft->get() == 0) {
 			    m_pCOPlay2->slotSet(0.0);
-				emit(transitionDone());
 			} else {
 				m_pCOFadeNowLeft->slotSet(0.0);
 			}
 		}
+		emit(transitionDone());
 	}
 }
 
