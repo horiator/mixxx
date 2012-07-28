@@ -2845,13 +2845,13 @@
 						<RightClickIsPushButton>false</RightClickIsPushButton>
 						<State>
 							<Number>0</Number>
-							<Pressed>btn_fadenow.png</Pressed>
+							<Pressed>btn_fadenow_over.png</Pressed>
 							<Unpressed>btn_fadenow.png</Unpressed>
 						</State>
 						<State>
 							<Number>1</Number>
 							<Pressed>btn_fadenow.png</Pressed>
-							<Unpressed>btn_fadenow.png</Unpressed>
+							<Unpressed>btn_fadenow_over.png</Unpressed>
 						</State>
 						<Pos>113,311</Pos>
 						<Connection>
@@ -2867,13 +2867,13 @@
 						<RightClickIsPushButton>false</RightClickIsPushButton>
 						<State>
 							<Number>0</Number>
-							<Pressed>btn_fadenow.png</Pressed>
+							<Pressed>btn_fadenow_over.png</Pressed>
 							<Unpressed>btn_fadenow.png</Unpressed>
 						</State>
 						<State>
 							<Number>1</Number>
 							<Pressed>btn_fadenow.png</Pressed>
-							<Unpressed>btn_fadenow.png</Unpressed>
+							<Unpressed>btn_fadenow_over.png</Unpressed>
 						</State>
 						<Pos>316,311</Pos>
 						<Connection>
@@ -4013,10 +4013,37 @@
 
 			<!-- Playback control sub-widget -->
 			<WidgetGroup>
-				<Pos>55,222</Pos>
-				<Size>357,54</Size>
+				<Pos>15,222</Pos>
+				<Size>397,54</Size>
 				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; }</Style>
 				<Children>
+
+					<!--
+					**********************************************
+					Button- AutoDJ Cue Out
+					**********************************************
+					-->
+					<PushButton>
+						<TooltipId></TooltipId>
+						<Style></Style>
+						<NumberStates>1</NumberStates>
+						<State>
+							<Number>0</Number>
+							<Pressed>btn_autodj_cueout_over.png</Pressed>
+							<Unpressed>btn_autodj_cueout.png</Unpressed>
+						</State>
+						<Pos>375,0</Pos>
+						<Connection>
+							<ConfigKey>[AutoDJ],set_cue_out_1</ConfigKey>
+							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
+							<ButtonState>LeftButton</ButtonState>
+						</Connection>
+						<Connection>
+							<ConfigKey>[AutoDJ],delete_cue_out_1</ConfigKey>
+							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
+							<ButtonState>RightButton</ButtonState>
+						</Connection>
+					</PushButton>
 
 					<!--
 					**********************************************
@@ -5081,9 +5108,36 @@
 			<!-- Playback control sub-widget -->
 			<WidgetGroup>
 				<Pos>6,222</Pos>
-				<Size>357,54</Size>
+				<Size>397,54</Size>
 				<Style>QGroupBox { border: 0px solid yellow; } QWidget { margin: 0; padding: 0; }</Style>
 				<Children>
+
+					<!--
+					**********************************************
+					Button- AutoDJ Cue Out
+					**********************************************
+					-->
+					<PushButton>
+						<TooltipId></TooltipId>
+						<Style></Style>
+						<NumberStates>1</NumberStates>
+						<State>
+							<Number>0</Number>
+							<Pressed>btn_autodj_cueout_over.png</Pressed>
+							<Unpressed>btn_autodj_cueout.png</Unpressed>
+						</State>
+						<Pos>375,0</Pos>
+						<Connection>
+							<ConfigKey>[AutoDJ],set_cue_out_2</ConfigKey>
+							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
+							<ButtonState>LeftButton</ButtonState>
+						</Connection>
+						<Connection>
+							<ConfigKey>[AutoDJ],delete_cue_out_2</ConfigKey>
+							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
+							<ButtonState>RightButton</ButtonState>
+						</Connection>
+					</PushButton>
 
 					<!--
 					**********************************************
