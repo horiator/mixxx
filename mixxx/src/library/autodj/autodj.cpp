@@ -27,9 +27,6 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     // Should eventually be changed to m_pconfig value initialization
     m_eTransition = CUE;
 
-    m_pTrackTransition = new TrackTransition(this, m_pConfig);
-    connect(m_pTrackTransition, SIGNAL(transitionDone()),
-    		this, SLOT(setTransitionDone()));
     // Most of these COs won't be needed once TrackTransition exists
     m_pCOPlay1 = new ControlObjectThreadMain(
             ControlObject::getControl(ConfigKey("[Channel1]","play")));
@@ -68,13 +65,15 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCOFadeNowRight = new ControlPushButton(
                         ConfigKey("[AutoDJ]", "fade_now_right"));
     m_pCOFadeNowRight->setButtonMode(ControlPushButton::PUSH);
-    connect(m_pCOFadeNowRight, SIGNAL(valueChanged(double)),
+    m_pCOFadeNowRightThread = new ControlObjectThreadMain(m_pCOFadeNowRight);
+    connect(m_pCOFadeNowRightThread, SIGNAL(valueChanged(double)),
         this, SLOT(fadeNowRight(double)));
 
     m_pCOFadeNowLeft = new ControlPushButton(
                        ConfigKey("[AutoDJ]", "fade_now_left"));
     m_pCOFadeNowLeft->setButtonMode(ControlPushButton::PUSH);
-    connect(m_pCOFadeNowLeft, SIGNAL(valueChanged(double)),
+    m_pCOFadeNowLeftThread = new ControlObjectThreadMain(m_pCOFadeNowLeft);
+    connect(m_pCOFadeNowLeftThread, SIGNAL(valueChanged(double)),
         this, SLOT(fadeNowLeft(double)));
 
     m_pCOShufflePlaylist = new ControlPushButton(
@@ -139,6 +138,9 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
             this, SLOT(player2PositionChanged(double)));
 
+    m_pTrackTransition = new TrackTransition(this, m_pConfig);
+    connect(m_pTrackTransition, SIGNAL(transitionDone()),
+    		this, SLOT(setTransitionDone()));
 }
 
 AutoDJ::~AutoDJ() {
@@ -179,23 +181,18 @@ void AutoDJ::player1PositionChanged(double value) {
         return;
     }
     if (m_eState == ADJ_FADENOW) {
-    	qDebug() << "fadenow state set";
-    	if (m_btransitionDone) {
-    	    m_eState == ADJ_DISABLED;
-    	    m_btransitionDone = false;
-    	    return;
-    	}
     	switch (m_eTransition) {
-    	    case CD:
-    	    	m_pTrackTransition->cdTransition(value);
-    	    	break;
-    	    case CUE:
-    	    	m_pTrackTransition->cueTransition(value);
-    	    	break;
-    	    case BEAT:
-    	        m_pTrackTransition->beatTransition(value);
-    	        break;
+    	   	case CD:
+    	   		m_pTrackTransition->cdTransition(value);
+    	   		break;
+    	   	case CUE:
+    	   		m_pTrackTransition->cueTransition(value);
+    	   		break;
+    	   	case BEAT:
+    	   		m_pTrackTransition->beatTransition(value);
+    	   		break;
     	}
+    	return;
     }
     if (m_eState == ADJ_WAITING) {
     	// Waiting for a deck to stop and deck 1 is finished
@@ -326,10 +323,10 @@ void AutoDJ::player2PositionChanged(double value) {
         return;
     }
     if (m_eState == ADJ_FADENOW) {
-    	qDebug() << "fadenow state set";
     	if (m_btransitionDone) {
-    	    m_eState == ADJ_DISABLED;
+    	    m_eState = ADJ_DISABLED;
     	    m_btransitionDone = false;
+    	    qDebug() << "m_eState = " << m_eState <<" and m_btransition = " << m_btransitionDone;
     	    return;
     	}
     	switch (m_eTransition) {
@@ -343,6 +340,7 @@ void AutoDJ::player2PositionChanged(double value) {
     	    	m_pTrackTransition->cdTransition(value);
     	    	break;
     	}
+    	return;
     }
     if (m_eState == ADJ_WAITING && value == 1.0) {
     	// Waiting for a deck to stop and deck 2 is finished
@@ -604,13 +602,47 @@ void AutoDJ::skipNext(double value) {
 }
 
 void AutoDJ::fadeNowRight(double value) {
-    m_pTrackTransition->fadeNowRight();
+	//qDebug() << "value = " << value << "and CO = " << m_pCOFadeNowRight->get();
+	if (value == 0) {
+		if (m_pCOFadeNowLeft->get() == 1) {
+			return;
+		}
+		if (m_eState == ADJ_FADENOW) {
+			m_eState = ADJ_DISABLED;
+			m_pTrackTransition->fadeNowStopped();
+			return;
+		} else {
+			return;
+		}
+	}
+	if (m_pCOPlay1->get() == 1) {
+        m_pTrackTransition->fadeNowRight();
+        m_eState = ADJ_FADENOW;
+	} else {
+		m_pCOFadeNowRightThread->slotSet(0.0);
+	}
 }
 
 void AutoDJ::fadeNowLeft(double value) {
-	qDebug() << "fading to the left...";
-    m_pTrackTransition->fadeNowLeft();
-    m_eState = ADJ_FADENOW;
+	//qDebug() << "value = " << value << "and CO = " << m_pCOFadeNowLeft->get();
+	if (value == 0) {
+		if (m_pCOFadeNowRight->get() == 1) {
+			return;
+		}
+		if (m_eState == ADJ_FADENOW) {
+			m_eState = ADJ_DISABLED;
+			m_pTrackTransition->fadeNowStopped();
+			return;
+		} else {
+			return;
+		}
+	}
+	if (m_pCOPlay2->get() == 1) {
+        m_pTrackTransition->fadeNowLeft();
+        m_eState = ADJ_FADENOW;
+	} else {
+		m_pCOFadeNowLeftThread->slotSet(0.0);
+	}
 }
 
 void AutoDJ::toggleAutoDJ(double value) {

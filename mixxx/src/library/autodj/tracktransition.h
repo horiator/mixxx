@@ -47,12 +47,14 @@ private:
     double m_dCrossfaderStart;
     bool transitioning();
     void calculateShortCue();
+    void fadeNowStopped();
     //int m_iTrackBCue;
     // This is the transition function used by AutoDJ to crossfade from the desired
     // deckA to deckB
     void cueTransition(double value);
     void cdTransition(double value);
     void beatTransition(double value);
+    void fadeNowTransition(double value);
 
     void fadeNowRight();
     void fadeNowLeft();
@@ -69,6 +71,8 @@ private:
     ControlObjectThreadMain* m_pCOSync2;
     ControlObjectThreadMain* m_pCOCueOut1;
     ControlObjectThreadMain* m_pCOCueOut2;
+    ControlObjectThreadMain* m_pCOFadeNowLeft;
+    ControlObjectThreadMain* m_pCOFadeNowRight;
 
     friend class AutoDJ;
 

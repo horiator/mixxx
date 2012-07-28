@@ -37,6 +37,10 @@ TrackTransition::TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pCo
             ControlObject::getControl(ConfigKey("[Channel1]", "autodj_cue_out_position")));
     m_pCOCueOut2 = new ControlObjectThreadMain(
             ControlObject::getControl(ConfigKey("[Channel2]", "autodj_cue_out_position")));
+    m_pCOFadeNowLeft = new ControlObjectThreadMain(
+    		ControlObject::getControl(ConfigKey("[AutoDJ]", "fade_now_left")));
+    m_pCOFadeNowRight = new ControlObjectThreadMain(
+    		ControlObject::getControl(ConfigKey("[AutoDJ]", "fade_now_right")));
 
     connect(m_pCOCrossfader, SIGNAL(valueChanged(double)),
     		this, SLOT(crossfaderChange(double)));
@@ -64,9 +68,7 @@ void TrackTransition::setGroups(QString groupA, QString groupB) {
 	m_trackA = PlayerInfo::Instance().getTrackInfo(m_groupA);
 	m_trackB = PlayerInfo::Instance().getTrackInfo(m_groupB);
 	// Find cue out for track A
-	if (m_trackA) {
-		calculateCue();
-	}
+	calculateCue();
 	/*if (m_groupA == "[Channel1]") {
 	    connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
     		this, SLOT(currentPlayPos(double)));
@@ -192,9 +194,13 @@ void TrackTransition::cueTransition(double value) {
     	if (crossfadePos >= 1.0) {
     		m_pCOCrossfader->slotSet(1.0);
     		m_dCrossfaderStart = 1.0;
-    		m_pCOPlay1->slotSet(0.0);
+    		if (m_pCOFadeNowRight->get() == 0.0) {
+    		    m_pCOPlay1->slotSet(0.0);
+        		emit(transitionDone());
+    		} else {
+    			m_pCOFadeNowRight->slotSet(0.0);
+    		}
     		m_bShortCue = false;
-    		emit(transitionDone());
     		qDebug() << "Transition now done";
     	}
     }
@@ -215,9 +221,13 @@ void TrackTransition::cueTransition(double value) {
     	if (crossfadePos <= -1.0) {
     		m_pCOCrossfader->slotSet(-1.0);
     		m_dCrossfaderStart = -1.0;
-    		m_pCOPlay2->slotSet(0.0);
+    		if (m_pCOFadeNowLeft->get() == 0) {
+    		    m_pCOPlay2->slotSet(0.0);
+    		    emit(transitionDone());
+    		} else {
+    			m_pCOFadeNowLeft->slotSet(0.0);
+    		}
     		m_bShortCue = false;
-    		emit(transitionDone());
     		qDebug() << "Transition now done";
     	}
     }
@@ -230,6 +240,7 @@ void TrackTransition::beatTransition(double value) {
         		(m_iFadeEnd - m_iFadeStart);
         if (m_pCOPlay2->get() != 1.0) {
         	m_pCOPlay2->slotSet(1.0);
+        	// Try only setting to 0
         	m_pCOSync2->slotSet(1.0);
         	m_pCOSync2->slotSet(0.0);
         }
@@ -237,9 +248,13 @@ void TrackTransition::beatTransition(double value) {
     	if (crossfadePos >= 1.0) {
     		m_pCOCrossfader->slotSet(1.0);
     		m_dCrossfaderStart = 1.0;
-    		m_pCOPlay1->slotSet(0.0);
+    		if (m_pCOFadeNowRight->get() == 0) {
+    		    m_pCOPlay1->slotSet(0.0);
+        		emit(transitionDone());
+    		} else {
+    			m_pCOFadeNowRight->slotSet(0.0);
+    		}
     		m_bShortCue = false;
-    		emit(transitionDone());
     		qDebug() << "Transition now done";
     	}
     } else if (m_groupA == "[Channel2]" && transitioning()) {
@@ -255,43 +270,56 @@ void TrackTransition::beatTransition(double value) {
     	if (crossfadePos <= -1.0) {
     		m_pCOCrossfader->slotSet(-1.0);
     		m_dCrossfaderStart = -1.0;
-    		m_pCOPlay2->slotSet(0.0);
+    		if (m_pCOFadeNowLeft->get() == 0) {
+    		    m_pCOPlay2->slotSet(0.0);
+        		emit(transitionDone());
+    		} else {
+    			m_pCOFadeNowLeft->slotSet(0.0);
+    		}
     		m_bShortCue = false;
-    		emit(transitionDone());
     		qDebug() << "Transition now done";
     	}
     }
 }
 
 void TrackTransition::cdTransition(double value) {
-	if (value == 1.0) {
+	if (value == 1.0 || m_pCOFadeNowLeft->get() == 1 ||
+			m_pCOFadeNowRight->get() == 1) {
 		if (m_groupA == "[Channel1]") {
 			//m_pCOPlayPos2->slotSet(0.0);
 			m_pCOPlay2->slotSet(1.0);
 			m_pCOCrossfader->slotSet(1.0);
-			m_pCOPlay1->slotSet(0.0);
+			if (m_pCOFadeNowRight->get() == 0) {
+			    m_pCOPlay1->slotSet(0.0);
+				emit(transitionDone());
+			} else {
+				m_pCOFadeNowRight->slotSet(0.0);
+			}
 		} else if (m_groupA == "[Channel2]") {
 			//m_pCOPlayPos1->slotSet(0.0);
 			m_pCOPlay1->slotSet(1.0);
 			m_pCOCrossfader->slotSet(-1.0);
-			m_pCOPlay2->slotSet(0.0);
+			if (m_pCOFadeNowLeft->get() == 0) {
+			    m_pCOPlay2->slotSet(0.0);
+				emit(transitionDone());
+			} else {
+				m_pCOFadeNowLeft->slotSet(0.0);
+			}
 		}
-		emit(transitionDone());
 	}
 }
 
 void TrackTransition::fadeNowLeft() {
-	qDebug() << "maybe fading to the left";
-	if (m_pCOPlay2->get() == 1) {
-		qDebug() << "we've gotten this far";
-		m_bFadeNow = true;
-        setGroups("[Channel2]", "[Channel1]");
-	}
+	qDebug() << "we've gotten this far";
+	m_bFadeNow = true;
+    setGroups("[Channel2]", "[Channel1]");
 }
 
 void TrackTransition::fadeNowRight() {
-    if (m_pCOPlay1->get() == 1) {
-    	m_bFadeNow = true;
-    	setGroups("[Channel1]", "[Channel2]");
-    }
+    m_bFadeNow = true;
+    setGroups("[Channel1]", "[Channel2]");
+}
+
+void TrackTransition::fadeNowStopped() {
+	m_dCrossfaderStart = m_pCOCrossfader->get();
 }

@@ -121,6 +121,8 @@ private:
     ControlObjectThreadMain* m_pKeyLock;
     ControlObjectThreadMain* m_pCOToggleAutoDJThread;
     ControlObjectThreadMain* m_pCOSkipNextThread;
+    ControlObjectThreadMain* m_pCOFadeNowRightThread;
+    ControlObjectThreadMain* m_pCOFadeNowLeftThread;
     ControlPushButton* m_pCOSkipNext;
     ControlPushButton* m_pCOFadeNowRight;
     ControlPushButton* m_pCOFadeNowLeft;
