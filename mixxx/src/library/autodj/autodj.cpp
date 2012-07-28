@@ -64,17 +64,19 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
 
     m_pCOFadeNowRight = new ControlPushButton(
                         ConfigKey("[AutoDJ]", "fade_now_right"));
-    m_pCOFadeNowRight->setButtonMode(ControlPushButton::PUSH);
+    m_pCOFadeNowRight->setButtonMode(ControlPushButton::TOGGLE);
     m_pCOFadeNowRightThread = new ControlObjectThreadMain(m_pCOFadeNowRight);
     connect(m_pCOFadeNowRightThread, SIGNAL(valueChanged(double)),
         this, SLOT(fadeNowRight(double)));
+    m_pCOFadeNowRightThread->slotSet(0.0);
 
     m_pCOFadeNowLeft = new ControlPushButton(
                        ConfigKey("[AutoDJ]", "fade_now_left"));
-    m_pCOFadeNowLeft->setButtonMode(ControlPushButton::PUSH);
+    m_pCOFadeNowLeft->setButtonMode(ControlPushButton::TOGGLE);
     m_pCOFadeNowLeftThread = new ControlObjectThreadMain(m_pCOFadeNowLeft);
     connect(m_pCOFadeNowLeftThread, SIGNAL(valueChanged(double)),
         this, SLOT(fadeNowLeft(double)));
+    m_pCOFadeNowLeftThread->slotSet(0.0);
 
     m_pCOShufflePlaylist = new ControlPushButton(
                            ConfigKey("[AutoDJ]", "shuffle_playlist"));
@@ -323,12 +325,6 @@ void AutoDJ::player2PositionChanged(double value) {
         return;
     }
     if (m_eState == ADJ_FADENOW) {
-    	if (m_btransitionDone) {
-    	    m_eState = ADJ_DISABLED;
-    	    m_btransitionDone = false;
-    	    qDebug() << "m_eState = " << m_eState <<" and m_btransition = " << m_btransitionDone;
-    	    return;
-    	}
     	switch (m_eTransition) {
     	    case CUE:
     	    	m_pTrackTransition->cueTransition(value);
@@ -615,6 +611,10 @@ void AutoDJ::fadeNowRight(double value) {
 			return;
 		}
 	}
+	if (m_pCOFadeNowLeft->get() == 1) {
+		m_pCOFadeNowRightThread->slotSet(0.0);
+		return;
+	}
 	if (m_pCOPlay1->get() == 1) {
         m_pTrackTransition->fadeNowRight();
         m_eState = ADJ_FADENOW;
@@ -636,6 +636,10 @@ void AutoDJ::fadeNowLeft(double value) {
 		} else {
 			return;
 		}
+	}
+	if (m_pCOFadeNowRight->get() == 1) {
+		m_pCOFadeNowLeftThread->slotSet(0.0);
+		return;
 	}
 	if (m_pCOPlay2->get() == 1) {
         m_pTrackTransition->fadeNowLeft();
