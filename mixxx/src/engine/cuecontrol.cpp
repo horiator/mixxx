@@ -96,6 +96,7 @@ CueControl::~CueControl() {
     delete m_pCuePreview;
     delete m_pCueCDJ;
     delete m_pCueDefault;
+    delete m_pAutoDJCueOut;
     while (m_hotcueControl.size() > 0) {
         HotcueControl* pControl = m_hotcueControl.takeLast();
         delete pControl;

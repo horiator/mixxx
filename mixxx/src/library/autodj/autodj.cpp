@@ -244,10 +244,10 @@ void AutoDJ::player1PositionChanged(double value) {
             //pushButtonFadeNow->setEnabled(true);
             m_btransitionDone = false;
             //qDebug() << "set groups 1 -> 2 (204)";
-            m_pTrackTransition->setGroups("[Channel1]", "[Channel2]");
             //qDebug() << "removing from channel 1";
             removePlayingTrackFromQueue("[Channel1]");
             loadNextTrackFromQueue();
+            m_pTrackTransition->setGroups("[Channel1]", "[Channel2]");
         }
         return;
     }
@@ -361,10 +361,10 @@ void AutoDJ::player2PositionChanged(double value) {
             //pushButtonFadeNow->setEnabled(true);
             m_btransitionDone = false;
             //qDebug() << "set groups 2 -> 1 (299)";
-            m_pTrackTransition->setGroups("[Channel2]", "[Channel1]");
             //qDebug() << "removing from channel 2";
             removePlayingTrackFromQueue("[Channel2]");
             loadNextTrackFromQueue();
+            m_pTrackTransition->setGroups("[Channel2]", "[Channel1]");
         }
         return;
     }
@@ -596,6 +596,7 @@ void AutoDJ::skipNext(double value) {
         removePlayingTrackFromQueue("[Channel2]");
         loadNextTrackFromQueue();
     }
+    m_pTrackTransition->m_bTrackBbpmSet = false;
 }
 
 void AutoDJ::fadeNowRight(double value) {
@@ -740,12 +741,12 @@ void AutoDJ::toggleAutoDJ(double value) {
             //pushButtonFadeNow->setEnabled(true);
             if (deck1Playing) {
                 // deck 1 is already playing
-            	m_pTrackTransition->setGroups("[Channel1]", "[Channel2]");
                 player1PlayChanged(1.0f);
+            	m_pTrackTransition->setGroups("[Channel1]", "[Channel2]");
             } else {
                 // deck 2 is already playing
-            	m_pTrackTransition->setGroups("[Channel2]", "[Channel1]");
                 player2PlayChanged(1.0f);
+            	m_pTrackTransition->setGroups("[Channel2]", "[Channel1]");
             }
         }
         // Loads into first deck If stopped else into second else not

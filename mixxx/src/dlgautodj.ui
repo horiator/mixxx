@@ -113,7 +113,7 @@
         <string comment="&quot;sec.&quot; as in seconds">Seconds</string>
        </property>
        <property name="text">
-        <string>sec.</string>
+        <string>beats</string>
        </property>
       </widget>
      </item>
