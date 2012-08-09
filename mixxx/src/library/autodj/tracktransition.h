@@ -17,10 +17,13 @@ public:
     virtual ~TrackTransition();
     void setGroups(QString groupA, QString groupB);
     void calculateCue();
-    bool m_bTrackBbpmSet;
+    void loadTrack();
+    bool m_bTrackBSynced;
 
 public slots:
 	void crossfaderChange(double value);
+	void slotBpm1Changed(double value);
+	void slotBpm2Changed(double value);
 
 signals:
 	void transitionDone();
@@ -31,6 +34,7 @@ private:
     bool m_bUserTakeOver;
     bool m_bTransitioning;
     bool m_bShortCue;
+    bool m_bDeckBCue;
     bool m_bFadeNow;
     bool m_bSpinBack;
     //bool m_bPastCue;
@@ -38,9 +42,12 @@ private:
     QString m_groupB;
     TrackPointer m_trackA;
     TrackPointer m_trackB;
+    TrackPointer* m_trackAPointer;
+    TrackPointer* m_trackBPointer;
     double m_dBpmA;
     double m_dBpmB;
     double m_dBpmShift;
+    bool m_bTrackLoaded;
     //int m_iTrackACue;
     int m_iCurrentPos;
     int m_iShortCue;
@@ -54,6 +61,7 @@ private:
     double m_dSpinRate;
     void transitioning();
     void calculateShortCue();
+    void calculateDeckBCue();
     void fadeNowStopped();
     //int m_iTrackBCue;
     // This is the transition function used by AutoDJ to crossfade from the desired
@@ -96,6 +104,8 @@ private:
     ControlObjectThreadMain* m_pCORate2;
     ControlObjectThreadMain* m_pCOBpm1;
     ControlObjectThreadMain* m_pCOBpm2;
+    ControlObjectThreadMain* m_pCOCueGoTo1;
+    ControlObjectThreadMain* m_pCOCueGoTo2;
 
     friend class AutoDJ;
 

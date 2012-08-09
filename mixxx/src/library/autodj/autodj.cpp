@@ -596,7 +596,7 @@ void AutoDJ::skipNext(double value) {
         removePlayingTrackFromQueue("[Channel2]");
         loadNextTrackFromQueue();
     }
-    m_pTrackTransition->m_bTrackBbpmSet = false;
+    m_pTrackTransition->m_bTrackLoaded = false;
 }
 
 void AutoDJ::fadeNowRight(double value) {
