@@ -41,11 +41,6 @@ TrackTransition::TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pCo
             ControlObject::getControl(ConfigKey("[Channel1]", "autodj_cue_out_position")));
     m_pCOCueOut2 = new ControlObjectThreadMain(
             ControlObject::getControl(ConfigKey("[Channel2]", "autodj_cue_out_position")));
-    m_pCOCueGoTo1 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]", "cue_goto")));
-    m_pCOCueGoTo2 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]", "cue_goto")));
-
     m_pCOFadeNowLeft = new ControlObjectThreadMain(
     		ControlObject::getControl(ConfigKey("[AutoDJ]", "fade_now_left")));
     m_pCOFadeNowRight = new ControlObjectThreadMain(
@@ -141,17 +136,6 @@ void TrackTransition::setGroups(QString groupA, QString groupB) {
 	qDebug() << "track loaded set to false";
 	// Find cue out for track A
 	calculateCue();
-	/*if (m_groupA == "[Channel1]") {
-	    connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-    		this, SLOT(currentPlayPos(double)));
-	    disconnect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-	    		this, SLOT(currentPlayPos(double)));
-	} else if (m_groupA == "[Channel2]") {
-	    connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-	    	this, SLOT(currentPlayPos(double)));
-	    disconnect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-    		this, SLOT(currentPlayPos(double)));
-	}*/
 }
 
 void TrackTransition::calculateCue() {
@@ -204,9 +188,11 @@ void TrackTransition::calculateCue() {
 }
 
 void TrackTransition::calculateShortCue() {
-	if (m_groupA == "[Channel1]") {
+	if ((m_groupA == "[Channel1]" && !m_bDeckBCue) ||
+		(m_groupA == "[Channel2]" && m_bDeckBCue)) {
 		m_iShortCue = m_pCOPlayPos1->get() * m_pCOTrackSamples1->get();
-	} else { // m_groupA == "[Channel2]"
+	} else if ((m_groupA == "[Channel2]" && !m_bDeckBCue) ||
+		(m_groupA == "[Channel1]" && m_bDeckBCue)) {
 		m_iShortCue = m_pCOPlayPos2->get() * m_pCOTrackSamples2->get();
 	}
 	m_bShortCue = true;
@@ -216,16 +202,18 @@ void TrackTransition::calculateDeckBCue() {
 	if (!m_trackB || !m_trackA) return;
 	int trackBSamples;
 	if (m_groupA == "[Channel1]") {
+		qDebug() << "Channel1 got called";
 		trackBSamples = m_pCOTrackSamples2->get();
 		m_iCuePoint = m_pCOPlayPos2->get() * trackBSamples;
 		m_iEndPoint = trackBSamples;
 	} else if (m_groupA == "[Channel2]") {
+		qDebug() << "Channel2 got called";
 		trackBSamples = m_pCOTrackSamples1->get();
 		m_iCuePoint = m_pCOPlayPos1->get() * trackBSamples;
 		m_iEndPoint = trackBSamples;
 	}
-	//m_iFadeLength = m_iFadeLength * m_trackB->getSampleRate() /
-	    //m_trackA->getSampleRate();
+	m_iFadeLength = m_iFadeLength / m_trackA->getSampleRate() * m_trackB->getSampleRate();
+	m_iFadeEnd = m_iCuePoint + (m_iFadeEnd - m_iFadeStart);
 	m_bDeckBCue = true;
 }
 
@@ -238,12 +226,10 @@ void TrackTransition::transitioning() {
     	playPos = m_pCOPlayPos1->get();
 	} else if ((m_groupA == "[Channel2]" && !m_bDeckBCue) ||
 		(m_groupA == "[Channel1]" && m_bDeckBCue)) {
-		qDebug() << "Setting playPos correctly";
 	    trackSamples = m_pCOTrackSamples2->get();
 	    playPos = m_pCOPlayPos2->get();
 	} else {
 		m_bTransitioning = false;
-		qDebug() << "returning false 1";
 		return;
 	}
 	m_iCurrentPos = playPos * trackSamples;
@@ -252,9 +238,6 @@ void TrackTransition::transitioning() {
     bool afterEndPoint = m_iCurrentPos >= m_iEndPoint;
     if (!afterEndPoint && !(afterCue && beforeFadeEnd)) {
     	m_bTransitioning = false;
-    	qDebug() << "returning false 2";
-    	qDebug() << "aftercue:" << afterCue << "beforeFadeEnd:" << beforeFadeEnd <<
-    			"afterEndPoint:" << afterEndPoint;
     	return;
    	}
     if (afterEndPoint) {
@@ -262,14 +245,13 @@ void TrackTransition::transitioning() {
     } else {
     	m_iFadeStart = m_iCuePoint;
     }
-	m_iFadeEnd = m_iFadeStart + m_iFadeLength;
-	if (m_iFadeEnd > trackSamples) {
-	   	m_iFadeEnd = trackSamples;
+    m_iFadeEnd = m_iFadeStart + m_iFadeLength;
+    if (m_iFadeEnd > trackSamples) {
+	    m_iFadeEnd = trackSamples;
 	}
-	if (m_bShortCue) {
-		qDebug() << "m_bshortcue returned true";
-	   	m_iFadeStart = m_iShortCue;
-	}
+    if (m_bShortCue && !m_bDeckBCue) {
+    	m_iFadeStart = m_iShortCue;
+    }
 	m_bTransitioning = true;
 }
 
@@ -339,11 +321,11 @@ void TrackTransition::beatTransition(double value) {
 	}
 	//qDebug() << "trackA = " << m_trackA->getTitle() << "and trackB = " << m_trackB->getTitle();
 	if (!m_bTrackBSynced) {
-		qDebug() << "bpm synced was indeed false";
+		//qDebug() << "bpm synced was indeed false";
 		//m_trackB = *m_trackBPointer;
-		qDebug() << "**bpmA = " << m_trackA->getBpm() << "and bpmB = " << m_trackB->getBpm();
+		//qDebug() << "**bpmA = " << m_trackA->getBpm() << "and bpmB = " << m_trackB->getBpm();
 		if (m_dBpmShift > 0.94 && m_dBpmShift < 1.06) {
-			qDebug() << "bpm being set for real";
+			//qDebug() << "bpm being set for real";
 			if (m_groupA == "[Channel1]") {
 				m_pCOSyncTempo2->slotSet(1.0);
 				m_pCOSyncTempo2->slotSet(0.0);
@@ -352,7 +334,7 @@ void TrackTransition::beatTransition(double value) {
 				m_pCOSyncTempo1->slotSet(0.0);
 			}
 		}
-		qDebug() << "bpm set to true";
+		//qDebug() << "bpm set to true";
 		m_bTrackBSynced = true;
 		return;
 	}
@@ -377,6 +359,7 @@ void TrackTransition::beatTransition(double value) {
 					(m_iFadeEnd - m_iFadeStart);
 		} else if (m_dBpmShift >= 1.06) {
 			if (!m_bDeckBCue) {
+				//qDebug() << "Setting deckBcue";
 				calculateDeckBCue();
 				m_pScratchEnable1->slotSet(1.0);
 				transitioning();
@@ -447,6 +430,7 @@ void TrackTransition::beatTransition(double value) {
 					(m_iFadeEnd - m_iFadeStart);
 		} else if (m_dBpmShift >= 1.06) {
 			if (!m_bDeckBCue) {
+				//qDebug() << "Setting deckBcue for Channel2";
 				calculateDeckBCue();
 				m_pScratchEnable2->slotSet(1.0);
 				transitioning();
@@ -454,9 +438,17 @@ void TrackTransition::beatTransition(double value) {
 			if (m_pCOPlay1->get() != 1.0) {
 				m_pCOPlay1->slotSet(1.0);
 			}
+			if (m_iCurrentPos == 0 && m_iFadeEnd == 0) return;
 			crossfadePos = m_dCrossfaderStart + (-1 - m_dCrossfaderStart) *
-					((1.0f * m_iCurrentPos) - m_iFadeStart) /
-					(m_iFadeEnd - m_iFadeStart);
+					(((1.0f * m_iCurrentPos) - m_iFadeStart) /
+					(m_iFadeEnd - m_iFadeStart));
+			/*qDebug() << "crossfader start = " << m_dCrossfaderStart <<
+						"\nm_iCurrentPos = " << m_iCurrentPos <<
+						"\nm_iCuePoint = " << m_iCuePoint <<
+						"\nm_iFadeEnd = " << m_iFadeEnd <<
+						"\nm_iFadeStart = " << m_iFadeStart <<
+						"\nm_groupA = " << m_groupA <<
+						"\nDeck 1 pos = " << m_pCOPlayPos1->get() * m_pCOTrackSamples1->get();*/
 			m_dBrakeRate = (crossfadePos + 1) / 2.0;
 			//qDebug() << "brake rate = " << m_dBrakeRate << "and crossfade = " << crossfadePos;
             spinBackTransition(m_dBrakeRate);
@@ -543,7 +535,7 @@ void TrackTransition::spinBackTransition(double value) {
 	} else if (m_groupA == "[Channel2]" && (m_bTransitioning || m_bSpinBack)) {
 		//m_pScratchEnable2->slotSet(1.0);
 		m_pScratch2->slotSet(value);
-		qDebug() << "mpScratch2 = " << m_pScratch2->get();
+		//qDebug() << "mpScratch2 = " << value;
 		//m_pScratchEnable2->slotSet(0.0);
 	}
 }
@@ -596,11 +588,9 @@ void TrackTransition::loadTrack() {
 	if (m_groupA == "[Channel1]") {
 		m_dBpmA = m_pCOBpm1->get();
 		m_dBpmB = m_pCOBpm2->get();
-		m_pCOCueGoTo2->slotSet(1.0);
 	} else {
 		m_dBpmA = m_pCOBpm2->get();
 		m_dBpmB = m_pCOBpm1->get();
-		m_pCOCueGoTo1->slotSet(1.0);
 	}
 	qDebug() << "bpms set for both tracks";
 	m_dBpmShift = m_dBpmA / m_dBpmB;
