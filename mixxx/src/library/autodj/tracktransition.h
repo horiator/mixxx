@@ -22,8 +22,7 @@ public:
 
 public slots:
 	void crossfaderChange(double value);
-	void slotBpm1Changed(double value);
-	void slotBpm2Changed(double value);
+	void slotBpmChanged(double value);
 
 signals:
 	void transitionDone();
@@ -31,7 +30,6 @@ signals:
 private:
 	double m_dcrossfadePosition;
     double m_dCurrentPlayPos;
-    bool m_bUserTakeOver;
     bool m_bTransitioning;
     bool m_bShortCue;
     bool m_bDeckBCue;
@@ -85,8 +83,6 @@ private:
     ControlObjectThreadMain* m_pCOSyncPhase2;
     ControlObjectThreadMain* m_pCOSyncTempo1;
     ControlObjectThreadMain* m_pCOSyncTempo2;
-    ControlObjectThreadMain* m_pCOJog1;
-    ControlObjectThreadMain* m_pCOJog2;
     ControlObjectThreadMain* m_pCOCueOut1;
     ControlObjectThreadMain* m_pCOCueOut2;
     ControlObjectThreadMain* m_pCOFadeNowLeft;

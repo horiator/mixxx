@@ -500,6 +500,14 @@ void AutoDJ::toggleAutoDJ(double value) {
         m_eState = ADJ_DISABLED;
         m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
         		ConfigValue(m_iCueRecall));
+        if (m_pCOScratchEnable1->get() == 1.0) {
+        	m_pCOScratch1->slotSet(0.0);
+        	m_pCOScratchEnable1->slotSet(0.0);
+        }
+        if (m_pCOScratchEnable2->get() == 1.0) {
+        	m_pCOScratch2->slotSet(0.0);
+        	m_pCOScratchEnable2->slotSet(0.0);
+        }
         //m_pCOPlayPos1->disconnect(this);
         //m_pCOPlayPos2->disconnect(this);
         //m_pCOPlay1->disconnect(this);

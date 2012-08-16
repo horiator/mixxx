@@ -44,12 +44,11 @@ public slots:
     void setTransitionDone();
 
 signals:
-    // Emitted so the currently playing track in the specified group will be removed from
-    // the AutoDJ queue. This is connected to DlgAutoDJ::slotRemovePlayingTrackFromQueue(QString).
     void loadTrack(TrackPointer tio);
     void loadTrackToPlayer(TrackPointer tio, QString group);
 
 private:
+    ConfigObject<ConfigValue>* m_pConfig;
     DlgAutoDJ* m_pDlgAutoDJ;
     enum ADJstates {
         ADJ_IDLE = 0,
@@ -77,7 +76,6 @@ private:
     int transitionValue;
     int m_iCueRecall;
 
-    ConfigObject<ConfigValue>* m_pConfig;
     ControlObject* m_pCOCueOutPosition1;
     ControlObject* m_pCOCueOutPosition2;
     ControlObjectThreadMain* m_pCOPlay1;
