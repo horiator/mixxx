@@ -13,16 +13,10 @@
 AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
 		TrackCollection* pTrackCollection) :
     QObject(parent),
-    m_bEnabled(false),
     m_pConfig(pConfig),
     m_pTrackCollection(pTrackCollection),
     m_playlistDao(pTrackCollection->getPlaylistDAO()){
 
-    m_bPlayer1Primed = false;
-    m_bPlayer2Primed = false;
-    m_bPlayer1Cued = false;
-    m_bPlayer2Cued = false;
-    m_bEndOfPlaylist = false;
     m_btransitionDone = false;
     // Should eventually be changed to m_pconfig value initialization
     m_eTransition = CUE;
@@ -55,11 +49,18 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
             ControlObject::getControl(ConfigKey("[Channel2]", "track_samples")));
     m_pCOCrossfader = new ControlObjectThreadMain(
     		ControlObject::getControl(ConfigKey("[Master]", "crossfader")));
+    m_pCOScratch1 = new ControlObjectThreadMain(
+            ControlObject::getControl(ConfigKey("[Channel1]", "scratch2")));
+    m_pCOScratch2 = new ControlObjectThreadMain(
+            ControlObject::getControl(ConfigKey("[Channel2]", "scratch2")));
+    m_pCOScratchEnable1 = new ControlObjectThreadMain(
+            ControlObject::getControl(ConfigKey("[Channel1]", "scratch2_enable")));
+    m_pCOScratchEnable2 = new ControlObjectThreadMain(
+            ControlObject::getControl(ConfigKey("[Channel2]", "scratch2_enable")));
 
         // Setting up ControlPushButtons
     m_pCOSkipNext = new ControlPushButton(
                     ConfigKey("[AutoDJ]", "skip_next"));
-    //m_pCOSkipNext->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCOSkipNext, SIGNAL(valueChanged(double)),
         this, SLOT(skipNext(double)));
 
@@ -81,7 +82,6 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
 
     m_pCOShufflePlaylist = new ControlPushButton(
                            ConfigKey("[AutoDJ]", "shuffle_playlist"));
-    //m_pCOShufflePlaylist->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCOShufflePlaylist, SIGNAL(valueChanged(double)),
         this, SLOT(shufflePlaylist(double)));
 
@@ -174,11 +174,6 @@ PlaylistTableModel* AutoDJ::getTableModel() {
 }
 
 void AutoDJ::player1PositionChanged(double value) {
-    // 95% playback is when we crossfade and do stuff
-    // const float posThreshold = 0.95;
-    // 0.05; // 5% playback is crossfade duration;
-    const float fadeDuration = m_fadeDuration1;
-
     if (m_eState == ADJ_DISABLED) {
         //nothing to do
         return;
@@ -197,12 +192,9 @@ void AutoDJ::player1PositionChanged(double value) {
     	}
     	return;
     }
-    if (m_eState == ADJ_WAITING) {
+    if (m_eState == ADJ_WAITING && value == 1.0) {
     	// Waiting for a deck to stop and deck 1 is finished
-    	qDebug() << "value = " << value;
-    	qDebug() << "Should be turning AutoDJ on";
     	m_pCOToggleAutoDJThread->slotSet(1.0);
-    	qDebug() << "CO = " << m_pCOToggleAutoDJ->get();
     }
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
     bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
@@ -214,11 +206,9 @@ void AutoDJ::player1PositionChanged(double value) {
             // Play the track in player 1
             m_pCOPlay1->slotSet(1.0f);
             removePlayingTrackFromQueue("[Channel1]");
-            //qDebug() << "setting groups 1 -> 2 (175)";
             m_pTrackTransition->setGroups("[Channel1]", "[Channel2]");
         } else {
             m_eState = ADJ_IDLE;
-            //pushButtonFadeNow->setEnabled(true);
             if (deck1Playing && !deck2Playing) {
                 // Here we are, if first deck was playing before starting Auto DJ
                 // or if it was started just before
@@ -233,18 +223,10 @@ void AutoDJ::player1PositionChanged(double value) {
         return;
     }
 
-    if (m_btransitionDone && m_pCOToggleAutoDJ->get() == 1) {//m_eState == ADJ_P2FADING) {
-    	//qDebug() << "transition done = true";
+    if (m_btransitionDone && m_pCOToggleAutoDJ->get() == 1) {
         if (deck1Playing && !deck2Playing) {
-        	//qDebug() << "1 not 2";
-            // End State
-            //m_pCOCrossfader->slotSet(-1.0f);  // Move crossfader to the left!
-            // qDebug() << "1: m_pCOCrossfader->slotSet(_-1.0f_);";
             m_eState = ADJ_IDLE;
-            //pushButtonFadeNow->setEnabled(true);
             m_btransitionDone = false;
-            //qDebug() << "set groups 1 -> 2 (204)";
-            //qDebug() << "removing from channel 1";
             removePlayingTrackFromQueue("[Channel1]");
             loadNextTrackFromQueue();
             m_pTrackTransition->setGroups("[Channel1]", "[Channel2]");
@@ -255,11 +237,10 @@ void AutoDJ::player1PositionChanged(double value) {
     if (m_eState == ADJ_IDLE) {
         if (m_pCORepeat1->get() == 1.0f) {
             // repeat disables auto DJ
-        	//qDebug() << "returning from repeat";
             return;
         }
     }
-    // Fading - Use transition class here
+    // Fading
     switch (m_eTransition) {
     	case CUE:
     		m_pTrackTransition->cueTransition(value);
@@ -271,56 +252,9 @@ void AutoDJ::player1PositionChanged(double value) {
     		m_pTrackTransition->cdTransition(value);
     		break;
     }
-    /*
-    if (value >= m_posThreshold1) {
-        if (m_eState == ADJ_IDLE &&
-            (deck1Playing || m_posThreshold1 >= 1.0f)) {
-            if (!deck2Playing) {
-                // Start Deck 2
-                player2PlayChanged(1.0f);
-                m_pCOPlay2->slotSet(1.0f);
-                if (fadeDuration < 0.0f) {
-                    // Scroll back for pause between tracks
-                    m_pCOPlayPos2->slotSet(m_fadeDuration2);
-                }
-            }
-            removePlayingTrackFromQueue("[Channel2]");
-            m_eState = ADJ_P1FADING;
-            //pushButtonFadeNow->setEnabled(false);
-        }
-
-        float posFadeEnd = math_min(1.0, m_posThreshold1 + fadeDuration);
-
-        if (value >= posFadeEnd) {
-            // Pre-EndState
-            // m_pCOCrossfader->slotSet(1.0f); //Move crossfader to the right!
-
-            m_pCOPlay1->slotSet(0.0f);  // Stop the player
-            //m_posThreshold = 1.0f - fadeDuration; // back to default
-
-            // does not work always immediately after stop
-            // loadNextTrackFromQueue();
-            // m_eState = ADJ_IDLE; // Fading ready
-        } else {
-            // Crossfade!
-            float crossfadeValue = -1.0f +
-                    2*(value-m_posThreshold1)/(posFadeEnd-m_posThreshold1);
-            // crossfadeValue = -1.0f -> + 1.0f
-            // Move crossfader to the right!
-            m_pCOCrossfader->slotSet(crossfadeValue);
-            // qDebug() << "1: m_pCOCrossfader->slotSet " << crossfadeValue;
-        }
-    }*/
 }
 
 void AutoDJ::player2PositionChanged(double value) {
-    // 95% playback is when we crossfade and do stuff
-    // const float posThreshold = 0.95;
-
-    // 0.05; // 5% playback is crossfade duration
-    float fadeDuration = m_fadeDuration2;
-
-    //qDebug() << "player2PositionChanged(" << value << ")";
     if (m_eState == ADJ_DISABLED) {
         //nothing to do
         return;
@@ -349,19 +283,10 @@ void AutoDJ::player2PositionChanged(double value) {
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
     bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
 
-    if (m_btransitionDone && m_pCOToggleAutoDJ->get() == 1) {//m_eState == ADJ_P1FADING) {
-    	//qDebug() << "transition done = true";
+    if (m_btransitionDone && m_pCOToggleAutoDJ->get() == 1) {
         if (!deck1Playing && deck2Playing) {
-        	//qDebug() << "not 1 - 2";
-            // End State
-            // Move crossfader to the right! (not anymore)
-            //m_pCOCrossfader->slotSet(1.0f);
-            // qDebug() << "1: m_pCOCrossfader->slotSet(_1.0f_);";
             m_eState = ADJ_IDLE;
-            //pushButtonFadeNow->setEnabled(true);
             m_btransitionDone = false;
-            //qDebug() << "set groups 2 -> 1 (299)";
-            //qDebug() << "removing from channel 2";
             removePlayingTrackFromQueue("[Channel2]");
             loadNextTrackFromQueue();
             m_pTrackTransition->setGroups("[Channel2]", "[Channel1]");
@@ -371,11 +296,11 @@ void AutoDJ::player2PositionChanged(double value) {
 
     if (m_eState == ADJ_IDLE) {
         if (m_pCORepeat2->get() == 1.0f) {
-            //repeat disables auto DJ
+            // repeat disables auto DJ
             return;
         }
     }
-    // Fading starts here
+    // Fading
     switch(m_eTransition) {
     	case CUE:
     		m_pTrackTransition->cueTransition(value);
@@ -387,174 +312,24 @@ void AutoDJ::player2PositionChanged(double value) {
     		m_pTrackTransition->cdTransition(value);
     		break;
     }
-
-    /*
-    if (value >= m_posThreshold2) {
-        if (m_eState == ADJ_IDLE &&
-            (deck2Playing || m_posThreshold2 >= 1.0f)) {
-            if (!deck1Playing) {
-                player1PlayChanged(1.0f);
-                m_pCOPlay1->slotSet(1.0f);
-                if (fadeDuration < 0) {
-                    // Scroll back for pause between tracks
-                    m_pCOPlayPos1->slotSet(m_fadeDuration1);
-                }
-            }
-            removePlayingTrackFromQueue("[Channel1]");
-            m_eState = ADJ_P2FADING;
-            //pushButtonFadeNow->setEnabled(false);
-        }
-
-        float posFadeEnd = math_min(1.0, m_posThreshold2 + fadeDuration);
-
-        if (value >= posFadeEnd) {
-            // Pre-End State
-            //m_pCOCrossfader->slotSet(-1.0f); //Move crossfader to the left!
-
-            m_pCOPlay2->slotSet(0.0f);  // Stop the player
-
-            //m_posThreshold = 1.0f - fadeDuration; // back to default
-
-            // does not work always immediately after stop
-            // loadNextTrackFromQueue();
-            // m_eState = ADJ_IDLE; // Fading ready
-        } else {
-            //Crossfade!
-            float crossfadeValue = 1.0f -
-                    2*(value-m_posThreshold2)/(posFadeEnd-m_posThreshold2);
-            // crossfadeValue = 1.0f -> + -1.0f
-            m_pCOCrossfader->slotSet(crossfadeValue); //Move crossfader to the right!
-            // qDebug() << "2: m_pCOCrossfader->slotSet " << crossfadeValue;
-        }
-    }*/
 }
 
+/* Check if this is even necessary at all */
 void AutoDJ::player1PlayChanged(double value) {
-	if (value == 1.0f && m_eState == ADJ_IDLE) {
-    TrackPointer loadedTrack =
-            PlayerInfo::Instance().getTrackInfo("[Channel1]");
-    	if (loadedTrack) {
-    		int TrackDuration = loadedTrack->getDuration();
-    		qDebug() << "TrackDuration = " << TrackDuration;
-
-    		int autoDjTransition = transitionValue;
-
-    		if (TrackDuration > autoDjTransition) {
-    			m_fadeDuration1 = static_cast<float>(autoDjTransition) /
-    					static_cast<float>(TrackDuration);
-    		} else {
-    			m_fadeDuration1 = 0;
-    		}
-
-    		if (autoDjTransition > 0) {
-    			m_posThreshold1 = 1.0f - m_fadeDuration1;
-    		} else {
-    			// in case of pause
-    			m_posThreshold1 = 1.0f;
-    		}
-    		//qDebug() << "m_fadeDuration1 = " << m_fadeDuration1;
-    	}
-	} else {
-		//qDebug() << "setting 2-1 playchanged";
-		//m_pTrackTransition->setGroups("[Channel2]", "[Channel1]");
-	}
+    if (value == 0.0 && m_pCOScratchEnable1->get() == 1.0) {
+    	m_pCOScratch1->slotSet(0.0);
+    	m_pCOScratchEnable1->slotSet(0.0);
+    }
 }
 
 void AutoDJ::player2PlayChanged(double value) {
-    if (value == 1.0f && m_eState == ADJ_IDLE) {
-        TrackPointer loadedTrack =
-                PlayerInfo::Instance().getTrackInfo("[Channel2]");
-        if (loadedTrack) {
-            int TrackDuration = loadedTrack->getDuration();
-            qDebug() << "TrackDuration = " << TrackDuration;
-
-            int autoDjTransition = transitionValue;
-
-            if (TrackDuration > autoDjTransition) {
-                m_fadeDuration2 = static_cast<float>(autoDjTransition) /
-                        static_cast<float>(TrackDuration);
-            } else {
-                m_fadeDuration2 = 0;
-            }
-
-            if (autoDjTransition > 0) {
-                m_posThreshold2 = 1.0f - m_fadeDuration2;
-            } else {
-                // in case of pause
-                m_posThreshold2 = 1.0f;
-            }
-            //qDebug() << "m_fadeDuration2 = " << m_fadeDuration2;
-        }
-    } else {
-		//qDebug() << "setting 1-2 playchanged";
-		//m_pTrackTransition->setGroups("[Channel1]", "[Channel2]");
+    if (value == 0.0 && m_pCOScratchEnable2->get() == 1.0) {
+    	m_pCOScratch2->slotSet(0.0);
+    	m_pCOScratchEnable2->slotSet(0.0);
     }
 }
-
-void AutoDJ::receiveNextTrack(TrackPointer nextTrack) {
-    m_pNextTrack = nextTrack;
-    qDebug() << "Received track from DlgAutoDJ: " << nextTrack->getTitle();
-}
-
-void AutoDJ::setEndOfPlaylist(bool endOfPlaylist) {
-    m_bEndOfPlaylist = endOfPlaylist;
-}
-
-void AutoDJ::loadNextTrack() {
-    emit loadTrack(m_pNextTrack);
-    emit needNextTrack();
-}
-
-/*
-void AutoDJ::cueTrackToFadeIn(QString group) {
-
-    TrackPointer pTrack = PlayerInfo::Instance().getTrackInfo(group);
-
-    if (group == "[Channel1]") {
-        // Get the FadeIn point of the track (in samples)
-        double fadeIn = 0.0;//pTrack->getFadeIn();
-
-        // Divide this by 2 and then by the sample rate to convert it to seconds
-        fadeIn = (fadeIn/2)/(m_pCOSampleRate1->get());
-
-        // Subtract the crossfade length
-        fadeIn = fadeIn - (m_pTrackTransition->m_iFadeLength);
-
-        // Check if the crossfade length set our cue to negative
-        if (fadeIn < 0) {
-            fadeIn = 0;
-        }
-        // Convert fadeIn to a ratio of the whole track
-        fadeIn = fadeIn/(pTrack->getDuration());
-
-        // Cue up the fadeIn point
-        //m_pTrackTransition->m_pCOPlayPos1->slotSet(fadeIn);
-    }
-
-    if (group == "[Channel2]") {
-        // Get the FadeIn point of the track (in samples)
-        double fadeIn = 0.0; //pTrack->getFadeIn();
-
-        // Divide this by 2 and then by the sample rate to convert it to seconds
-        fadeIn = (fadeIn/2)/(m_pCOSampleRate2->get());
-
-        // Subtract the crossfade length
-        fadeIn = fadeIn - (m_pTrackTransition->m_iFadeLength);
-
-        // Check if the crossfade length set our cue to negative
-        if (fadeIn < 0) {
-            fadeIn = 0;
-        }
-        // Convert fadeIn to a ratio of the whole track
-        fadeIn = fadeIn/(pTrack->getDuration());
-
-        // Cue up the fadeIn point
-        m_pTrackTransition->m_pCOPlayPos2->slotSet(fadeIn);
-    }
-}*/
 
 void AutoDJ::transitionValueChanged(int value) {
-	//qDebug() << "Transition values starts at " << transitionValue;
     if (m_eState == ADJ_IDLE) {
         if (m_pCOPlay1Fb->get() == 1.0f) {
             player1PlayChanged(1.0f);
@@ -566,7 +341,6 @@ void AutoDJ::transitionValueChanged(int value) {
     m_pConfig->set(ConfigKey("[Auto DJ]", "Transition"),
                    ConfigValue(value));
     transitionValue = value;
-    qDebug() << "Transition value changed to " << value;
     m_pTrackTransition->calculateCue();
 }
 
@@ -574,7 +348,7 @@ void AutoDJ::shufflePlaylist(double value) {
 	// Guard to prevent shuffling twice when keyboard sends a double signal
 	if (value >= 1.0) return;
    	qDebug() << "Shuffling AutoDJ playlist";
-		int row = m_eState == ADJ_DISABLED ? 0 : 1;
+	int row = m_eState == ADJ_DISABLED ? 0 : 1;
    	m_pAutoDJTableModel->shuffleTracks(m_pAutoDJTableModel->index(row, 0));
    	qDebug() << "Shuffling done";
 }
@@ -592,10 +366,10 @@ void AutoDJ::skipNext(double value) {
         loadNextTrackFromQueue();
     }
     m_pTrackTransition->m_bTrackLoaded = false;
+    /* Need a calculate cue call here? */
 }
 
 void AutoDJ::fadeNowRight(double value) {
-	//qDebug() << "value = " << value << "and CO = " << m_pCOFadeNowRight->get();
 	if (value == 0) {
 		if (m_pCOFadeNowLeft->get() == 1) {
 			return;
@@ -625,7 +399,6 @@ void AutoDJ::fadeNowRight(double value) {
 }
 
 void AutoDJ::fadeNowLeft(double value) {
-	//qDebug() << "value = " << value << "and CO = " << m_pCOFadeNowLeft->get();
 	if (value == 0) {
 		if (m_pCOFadeNowRight->get() == 1) {
 			return;
@@ -675,24 +448,11 @@ void AutoDJ::toggleAutoDJ(double value) {
         	               ConfigValue(1));
         }
         if (deck1Playing && deck2Playing) {
-            /*QMessageBox::warning(
-                NULL, tr("Auto-DJ"),
-                tr("One deck must be stopped to enable Auto-DJ mode."),
-                QMessageBox::Ok);*/
             qDebug() << "AutoDJ waiting for one deck to stop";
-            //pushButtonAutoDJ->setChecked(false);
-            //m_pCOToggleAutoDJ->set(0.0);
             lastToggleValue = -1.0;
             m_eState = ADJ_WAITING;
-            qDebug() << "set to waiting. CO = " << m_pCOToggleAutoDJ->get() <<
-            		" and m_eState = " << m_eState;
-            //connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-                    //this, SLOT(player1PositionChanged(double)));
-            //connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-                    //this, SLOT(player2PositionChanged(double)));
             return;
         }
-
         // Never load the same track if it is already playing
         if (deck1Playing) {
             removePlayingTrackFromQueue("[Channel1]");
@@ -704,22 +464,12 @@ void AutoDJ::toggleAutoDJ(double value) {
         TrackPointer nextTrack = getNextTrackFromQueue();
         if (!nextTrack) {
             qDebug() << "Queue is empty now";
-            //pushButtonAutoDJ->setChecked(false);
             m_pCOToggleAutoDJThread->slotSet(0.0);
             lastToggleValue = -1.0;
             return;
         }
 
         // Track is available so GO
-        //pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
-        //pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
-        //pushButtonSkipNext->setEnabled(true);
-
-        //connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-                //this, SLOT(player1PositionChanged(double)));
-        //connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-                //this, SLOT(player2PositionChanged(double)));
-
          connect(m_pCOPlay1Fb, SIGNAL(valueChanged(double)),
                  this, SLOT(player1PlayChanged(double)));
          connect(m_pCOPlay2Fb, SIGNAL(valueChanged(double)),
@@ -728,12 +478,10 @@ void AutoDJ::toggleAutoDJ(double value) {
          if (!deck1Playing && !deck2Playing) {
             // both decks are stopped
             m_eState = ADJ_ENABLE_P1LOADED;
-            //pushButtonFadeNow->setEnabled(false);
             // Force Update on load Track
             player1PositionChanged(-0.001f);
          } else {
             m_eState = ADJ_IDLE;
-            //pushButtonFadeNow->setEnabled(true);
             if (deck1Playing) {
                 // deck 1 is already playing
                 player1PlayChanged(1.0f);
@@ -747,16 +495,11 @@ void AutoDJ::toggleAutoDJ(double value) {
         // Loads into first deck If stopped else into second else not
         emit(loadTrack(nextTrack));
     } else {  // Disable Auto DJ
-        //pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
-        //pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
         qDebug() << "Auto DJ disabled";
         m_pDlgAutoDJ->setAutoDJDisabled();
         m_eState = ADJ_DISABLED;
         m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
         		ConfigValue(m_iCueRecall));
-        //pushButtonFadeNow->setEnabled(false);
-        //pushButtonSkipNext->setEnabled(false);
-        //m_bFadeNow = false;
         //m_pCOPlayPos1->disconnect(this);
         //m_pCOPlayPos2->disconnect(this);
         //m_pCOPlay1->disconnect(this);
@@ -794,15 +537,10 @@ bool AutoDJ::loadNextTrackFromQueue() {
 
     // We ran out of tracks in the queue...
     if (!nextTrack) {
-    	qDebug() << "Got to this part, but nothing is happening....";
-    	m_pCOToggleAutoDJThread->slotSet(0.0);
         // Disable auto DJ and return...
-        //pushButtonAutoDJ->setChecked(false);
-        // And eject track as "End of auto DJ warning"
-        emit(loadTrack(nextTrack));
+    	m_pCOToggleAutoDJThread->slotSet(0.0);
         return false;
     }
-
     emit(loadTrack(nextTrack));
     return true;
 }
@@ -907,14 +645,11 @@ void AutoDJ::setCueOut(double position, int channel) {
 	}
 	if (track) {
 		pCue = track->addCue();
-		//qDebug() << "cue added!";
 		pCue->setType(Cue::CUEOUT);
 		if (pos % 2 != 0) pos--;
-		//qDebug() << "cue pos = " << pos;
 		pCue->setPosition(pos);
 		pCOcuePos->set(pos);
 		track->setCuePoint(pos);
-		qDebug() << "cue position set at " << pos;
 	} else {
 		qDebug() << "Null trackpointer - no cue added";
 	}
@@ -972,12 +707,4 @@ void AutoDJ::deleteCueOut1(double value) {
 
 void AutoDJ::deleteCueOut2(double value) {
 	deleteCueOut(value, 2);
-}
-
-void AutoDJ::cueOutPos1(double value) {
-
-}
-
-void AutoDJ::cueOutPos2(double value) {
-
 }

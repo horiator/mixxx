@@ -37,7 +37,6 @@ private:
     bool m_bDeckBCue;
     bool m_bFadeNow;
     bool m_bSpinBack;
-    //bool m_bPastCue;
     QString m_groupA;
     QString m_groupB;
     TrackPointer m_trackA;
@@ -48,7 +47,6 @@ private:
     double m_dBpmB;
     double m_dBpmShift;
     bool m_bTrackLoaded;
-    //int m_iTrackACue;
     int m_iCurrentPos;
     int m_iShortCue;
     int m_iCuePoint;
@@ -63,9 +61,6 @@ private:
     void calculateShortCue();
     void calculateDeckBCue();
     void fadeNowStopped();
-    //int m_iTrackBCue;
-    // This is the transition function used by AutoDJ to crossfade from the desired
-    // deckA to deckB
     void cueTransition(double value);
     void cdTransition(double value);
     void beatTransition(double value);

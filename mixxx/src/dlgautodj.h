@@ -44,13 +44,6 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     void fadeNowRight(bool buttonChecked);
     void fadeNowLeft(bool buttonChecked);
     void toggleAutoDJ(bool checked);
-    //void selectTransition(int index);
-    // All of these are now handled in AutoDJ (smstewart)
-    //void player1PositionChanged(double value);
-    //void player2PositionChanged(double value);
-    //void player1PlayChanged(double value);
-    //void player2PlayChanged(double value);
-    //void transitionValueChanged(int value);
 
   signals:
     void loadTrack(TrackPointer tio);
@@ -58,20 +51,6 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     void transitionIndex(int index);
 
   private:
-    //enum ADJstates {
-        //ADJ_IDLE = 0,
-        //ADJ_P1FADING,
-        //ADJ_P2FADING,
-        //ADJ_ENABLE_P1LOADED,
-        //ADJ_ENABLE_P1PLAYING,
-        //ADJ_DISABLED
-    //};
-
-    // Queue management is now done in AutoDJ (smstewart)
-    //TrackPointer getNextTrackFromQueue();
-    //bool loadNextTrackFromQueue();
-    //bool removePlayingTrackFromQueue(QString group);
-
     ConfigObject<ConfigValue>* m_pConfig;
     TrackCollection* m_pTrackCollection;
     WTrackTableView* m_pTrackTableView;
@@ -79,22 +58,7 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     PlaylistDAO& m_playlistDao;
     AutoDJ* m_pAutoDJ;
 
-    // Makes our Auto DJ logic assume the next track that should be played is
-    // already loaded. We need this flag to make our
-    // first-track-gets-loaded-but- not-removed-from-the-queue behaviour work.
-    //bool m_bNextTrackAlreadyLoaded;
-
-    //bool m_bFadeNow;
-    //enum ADJstates m_eState;
-    //float m_posThreshold1;
-    //float m_posThreshold2;
-    //float m_fadeDuration1;
-    //float m_fadeDuration2;
     ControlObjectThreadMain* m_pCOSkipNext;
-    // These will probably be handled by AutoDJ since they will not be a part
-    // of the AutoDJ controls but on the deck
-    //ControlObjectThreadMain* m_pCOFadeNowRight;
-    //ControlObjectThreadMain* m_pCOFadeNowLeft;
     ControlObjectThreadMain* m_pCOShufflePlaylist;
     ControlObjectThreadMain* m_pCOToggleAutoDJ;
     ControlObjectThreadMain* m_pCOPlayPos1;
