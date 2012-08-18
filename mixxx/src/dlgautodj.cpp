@@ -30,9 +30,9 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
 
     m_pTrackTableView->installEventFilter(pKeyboard);
     connect(m_pTrackTableView, SIGNAL(loadTrack(TrackPointer)),
-            m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)));
+        m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)));
     connect(m_pTrackTableView, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
-            m_pAutoDJ, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
+        m_pAutoDJ, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
 
     QBoxLayout* box = dynamic_cast<QBoxLayout*>(layout());
     Q_ASSERT(box); //Assumes the form layout is a QVBox/QHBoxLayout!
@@ -54,37 +54,35 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     pushButtonSkipNext->setEnabled(false);
 
     connect(spinBoxTransition, SIGNAL(valueChanged(int)),
-            m_pAutoDJ, SLOT(transitionValueChanged(int)));
+        m_pAutoDJ, SLOT(transitionValueChanged(int)));
     connect(comboBoxTransition, SIGNAL(currentIndexChanged(int)),
-    		m_pAutoDJ, SLOT(transitionSelect(int)));
-	switch(comboBoxTransition->currentIndex()) {
-		case 0:
-			spinBoxTransition->setEnabled(true);
-			break;
-		case 1:
-			spinBoxTransition->setEnabled(true);
-			break;
-		case 2:
-			spinBoxTransition->setEnabled(false);
-			break;
-	}
-
-    // TODO(smstewart): These COs should be instantiated in AutoDJ
+        m_pAutoDJ, SLOT(transitionSelect(int)));
+    switch(comboBoxTransition->currentIndex()) {
+        case 0:
+            spinBoxTransition->setEnabled(true);
+            break;
+        case 1:
+            spinBoxTransition->setEnabled(true);
+            break;
+        case 2:
+            spinBoxTransition->setEnabled(false);
+            break;
+    }
 
     m_pCOShufflePlaylist = new ControlObjectThreadMain(
-    		ControlObject::getControl(ConfigKey("[AutoDJ]", "shuffle_playlist")));
+        ControlObject::getControl(ConfigKey("[AutoDJ]", "shuffle_playlist")));
     connect(pushButtonShuffle, SIGNAL(clicked(bool)),
-            this, SLOT(shufflePlaylist(bool)));
+        this, SLOT(shufflePlaylist(bool)));
 
     m_pCOSkipNext = new ControlObjectThreadMain(
-    		ControlObject::getControl(ConfigKey("[AutoDJ]", "skip_next")));
+        ControlObject::getControl(ConfigKey("[AutoDJ]", "skip_next")));
     connect(pushButtonSkipNext, SIGNAL(clicked(bool)),
-            this, SLOT(skipNext(bool)));
+        this, SLOT(skipNext(bool)));
 
     m_pCOToggleAutoDJ = new ControlObjectThreadMain(
-    		ControlObject::getControl(ConfigKey("[AutoDJ]", "toggle_autodj")));
+        ControlObject::getControl(ConfigKey("[AutoDJ]", "toggle_autodj")));
     connect(pushButtonAutoDJ, SIGNAL(toggled(bool)),
-            this, SLOT(toggleAutoDJ(bool))); _blah;
+        this, SLOT(toggleAutoDJ(bool))); _blah;
 }
 
 DlgAutoDJ::~DlgAutoDJ() {
@@ -163,11 +161,11 @@ void DlgAutoDJ::moveSelection(int delta) {
 }
 
 void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
-	m_pCOShufflePlaylist->slotSet(0.0);
+    m_pCOShufflePlaylist->slotSet(0.0);
 }
 
 void DlgAutoDJ::skipNext(bool buttonChecked) {
-	m_pCOSkipNext->slotSet(0.0);
+    m_pCOSkipNext->slotSet(0.0);
 }
 
 void DlgAutoDJ::fadeNowRight(bool buttonChecked) {
@@ -179,20 +177,20 @@ void DlgAutoDJ::fadeNowLeft(bool buttonChecked) {
 }
 
 void DlgAutoDJ::toggleAutoDJ(bool) {
-	qDebug() << "toggle pushed";
-	m_pCOToggleAutoDJ->slotSet(!m_pCOToggleAutoDJ->get());
+    qDebug() << "toggle pushed";
+    m_pCOToggleAutoDJ->slotSet(!m_pCOToggleAutoDJ->get());
 }
 
 void DlgAutoDJ::setAutoDJEnabled() {
-	pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
-	pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
-	pushButtonSkipNext->setEnabled(true);
+    pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
+    pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
+    pushButtonSkipNext->setEnabled(true);
 }
 
 void DlgAutoDJ::setAutoDJDisabled() {
-	pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
-	pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
-	pushButtonSkipNext->setEnabled(false);
+    pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
+    pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
+    pushButtonSkipNext->setEnabled(false);
 }
 
 bool DlgAutoDJ::appendTrack(int trackId) {

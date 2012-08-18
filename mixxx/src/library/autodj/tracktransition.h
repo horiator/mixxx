@@ -21,14 +21,14 @@ public:
     bool m_bTrackBSynced;
 
 public slots:
-	void crossfaderChange(double value);
-	void slotBpmChanged(double value);
+    void crossfaderChange(double value);
+    void slotBpmChanged(double value);
 
 signals:
-	void transitionDone();
+    void transitionDone();
 
 private:
-	double m_dcrossfadePosition;
+    double m_dcrossfadePosition;
     double m_dCurrentPlayPos;
     bool m_bTransitioning;
     bool m_bShortCue;

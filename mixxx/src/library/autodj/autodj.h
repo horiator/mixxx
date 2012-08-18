@@ -62,9 +62,9 @@ private:
     };
     enum ADJstates m_eState;
     enum TranSelect {
-    	CUE = 0,
-    	BEAT,
-    	CD
+        CUE = 0,
+        BEAT,
+        CD
     };
     enum TranSelect m_eTransition;
     bool m_btransitionDone;
