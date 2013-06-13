@@ -43,7 +43,7 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     void skipNext(bool buttonChecked);
     void fadeNowRight(bool buttonChecked);
     void fadeNowLeft(bool buttonChecked);
-    void toggleAutoDJ(bool toggle);
+    void toggleAutoDJ(bool checked);
     //void selectTransition(int index);
     // All of these are now handled in AutoDJ (smstewart)
     //void player1PositionChanged(double value);

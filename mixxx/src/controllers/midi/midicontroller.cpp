@@ -29,7 +29,7 @@ QString MidiController::defaultPreset() {
 }
 
 QString MidiController::presetExtension() {
-    return MIDI_MAPPING_EXTENSION;
+    return MIDI_PRESET_EXTENSION;
 }
 
 void MidiController::visit(const MidiControllerPreset* preset) {
@@ -66,9 +66,9 @@ bool MidiController::savePreset(const QString fileName) const {
     return handler.save(m_preset, getName(), fileName);
 }
 
-void MidiController::applyPreset(QString configPath) {
+void MidiController::applyPreset(QString resourcePath) {
     // Handles the engine
-    Controller::applyPreset(configPath);
+    Controller::applyPreset(resourcePath);
 
     // Only execute this code if this is an output device
     if (isOutputDevice()) {
@@ -334,6 +334,12 @@ void MidiController::receive(unsigned char status, unsigned char control,
         // computeValue not (yet) done on pitch messages because it all assumes 7-bit numbers
     } else {
         newValue = computeValue(options, currMixxxControlValue, value);
+    }
+
+    // ControlPushButton ControlObjects only accept NOTE_ON, so if the midi
+    // mapping is <button> we override the Midi 'status' appropriately.
+    if (options.button || options.sw) {
+        opCode = MIDI_NOTE_ON;
     }
 
     if (options.soft_takeover) {

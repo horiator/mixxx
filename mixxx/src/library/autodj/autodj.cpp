@@ -59,7 +59,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
         // Setting up ControlPushButtons
     m_pCOSkipNext = new ControlPushButton(
                     ConfigKey("[AutoDJ]", "skip_next"));
-    m_pCOSkipNext->setButtonMode(ControlPushButton::PUSH);
+    //m_pCOSkipNext->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCOSkipNext, SIGNAL(valueChanged(double)),
         this, SLOT(skipNext(double)));
 
@@ -81,7 +81,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
 
     m_pCOShufflePlaylist = new ControlPushButton(
                            ConfigKey("[AutoDJ]", "shuffle_playlist"));
-    m_pCOShufflePlaylist->setButtonMode(ControlPushButton::PUSH);
+    //m_pCOShufflePlaylist->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCOShufflePlaylist, SIGNAL(valueChanged(double)),
         this, SLOT(shufflePlaylist(double)));
 
@@ -572,21 +572,16 @@ void AutoDJ::transitionValueChanged(int value) {
 
 void AutoDJ::shufflePlaylist(double value) {
 	// Guard to prevent shuffling twice when keyboard sends a double signal
-	if (value == 1.0) return;
+	if (value >= 1.0) return;
    	qDebug() << "Shuffling AutoDJ playlist";
-   	int row;
-   	if(m_eState == ADJ_DISABLED) {
-   	    row = 0;
-   	} else {
-   	    row = 1;
-   	}
+		int row = m_eState == ADJ_DISABLED ? 0 : 1;
    	m_pAutoDJTableModel->shuffleTracks(m_pAutoDJTableModel->index(row, 0));
    	qDebug() << "Shuffling done";
 }
 
 void AutoDJ::skipNext(double value) {
 	// Guard to prevent shuffling twice when keyboard sends a double signal
-	if (value == 1.0 || m_pCOToggleAutoDJ->get() == 0.0) return;
+	if (value >= 1.0 || m_pCOToggleAutoDJ->get() == 0.0) return;
     qDebug() << "Skip Next";
     // Load the next song from the queue.
     if (m_pCOPlay1Fb->get() == 0.0f) {

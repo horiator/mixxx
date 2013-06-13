@@ -16,7 +16,6 @@
 
 class PlaylistTableModel;
 class TrackCollection;
-class AutoDJ;
 
 class AutoDJFeature : public LibraryFeature {
     Q_OBJECT
@@ -29,8 +28,8 @@ class AutoDJFeature : public LibraryFeature {
     QVariant title();
     QIcon getIcon();
 
-    bool dropAccept(QUrl url);
-    bool dropAcceptChild(const QModelIndex& index, QUrl url);
+    bool dropAccept(QList<QUrl> urls);
+    bool dropAcceptChild(const QModelIndex& index, QList<QUrl> urls);
     bool dragMoveAccept(QUrl url);
     bool dragMoveAcceptChild(const QModelIndex& index, QUrl url);
 
@@ -53,8 +52,8 @@ class AutoDJFeature : public LibraryFeature {
     PlaylistDAO& m_playlistDao;
     const static QString m_sAutoDJViewName;
     TreeItemModel m_childModel;
+		AutoDJ* m_pAutoDJ;
     DlgAutoDJ* m_pAutoDJView;
-    AutoDJ* m_pAutoDJ;
 };
 
 

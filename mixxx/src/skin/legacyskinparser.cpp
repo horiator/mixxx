@@ -442,7 +442,7 @@ QWidget* LegacySkinParser::parseVisual(QDomElement node) {
 
     // Connect control proxy to widget, so delete can be handled by the QT object tree
     ControlObjectThreadWidget * p = new ControlObjectThreadWidget(
-                ControlObject::getControl(ConfigKey(channelStr, "wheel"))/*, viewer*/);
+                ControlObject::getControl(ConfigKey(channelStr, "wheel")), viewer);
 
     p->setWidget((QWidget *)viewer, true, false,
                  ControlObjectThreadWidget::EMIT_ON_PRESS, Qt::RightButton);
@@ -853,7 +853,8 @@ const char* LegacySkinParser::safeChannelString(QString channelStr) {
     QByteArray qba(channelStr.toAscii());
     char *safe = new char[qba.size() + 1]; // +1 for \0
     int i = 0;
-    while (safe[i] = qba[i]) ++i;
+    // Copy string
+    while ((safe[i] = qba[i])) ++i;
     s_channelStrs.append(safe);
     return safe;
 }

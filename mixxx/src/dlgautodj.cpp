@@ -25,11 +25,11 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
           m_pTrackTableView(
               new WTrackTableView(this, pConfig, m_pTrackCollection)),
           m_playlistDao(pTrackCollection->getPlaylistDAO()),
-          m_pAutoDJ(pAutoDJ)
+          m_pAutoDJ(pAutoDJ) {
           //m_bFadeNow(false),
           //m_eState(ADJ_DISABLED),
           //m_posThreshold1(1.0f),
-          /*m_posThreshold2(1.0f)*/ {
+          //m_posThreshold2(1.0f)
     setupUi(this);
 
     m_pTrackTableView->installEventFilter(pKeyboard);
@@ -236,14 +236,15 @@ void DlgAutoDJ::moveSelection(int delta) {
 }
 
 void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
-	double button = (double) buttonChecked;
-	m_pCOShufflePlaylist->slotSet(button);
+	//double button = (double) buttonChecked;
+	//m_pCOShufflePlaylist->slotSet(button);
+	m_pCOShufflePlaylist->slotSet(0.0);
 }
 
 void DlgAutoDJ::skipNext(bool buttonChecked) {
-	qDebug() << "skip pushed";
-	double button = (double) buttonChecked;
-	m_pCOSkipNext->slotSet(button);
+	//qDebug() << "skip pushed";
+	//double button = (double) buttonChecked;
+	m_pCOSkipNext->slotSet(0.0);
 }
 
 /*
@@ -289,10 +290,9 @@ void DlgAutoDJ::fadeNow(bool buttonChecked) {
     }
 }*/
 
-void DlgAutoDJ::toggleAutoDJ(bool toggle) {
+void DlgAutoDJ::toggleAutoDJ(bool) {
 	qDebug() << "toggle pushed";
-	double toggleValue = !m_pCOToggleAutoDJ->get();
-	m_pCOToggleAutoDJ->slotSet(toggleValue);
+	m_pCOToggleAutoDJ->slotSet(!m_pCOToggleAutoDJ->get());
 }
 
 /*
