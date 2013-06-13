@@ -16,7 +16,7 @@ class PlaylistTableModel : public BaseSqlTableModel {
     Q_OBJECT
   public:
     PlaylistTableModel(QObject* parent, TrackCollection* pTrackCollection,
-                       QString settingsNamespace);
+                       QString settingsNamespace,bool showAll=false);
     virtual ~PlaylistTableModel();
     void setPlaylist(int playlistId);
     int getPlaylist() const {
@@ -37,7 +37,6 @@ class PlaylistTableModel : public BaseSqlTableModel {
     virtual void moveTrack(const QModelIndex& sourceIndex, const QModelIndex& destIndex);
     virtual void shuffleTracks(const QModelIndex& currentIndex);
 
-    QAbstractItemDelegate* delegateForColumn(const int i, QObject* pObject);
     TrackModel::CapabilitiesFlags getCapabilities() const;
 
   private slots:
@@ -51,6 +50,7 @@ class PlaylistTableModel : public BaseSqlTableModel {
     PlaylistDAO& m_playlistDao;
     TrackDAO& m_trackDao;
     int m_iPlaylistId;
+    bool m_showAll;
 };
 
 #endif

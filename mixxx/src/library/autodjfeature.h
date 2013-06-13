@@ -16,6 +16,7 @@
 
 class PlaylistTableModel;
 class TrackCollection;
+class AutoDJ;
 
 class AutoDJFeature : public LibraryFeature {
     Q_OBJECT

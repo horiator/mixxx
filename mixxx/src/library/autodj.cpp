@@ -19,7 +19,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig) :
     m_bPlayer2Cued = false;
     m_bEndOfPlaylist = false;
 
-    m_pTrackTransition = new TrackTransition(this, m_pConfig);
+    //m_pTrackTransition = new TrackTransition(this, m_pConfig);
 
     m_pCOPlay1 = new ControlObjectThreadMain(
                             ControlObject::getControl(ConfigKey("[Channel1]", "play")));
@@ -53,7 +53,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig) :
     m_pCOFadeNowLeft = new ControlPushButton(
                        ConfigKey("[AutoDJ]", "fade_now_left"));
     m_pCOFadeNowLeft->setButtonMode(ControlPushButton::PUSH);
-    connect(m_pCoFadeNowLeft, SIGNAL(valueChanged(double)),
+    connect(m_pCOFadeNowLeft, SIGNAL(valueChanged(double)),
         this, SLOT(fadeNow(double)));
 
     m_pCOShufflePlaylist = new ControlPushButton(
@@ -62,7 +62,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig) :
     connect(m_pCOShufflePlaylist, SIGNAL(valueChanged(double)),
         this, SLOT(shufflePlaylist(double)));
 
-    m_pCOToggleAutoDJ = newControlPushButton(
+    m_pCOToggleAutoDJ = new ControlPushButton(
                         ConfigKey("[AutoDJ]", "toggle_autodj"));
     m_pCOToggleAutoDJ->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_pCOToggleAutoDJ, SIGNAL(valueChanged(double)),
@@ -170,8 +170,8 @@ void AutoDJ::setEnabled(bool enable) {
     }
 }
 
-void AutoDJ::player1PositionChanged(double samplePos1) {
-
+void AutoDJ::player1PositionChanged(double samplePos1) {}
+/*
     TrackPointer pTrack = PlayerInfo::Instance().getTrackInfo("[Channel1]");
 
     emit removePlayingTrackFromQueue("[Channel1]");
@@ -191,7 +191,7 @@ void AutoDJ::player1PositionChanged(double samplePos1) {
     }
 
     // Check if Player 1 position is past the Fade Out point
-    if (samplePos1 > pTrack->getFadeOut()) {
+    if (true){//samplePos1 > pTrack->getFadeOut()) {
 
         // Remove the track in Player 2 from the AutoDJ queue
         emit removePlayingTrackFromQueue("[Channel2]");
@@ -200,7 +200,7 @@ void AutoDJ::player1PositionChanged(double samplePos1) {
 
         // Cue the track in Player 2 to the Fade In point
         if (m_bPlayer2Cued == false) {
-            cueTrackToFadeIn("[Channel2]");
+            //cueTrackToFadeIn("[Channel2]");
             m_bPlayer2Cued = true;
         }
 
@@ -224,10 +224,10 @@ void AutoDJ::player1PositionChanged(double samplePos1) {
             m_bPlayer1Cued = false;
         }
     }
-}
+}*/
 
-void AutoDJ::player2PositionChanged(double samplePos2) {
-
+void AutoDJ::player2PositionChanged(double samplePos2) {}
+/*
     TrackPointer pTrack = PlayerInfo::Instance().getTrackInfo("[Channel2]");
 
     emit removePlayingTrackFromQueue("[Channel2]");
@@ -247,7 +247,7 @@ void AutoDJ::player2PositionChanged(double samplePos2) {
     }
 
     // Check if Player 2 position is past the Fade Out point
-    if (samplePos2 > pTrack->getFadeOut()) {
+    if (true){//samplePos2 > pTrack->getFadeOut()) {
 
         // Remove the track in Player 1 from the AutoDJ queue
         emit removePlayingTrackFromQueue("[Channel1");
@@ -280,7 +280,11 @@ void AutoDJ::player2PositionChanged(double samplePos2) {
             m_bPlayer2Cued = false;
         }
     }
-}
+}*/
+
+void AutoDJ::player1PlayChanged(double value) {}
+
+void AutoDJ::player2PlayChanged(double value) {}
 
 void AutoDJ::receiveNextTrack(TrackPointer nextTrack) {
     m_pNextTrack = nextTrack;
@@ -302,7 +306,7 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
 
     if (group == "[Channel1]") {
         // Get the FadeIn point of the track (in samples)
-        double fadeIn = pTrack->getFadeIn();
+        double fadeIn = 0.0;//pTrack->getFadeIn();
 
         // Divide this by 2 and then by the sample rate to convert it to seconds
         fadeIn = (fadeIn/2)/(m_pCOSampleRate1->get());
@@ -323,7 +327,7 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
 
     if (group == "[Channel2]") {
         // Get the FadeIn point of the track (in samples)
-        double fadeIn = pTrack->getFadeIn();
+        double fadeIn = 0.0; //pTrack->getFadeIn();
 
         // Divide this by 2 and then by the sample rate to convert it to seconds
         fadeIn = (fadeIn/2)/(m_pCOSampleRate2->get());
@@ -341,8 +345,10 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
         // Cue up the fadeIn point
         m_pTrackTransition->m_pCOPlayPos2->slotSet(fadeIn);
     }
+}
 
     void AutoDJ::transitionValueChanged(int value) {
+    	/*
         if (m_eState == ADJ_IDLE) {
             if (m_pCOPlay1Fb->get() == 1.0f) {
                 player1PlayChanged(1.0f);
@@ -353,9 +359,11 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
         }
         m_pConfig->set(ConfigKey(CONFIG_KEY, kTransitionPreferenceName),
                        ConfigValue(value));
+                       */
     }
 
     void AutoDJ::shufflePlaylist(double value) {
+    	/*
     	Q_UNUSED(buttonChecked);
     	qDebug() << "Shuffling AutoDJ playlist";
     	int row;
@@ -366,9 +374,11 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
     	}
     	m_pAutoDJTableModel->shuffleTracks(m_pAutoDJTableModel->index(row, 0));
     	qDebug() << "Shuffling done";
+    	*/
     }
 
     void AutoDJ::skipNext(double value) {
+    	/*
         Q_UNUSED(buttonChecked);
         qDebug() << "Skip Next";
         // Load the next song from the queue.
@@ -379,9 +389,11 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
             removePlayingTrackFromQueue("[Channel2]");
             loadNextTrackFromQueue();
         }
+        */
     }
 
     void AutoDJ::fadeNowRight(double value) {
+    	/*
         Q_UNUSED(buttonChecked);
         qDebug() << "Fade Now";
         if (m_eState == ADJ_IDLE) {
@@ -399,9 +411,11 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
                 m_pCORepeat2->slotSet(0.0f);
             }
         }
+        */
     }
 
     void AutoDJ::fadeNowLeft(double value) {
+    	/*
         Q_UNUSED(buttonChecked);
         qDebug() << "Fade Now";
         if (m_eState == ADJ_IDLE) {
@@ -419,9 +433,11 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
                 m_pCORepeat2->slotSet(0.0f);
             }
         }
+        */
     }
 
     void AutoDJ::toggleAutoDJ(double value) {
+    	/*
         bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
         bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
 
@@ -500,5 +516,6 @@ void AutoDJ::cueTrackToFadeIn(QString group) {
             m_pCOPlay1->disconnect(this);
             m_pCOPlay2->disconnect(this);
         }
+        */
     }
-}
+

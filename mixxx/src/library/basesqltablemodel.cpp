@@ -8,6 +8,7 @@
 #include "library/basesqltablemodel.h"
 
 #include "library/starrating.h"
+#include "library/stardelegate.h"
 #include "mixxxutils.cpp"
 
 const bool sDebug = false;
@@ -18,6 +19,7 @@ BaseSqlTableModel::BaseSqlTableModel(QObject* pParent,
                                      QString settingsNamespace)
         :  QAbstractTableModel(pParent),
            TrackModel(db, settingsNamespace),
+           m_currentSearch(""),
            m_pTrackCollection(pTrackCollection),
            m_trackDAO(m_pTrackCollection->getTrackDAO()),
            m_database(db) {
@@ -518,6 +520,9 @@ bool BaseSqlTableModel::setData(
     // TODO(rryan) ugly and only works because the mixxx library tables are the
     // only ones that aren't read-only. This should be moved into BTC.
     TrackPointer pTrack = m_trackDAO.getTrack(trackId);
+    if (!pTrack) {
+        return false;
+    }
     setTrackValueForColumn(pTrack, column, value);
 
     // Do not save the track here. Changing the track dirties it and the caching
@@ -739,3 +744,26 @@ QMimeData* BaseSqlTableModel::mimeData(const QModelIndexList &indexes) const {
     mimeData->setUrls(urls);
     return mimeData;
 }
+
+QAbstractItemDelegate* BaseSqlTableModel::delegateForColumn(const int i, QObject* pParent) {
+    if (i == fieldIndex(LIBRARYTABLE_RATING)) {
+        return new StarDelegate(pParent);
+    }
+    return NULL;
+}
+
+void BaseSqlTableModel::hideTracks(const QModelIndexList& indices) {
+    QList<int> trackIds;
+    foreach (QModelIndex index, indices) {
+        int trackId = getTrackId(index);
+        trackIds.append(trackId);
+    }
+
+    m_trackDAO.hideTracks(trackIds);
+
+    // TODO(rryan) : do not select, instead route event to BTC and notify from
+    // there.
+    select(); //Repopulate the data model.
+}
+
+

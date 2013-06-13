@@ -5,6 +5,7 @@
 
 #include "dlgautodj.h"
 #include "library/tracktransition.h"
+#include "controlpushbutton.h"
 
 class ControlObjectThreadMain;
 
@@ -16,9 +17,9 @@ public:
     ~AutoDJ();
 
 public slots:
-    //void setEnabled(bool);
-    //void setEndOfPlaylist(bool);
-    void transitionIndex(int index);
+    void setEnabled(bool);
+    void setEndOfPlaylist(bool);
+    //void transitionIndex(int index);
     void receiveNextTrack(TrackPointer nextTrack);
     void player1PositionChanged(double samplePos1);
     void player2PositionChanged(double samplePos2);
@@ -35,11 +36,11 @@ signals:
     // Emitted whenever AutoDJ is ready for the next track from the queue.
     // This is connected to DlgAutoDJ::slotNextTrackNeeded() by AutoDJFeature.
     // AutoDJ is going to control this now, not send a signal (smstewart)
-    //void needNextTrack();
+    void needNextTrack();
     // Emitted to signal that the AutoDJ automation is stopping.
     // This is connected to DlgAutoDJ::toggleAutoDJ(bool) by AutoDJFeature.
-    //This will now be controlled by COtoggleAutoDJ (smstewart)
-    //void disableAutoDJ();
+    // This will now be controlled by COtoggleAutoDJ (smstewart)
+    void disableAutoDJ();
     // Emitted so the currently playing track in the specified group will be removed from
     // the AutoDJ queue. This is connected to DlgAutoDJ::slotRemovePlayingTrackFromQueue(QString).
     void removePlayingTrackFromQueue(QString group);
@@ -69,11 +70,11 @@ private:
     ControlObjectThreadMain* m_pCOSync;
     ControlObjectThreadMain* m_pPitchControl;
     ControlObjectThreadMain* m_pKeyLock;
-    ControlObjectThreadMain* m_pCOSkipNext;
-    ControlObjectThreadMain* m_pCOFadeNowRight;
-    ControlObjectThreadMain* m_pCOFadeNowLeft;
-    ControlObjectThreadMain* m_pCOShufflePlaylist;
-    ControlObjectThreadMain* m_pCOToggleAutoDJ;
+    ControlPushButton* m_pCOSkipNext;
+    ControlPushButton* m_pCOFadeNowRight;
+    ControlPushButton* m_pCOFadeNowLeft;
+    ControlPushButton* m_pCOShufflePlaylist;
+    ControlPushButton* m_pCOToggleAutoDJ;
 
     // This is effectively our "on deck" track for AutoDJ.
     TrackPointer m_pNextTrack;
@@ -91,7 +92,7 @@ private:
     // where X is the user defined crossfade length
     // Tracks are loaded at the default cue point, so AutoDJ doesn't need to
     // do anyting extra (smstewart)
-    //void cueTrackToFadeIn(QString group);
+    void cueTrackToFadeIn(QString group);
 
 };
 
