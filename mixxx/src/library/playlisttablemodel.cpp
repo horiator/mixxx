@@ -17,7 +17,7 @@ PlaylistTableModel::~PlaylistTableModel() {
 }
 
 void PlaylistTableModel::setTableModel(int playlistId) {
-    //qDebug() << "PlaylistTableModel::setPlaylist" << playlistId;
+    //qDebug() << "PlaylistTableModel::setTableModel" << playlistId;
     if (m_iPlaylistId == playlistId) {
         qDebug() << "Already focused on playlist " << playlistId;
         return;

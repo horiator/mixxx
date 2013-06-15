@@ -124,7 +124,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
         playlistId = m_playlistDao.createPlaylist(AUTODJ_TABLE,
                                                   PlaylistDAO::PLHT_AUTO_DJ);
     }
-    m_pAutoDJTableModel->setPlaylist(playlistId);
+    m_pAutoDJTableModel->setTableModel(playlistId);
 
     transitionValue = m_pConfig->getValueString(
         ConfigKey("[Auto DJ]", "Transition")).toInt();

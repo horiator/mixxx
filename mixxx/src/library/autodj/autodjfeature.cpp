@@ -38,8 +38,7 @@ QIcon AutoDJFeature::getIcon() {
     return QIcon(":/images/library/ic_library_autodj.png");
 }
 
-void AutoDJFeature::bindWidget(WLibrarySidebar* /*sidebarWidget*/,
-                               WLibrary* libraryWidget,
+void AutoDJFeature::bindWidget(WLibrary* libraryWidget,
                                MixxxKeyboard* keyboard) {
 		m_pAutoDJ = new AutoDJ(this, m_pConfig, m_pTrackCollection);
     connect(m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)),
@@ -70,57 +69,7 @@ void AutoDJFeature::activate() {
     emit(restoreSearch(QString())); //Null String disables search box
 }
 
-void AutoDJFeature::activateChild(const QModelIndex& /*index*/) {
-}
-
-void AutoDJFeature::onRightClick(const QPoint& /*globalPos*/) {
-}
-
-void AutoDJFeature::onRightClickChild(const QPoint& /*globalPos*/,
-                                      QModelIndex /*index*/) {
-}
-
-bool AutoDJFeature::dropAccept(QList<QUrl> urls) {
-    //TODO: Filter by supported formats regex and reject anything that doesn't match.
-    TrackDAO &trackDao = m_pTrackCollection->getTrackDAO();
-
-    //If a track is dropped onto a playlist's name, but the track isn't in the library,
-    //then add the track to the library before adding it to the playlist.
-    QList<QFileInfo> files;
-    foreach (QUrl url, urls) {
-        //XXX: See the note in PlaylistFeature::dropAccept() about using QUrl::toLocalFile()
-        //     instead of toString()
-        QFileInfo file = url.toLocalFile();
-        if (SoundSourceProxy::isFilenameSupported(file.fileName())) {
-            files.append(file);
-        }
-    }
-    QList<int> trackIds = trackDao.addTracks(files, true);
-
-    int playlistId = m_playlistDao.getPlaylistIdFromName(AUTODJ_TABLE);
-    // remove tracks that could not be added
-    for (int trackId =0; trackId<trackIds.size() ; trackId++) {
-        if (trackIds.at(trackId) < 0) {
-            trackIds.removeAt(trackId--);
-        }
-    }
-    m_playlistDao.appendTracksToPlaylist(trackIds, playlistId);
-    return true;
-}
-
-bool AutoDJFeature::dropAcceptChild(const QModelIndex& /*index*/, QList<QUrl> /*url*/) {
-    return false;
-}
-
 bool AutoDJFeature::dragMoveAccept(QUrl url) {
     QFileInfo file(url.toLocalFile());
     return SoundSourceProxy::isFilenameSupported(file.fileName());
-}
-
-bool AutoDJFeature::dragMoveAcceptChild(const QModelIndex& /*index*/,
-                                        QUrl /*url*/) {
-    return false;
-}
-void AutoDJFeature::onLazyChildExpandation(const QModelIndex& /*index*/){
-    //Nothing to do because the childmodel is not of lazy nature.
 }

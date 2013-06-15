@@ -48,9 +48,6 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     // Do not set this because it disables auto-scrolling
     //m_pTrackTableView->setDragDropMode(QAbstractItemView::InternalMove);
 
-    // Disallow sorting.
-    m_pTrackTableView->disableSorting();
-
     pushButtonSkipNext->setEnabled(false);
 
     connect(spinBoxTransition, SIGNAL(valueChanged(int)),
@@ -153,7 +150,7 @@ void DlgAutoDJ::loadSelectedTrack() {
 }
 
 void DlgAutoDJ::loadSelectedTrackToGroup(QString group) {
-    m_pTrackTableView->loadSelectedTrackToGroup(group);
+    m_pTrackTableView->loadSelectedTrackToGroup(group, false);
 }
 
 void DlgAutoDJ::moveSelection(int delta) {

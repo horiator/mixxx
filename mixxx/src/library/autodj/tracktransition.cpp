@@ -134,8 +134,8 @@ void TrackTransition::calculateCue() {
     }
 
     // Setting m_iCuePoint
-    int cueOutPoint;
-    int pos;
+    int cueOutPoint = 0;
+    int pos = 0;
     int samples;
     if (m_groupA == "[Channel1]") {
        	cueOutPoint = m_pCOCueOut1->get();
