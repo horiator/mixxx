@@ -10,6 +10,7 @@
 #include "configobject.h"
 
 class TrackCollection;
+class TreeItem;
 
 class PlaylistFeature : public BasePlaylistFeature {
     Q_OBJECT
@@ -21,7 +22,7 @@ class PlaylistFeature : public BasePlaylistFeature {
     QVariant title();
     QIcon getIcon();
 
-    bool dropAcceptChild(const QModelIndex& index, QList<QUrl> urls);
+    bool dropAcceptChild(const QModelIndex& index, QList<QUrl> urls, QWidget *pSource);
     bool dragMoveAcceptChild(const QModelIndex& index, QUrl url);
 
   public slots:
@@ -32,10 +33,11 @@ class PlaylistFeature : public BasePlaylistFeature {
     void slotPlaylistTableChanged(int playlistId);
 
  protected:
-    QModelIndex constructChildModel(int selected_id);
+    void buildPlaylistList();
+    void decorateChild(TreeItem *pChild, int playlist_id);
 
   private:
-    virtual QString getRootViewHtml() const;
+    QString getRootViewHtml() const;
 };
 
 #endif /* PLAYLISTFEATURE_H */

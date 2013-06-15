@@ -1,6 +1,7 @@
 Debug
 .cproject
 .project
+.DS_Store
 osx64_build/Mixxx.app
 osx64_build/analyserbeats.o
 osx64_build/analyserbpm.o
