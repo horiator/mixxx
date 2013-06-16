@@ -72,7 +72,7 @@ private:
     PlaylistDAO& m_playlistDao;
     PlaylistTableModel* m_pAutoDJTableModel;
     // Checks for a double signal sent by keyboard press
-    double lastToggleValue;
+    double m_lastToggleValue;
     int transitionValue;
     int m_iCueRecall;
 
@@ -92,7 +92,6 @@ private:
     ControlObjectThreadMain* m_pCOTrackSamples2;
     ControlObjectThreadMain* m_pCOCrossfader;
     ControlObjectThreadMain* m_pCOToggleAutoDJThread;
-    ControlObjectThreadMain* m_pCOSkipNextThread;
     ControlObjectThreadMain* m_pCOFadeNowRightThread;
     ControlObjectThreadMain* m_pCOFadeNowLeftThread;
     ControlObjectThreadMain* m_pCOScratch1;

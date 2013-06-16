@@ -11,16 +11,19 @@
 #include "ui_dlgautodj.h"
 
 AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
-        TrackCollection* pTrackCollection) :
-    QObject(parent),
-    m_pConfig(pConfig),
-    m_pTrackCollection(pTrackCollection),
-    m_playlistDao(pTrackCollection->getPlaylistDAO()){
-
-    m_btransitionDone = false;
-    // Should eventually be changed to m_pconfig value initialization
-    m_eTransition = CUE;
-    m_eState = ADJ_DISABLED;
+        TrackCollection* pTrackCollection)
+    : QObject(parent),
+      m_pConfig(pConfig),
+      m_eState(ADJ_DISABLED),
+      m_eTransition(CUE),
+      m_btransitionDone(false),
+      m_pTrackCollection(pTrackCollection),
+      m_playlistDao(pTrackCollection->getPlaylistDAO()),
+      m_lastToggleValue(-1),
+      m_iCueRecall(0),
+      m_fadeDuration1(0),
+      m_posThreshold1 (0),
+      m_posThreshold2(0) {
 
     // Most of these COs won't be needed once TrackTransition exists
     m_pCOPlay1 = new ControlObjectThreadMain(
@@ -428,11 +431,11 @@ void AutoDJ::fadeNowLeft(double value) {
 
 void AutoDJ::toggleAutoDJ(double value) {
     // Guard against double signal sent by keyboard
-    if (value == lastToggleValue){
-        lastToggleValue = -1.0;
+    if (value == m_lastToggleValue){
+        m_lastToggleValue = -1.0;
         return;
     }
-    lastToggleValue = value;
+    m_lastToggleValue = value;
 
     bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
     bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
@@ -440,6 +443,7 @@ void AutoDJ::toggleAutoDJ(double value) {
     if (value) {  // Enable Auto DJ
         qDebug() << "Auto DJ enabled";
         m_pDlgAutoDJ->setAutoDJEnabled();
+        // TODO(DSC): Do not mess with the config file
         m_iCueRecall = m_pConfig->getValueString(
             ConfigKey("[Controls]" ,"CueRecall")).toInt();
         if (m_eTransition == CD) {
@@ -448,7 +452,7 @@ void AutoDJ::toggleAutoDJ(double value) {
         }
         if (deck1Playing && deck2Playing) {
             qDebug() << "AutoDJ waiting for one deck to stop";
-            lastToggleValue = -1.0;
+            m_lastToggleValue = -1.0;
             m_eState = ADJ_WAITING;
             return;
         }
@@ -464,7 +468,7 @@ void AutoDJ::toggleAutoDJ(double value) {
         if (!nextTrack) {
             qDebug() << "Queue is empty now";
             m_pCOToggleAutoDJThread->slotSet(0.0);
-            lastToggleValue = -1.0;
+            m_lastToggleValue = -1.0;
             return;
         }
 
@@ -673,11 +677,11 @@ void AutoDJ::deleteCueOut(double value, int channel) {
     if (channel == 1) {
         track = PlayerInfo::Instance().getTrackInfo("[Channel1]");
         pCOcuePos = m_pCOCueOutPosition1;
-    }
-    if (channel == 2) {
+    } else { // if (channel == 2) {
         track = PlayerInfo::Instance().getTrackInfo("[Channel2]");
         pCOcuePos = m_pCOCueOutPosition2;
     }
+
     if (track) {
         cuePoints = track->getCuePoints();
         QListIterator<Cue*> it(cuePoints);

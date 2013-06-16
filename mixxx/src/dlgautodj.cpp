@@ -63,6 +63,7 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
         m_pAutoDJ, SLOT(transitionValueChanged(int)));
     connect(comboBoxTransition, SIGNAL(currentIndexChanged(int)),
         m_pAutoDJ, SLOT(transitionSelect(int)));
+    // TOD
     switch(comboBoxTransition->currentIndex()) {
         case 0:
             spinBoxTransition->setEnabled(true);
