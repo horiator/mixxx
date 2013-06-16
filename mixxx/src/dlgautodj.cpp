@@ -25,7 +25,16 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
           m_pTrackTableView(
               new WTrackTableView(this, pConfig, m_pTrackCollection)),
           m_playlistDao(pTrackCollection->getPlaylistDAO()),
-          m_pAutoDJ(pAutoDJ) {
+          m_pAutoDJ(pAutoDJ),
+          m_pCOPlayPos1(NULL),
+          m_pCOPlayPos2(NULL),
+          m_pCOPlay1(NULL),
+          m_pCOPlay2(NULL),
+          m_pCOPlay1Fb(NULL),
+          m_pCOPlay2Fb(NULL),
+          m_pCORepeat1(NULL),
+          m_pCORepeat2(NULL),
+          m_pCOCrossfader(NULL) {
     setupUi(this);
 
     m_pTrackTableView->installEventFilter(pKeyboard);
@@ -158,19 +167,21 @@ void DlgAutoDJ::moveSelection(int delta) {
 }
 
 void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
+	Q_UNUSED(buttonChecked);
     m_pCOShufflePlaylist->slotSet(0.0);
 }
 
 void DlgAutoDJ::skipNext(bool buttonChecked) {
+	Q_UNUSED(buttonChecked);
     m_pCOSkipNext->slotSet(0.0);
 }
 
 void DlgAutoDJ::fadeNowRight(bool buttonChecked) {
-
+	Q_UNUSED(buttonChecked);
 }
 
 void DlgAutoDJ::fadeNowLeft(bool buttonChecked) {
-
+	Q_UNUSED(buttonChecked);
 }
 
 void DlgAutoDJ::toggleAutoDJ(bool) {
