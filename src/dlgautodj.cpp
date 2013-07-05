@@ -76,18 +76,15 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
             break;
     }
 
-    m_pCOShufflePlaylist = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[AutoDJ]", "shuffle_playlist")));
+    m_pCOShufflePlaylist = new ControlObjectThreadMain("[AutoDJ]", "shuffle_playlist");
     connect(pushButtonShuffle, SIGNAL(clicked(bool)),
         this, SLOT(shufflePlaylist(bool)));
 
-    m_pCOSkipNext = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[AutoDJ]", "skip_next")));
+    m_pCOSkipNext = new ControlObjectThreadMain("[AutoDJ]", "skip_next");
     connect(pushButtonSkipNext, SIGNAL(clicked(bool)),
         this, SLOT(skipNext(bool)));
 
-    m_pCOToggleAutoDJ = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[AutoDJ]", "toggle_autodj")));
+    m_pCOToggleAutoDJ = new ControlObjectThreadMain("[AutoDJ]", "toggle_autodj");
     connect(pushButtonAutoDJ, SIGNAL(toggled(bool)),
         this, SLOT(toggleAutoDJ(bool))); _blah;
 }

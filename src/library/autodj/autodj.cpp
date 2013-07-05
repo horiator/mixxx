@@ -26,40 +26,23 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
       m_posThreshold2(0) {
 
     // Most of these COs won't be needed once TrackTransition exists
-    m_pCOPlay1 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]","play")));
-    m_pCOPlay2 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]","play")));
-    m_pCOPlay1Fb = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]", "play")));
-    m_pCOPlay2Fb = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]", "play")));
-    m_pCORepeat1 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]", "repeat")));
-    m_pCORepeat2 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]", "repeat")));
-    m_pCOPlayPos1 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]", "playposition")));
-    m_pCOPlayPos2 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]", "playposition")));
-    m_pCOSampleRate1 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]", "track_samplerate")));
-    m_pCOSampleRate2 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]", "track_samplerate")));
-    m_pCOTrackSamples1 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]", "track_samples")));
-    m_pCOTrackSamples2 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]", "track_samples")));
-    m_pCOCrossfader = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Master]", "crossfader")));
-    m_pCOScratch1 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]", "scratch2")));
-    m_pCOScratch2 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]", "scratch2")));
-    m_pCOScratchEnable1 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel1]", "scratch2_enable")));
-    m_pCOScratchEnable2 = new ControlObjectThreadMain(
-            ControlObject::getControl(ConfigKey("[Channel2]", "scratch2_enable")));
+    m_pCOPlay1 = new ControlObjectThreadMain("[Channel1]","play");
+    m_pCOPlay2 = new ControlObjectThreadMain("[Channel2]","play");
+    m_pCOPlay1Fb = new ControlObjectThreadMain("[Channel1]", "play");
+    m_pCOPlay2Fb = new ControlObjectThreadMain("[Channel2]", "play");
+    m_pCORepeat1 = new ControlObjectThreadMain("[Channel1]", "repeat");
+    m_pCORepeat2 = new ControlObjectThreadMain("[Channel2]", "repeat");
+    m_pCOPlayPos1 = new ControlObjectThreadMain("[Channel1]", "playposition");
+    m_pCOPlayPos2 = new ControlObjectThreadMain("[Channel2]", "playposition");
+    m_pCOSampleRate1 = new ControlObjectThreadMain("[Channel1]", "track_samplerate");
+    m_pCOSampleRate2 = new ControlObjectThreadMain("[Channel2]", "track_samplerate");
+    m_pCOTrackSamples1 = new ControlObjectThreadMain("[Channel1]", "track_samples");
+    m_pCOTrackSamples2 = new ControlObjectThreadMain("[Channel2]", "track_samples");
+    m_pCOCrossfader = new ControlObjectThreadMain("[Master]", "crossfader");
+    m_pCOScratch1 = new ControlObjectThreadMain("[Channel1]", "scratch2");
+    m_pCOScratch2 = new ControlObjectThreadMain("[Channel2]", "scratch2");
+    m_pCOScratchEnable1 = new ControlObjectThreadMain("[Channel1]", "scratch2_enable");
+    m_pCOScratchEnable2 = new ControlObjectThreadMain("[Channel2]", "scratch2_enable");
 
         // Setting up ControlPushButtons
     m_pCOSkipNext = new ControlPushButton(
@@ -70,7 +53,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCOFadeNowRight = new ControlPushButton(
         ConfigKey("[AutoDJ]", "fade_now_right"));
     m_pCOFadeNowRight->setButtonMode(ControlPushButton::TOGGLE);
-    m_pCOFadeNowRightThread = new ControlObjectThreadMain(m_pCOFadeNowRight);
+    m_pCOFadeNowRightThread = new ControlObjectThreadMain(m_pCOFadeNowRight->getKey());
     connect(m_pCOFadeNowRightThread, SIGNAL(valueChanged(double)),
         this, SLOT(fadeNowRight(double)));
     m_pCOFadeNowRightThread->slotSet(0.0);
@@ -78,7 +61,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCOFadeNowLeft = new ControlPushButton(
         ConfigKey("[AutoDJ]", "fade_now_left"));
     m_pCOFadeNowLeft->setButtonMode(ControlPushButton::TOGGLE);
-    m_pCOFadeNowLeftThread = new ControlObjectThreadMain(m_pCOFadeNowLeft);
+    m_pCOFadeNowLeftThread = new ControlObjectThreadMain(m_pCOFadeNowLeft->getKey());
     connect(m_pCOFadeNowLeftThread, SIGNAL(valueChanged(double)),
         this, SLOT(fadeNowLeft(double)));
     m_pCOFadeNowLeftThread->slotSet(0.0);
@@ -93,7 +76,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCOToggleAutoDJ->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_pCOToggleAutoDJ, SIGNAL(valueChanged(double)),
         this, SLOT(toggleAutoDJ(double)));
-    m_pCOToggleAutoDJThread = new ControlObjectThreadMain(m_pCOToggleAutoDJ);
+    m_pCOToggleAutoDJThread = new ControlObjectThreadMain(m_pCOToggleAutoDJ->getKey());
 
     m_pCOSetCueOut1 = new ControlPushButton(
         ConfigKey("[AutoDJ]", "set_cue_out_1"));

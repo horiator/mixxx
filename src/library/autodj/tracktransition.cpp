@@ -15,60 +15,35 @@ TrackTransition::TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pCo
     m_bSpinBack = false;
     m_bDeckBCue = false;
 
-    m_pCOCrossfader = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Master]", "crossfader")));
+    m_pCOCrossfader = new ControlObjectThreadMain("[Master]", "crossfader");
     connect(m_pCOCrossfader, SIGNAL(valueChanged(double)),
         this, SLOT(crossfaderChange(double)));
     m_dCrossfaderStart = m_pCOCrossfader->get();
-    m_pCOPlayPos1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "playposition")));
-    m_pCOPlayPos2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "playposition")));
-    m_pCOTrackSamples1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "track_samples")));
-    m_pCOTrackSamples2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "track_samples")));
-    m_pCOPlay1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]","play")));
-    m_pCOPlay2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]","play")));
-    m_pCOCueOut1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "autodj_cue_out_position")));
-    m_pCOCueOut2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "autodj_cue_out_position")));
-    m_pCOFadeNowLeft = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[AutoDJ]", "fade_now_left")));
-    m_pCOFadeNowRight = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[AutoDJ]", "fade_now_right")));
+    m_pCOPlayPos1 = new ControlObjectThreadMain("[Channel1]", "playposition");
+    m_pCOPlayPos2 = new ControlObjectThreadMain("[Channel2]", "playposition");
+    m_pCOTrackSamples1 = new ControlObjectThreadMain("[Channel1]", "track_samples");
+    m_pCOTrackSamples2 = new ControlObjectThreadMain("[Channel2]", "track_samples");
+    m_pCOPlay1 = new ControlObjectThreadMain("[Channel1]","play");
+    m_pCOPlay2 = new ControlObjectThreadMain("[Channel2]","play");
+    m_pCOCueOut1 = new ControlObjectThreadMain("[Channel1]", "autodj_cue_out_position");
+    m_pCOCueOut2 = new ControlObjectThreadMain("[Channel2]", "autodj_cue_out_position");
+    m_pCOFadeNowLeft = new ControlObjectThreadMain("[AutoDJ]", "fade_now_left");
+    m_pCOFadeNowRight = new ControlObjectThreadMain("[AutoDJ]", "fade_now_right");
 
-    m_pScratch1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "scratch2")));
-    m_pScratch2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "scratch2")));
-    m_pScratchEnable1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "scratch2_enable")));
-    m_pScratchEnable2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "scratch2_enable")));
-    m_pCOSync1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "beatsync")));
-    m_pCOSync2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "beatsync")));
-    m_pCOSyncPhase1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "beatsync_phase")));
-    m_pCOSyncPhase2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "beatsync_phase")));
-    m_pCOSyncTempo1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "beatsync_tempo")));
-    m_pCOSyncTempo2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "beatsync_tempo")));
-    m_pCORate1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "rate")));
-    m_pCORate2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "rate")));
-    m_pCOBpm1 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel1]", "bpm")));
-    m_pCOBpm2 = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Channel2]", "bpm")));
+    m_pScratch1 = new ControlObjectThreadMain("[Channel1]", "scratch2");
+    m_pScratch2 = new ControlObjectThreadMain("[Channel2]", "scratch2");
+    m_pScratchEnable1 = new ControlObjectThreadMain("[Channel1]", "scratch2_enable");
+    m_pScratchEnable2 = new ControlObjectThreadMain("[Channel2]", "scratch2_enable");
+    m_pCOSync1 = new ControlObjectThreadMain("[Channel1]", "beatsync");
+    m_pCOSync2 = new ControlObjectThreadMain("[Channel2]", "beatsync");
+    m_pCOSyncPhase1 = new ControlObjectThreadMain("[Channel1]", "beatsync_phase");
+    m_pCOSyncPhase2 = new ControlObjectThreadMain("[Channel2]", "beatsync_phase");
+    m_pCOSyncTempo1 = new ControlObjectThreadMain("[Channel1]", "beatsync_tempo");
+    m_pCOSyncTempo2 = new ControlObjectThreadMain("[Channel2]", "beatsync_tempo");
+    m_pCORate1 = new ControlObjectThreadMain("[Channel1]", "rate");
+    m_pCORate2 = new ControlObjectThreadMain("[Channel2]", "rate");
+    m_pCOBpm1 = new ControlObjectThreadMain("[Channel1]", "bpm");
+    m_pCOBpm2 = new ControlObjectThreadMain("[Channel2]", "bpm");
     connect(m_pCOBpm1, SIGNAL(valueChanged(double)),
         this, SLOT(slotBpmChanged(double)));
     connect(m_pCOBpm2, SIGNAL(valueChanged(double)),
@@ -123,7 +98,6 @@ void TrackTransition::setGroups(QString groupA, QString groupB) {
 void TrackTransition::calculateCue() {
     if (!m_trackA) return;
     // Setting m_iEndPoint
-    int trackduration = m_trackA->getDuration();
     m_iFadeLength = m_pConfig->getValueString(
         ConfigKey("[Auto DJ]", "Transition")).toInt() *
         m_trackA->getSampleRate() * 120 / m_trackA->getBpm();
@@ -146,7 +120,6 @@ void TrackTransition::calculateCue() {
         samples = m_pCOTrackSamples2->get();
         pos = m_pCOPlayPos2->get() * samples;
     }
-    bool laterThanLoad = true;
     if (cueOutPoint > -1) {
         m_iCuePoint = cueOutPoint;
     } else {
