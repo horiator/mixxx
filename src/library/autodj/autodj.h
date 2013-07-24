@@ -68,7 +68,6 @@ private:
     };
     enum TranSelect m_eTransition;
     bool m_btransitionDone;
-    TrackCollection* m_pTrackCollection;
     PlaylistDAO& m_playlistDao;
     PlaylistTableModel* m_pAutoDJTableModel;
     // Checks for a double signal sent by keyboard press

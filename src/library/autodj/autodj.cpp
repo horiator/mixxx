@@ -17,12 +17,11 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
       m_eState(ADJ_DISABLED),
       m_eTransition(CUE),
       m_btransitionDone(false),
-      m_pTrackCollection(pTrackCollection),
       m_playlistDao(pTrackCollection->getPlaylistDAO()),
       m_lastToggleValue(-1),
       m_iCueRecall(0),
       m_fadeDuration1(0),
-      m_posThreshold1 (0),
+      m_posThreshold1(0),
       m_posThreshold2(0) {
 
     // Most of these COs won't be needed once TrackTransition exists
@@ -153,6 +152,7 @@ AutoDJ::~AutoDJ() {
     delete m_pCOSetCueOut2;
     delete m_pCODeleteCueOut1;
     delete m_pCODeleteCueOut2;
+    delete m_pAutoDJTableModel;
 }
 
 PlaylistTableModel* AutoDJ::getTableModel() {
