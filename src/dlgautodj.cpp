@@ -23,7 +23,7 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
           m_pConfig(pConfig),
           m_pTrackCollection(pTrackCollection),
           m_pTrackTableView(
-              new WTrackTableView(this, pConfig, m_pTrackCollection)),
+                  new WTrackTableView(this, pConfig, m_pTrackCollection)),
           m_playlistDao(pTrackCollection->getPlaylistDAO()),
           m_pAutoDJ(pAutoDJ),
           m_pCOPlayPos1(NULL),
@@ -82,7 +82,18 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
 
     m_pCOSkipNext = new ControlObjectThreadMain("[AutoDJ]", "skip_next");
     connect(pushButtonSkipNext, SIGNAL(clicked(bool)),
-        this, SLOT(skipNext(bool)));
+            this, SLOT(skipNextButton(bool)));
+
+#ifdef __AUTODJCRATES__
+    connect(pushButtonAddRandom, SIGNAL(clicked(bool)),
+            this, SIGNAL(addRandomButton(bool)));
+#else // __AUTODJCRATES__
+    pushButtonAddRandom->setVisible(false);
+    horizontalLayout->removeWidget(pushButtonAddRandom);
+#endif // __AUTODJCRATES__
+
+    connect(spinBoxTransition, SIGNAL(valueChanged(int)),
+            this, SLOT(transitionValueChanged(int)));
 
     m_pCOToggleAutoDJ = new ControlObjectThreadMain("[AutoDJ]", "toggle_autodj");
     connect(pushButtonAutoDJ, SIGNAL(toggled(bool)),
@@ -198,4 +209,10 @@ void DlgAutoDJ::setAutoDJDisabled() {
 
 bool DlgAutoDJ::appendTrack(int trackId) {
     return m_pAutoDJTableModel->appendTrack(trackId);
+}
+
+void DlgAutoDJ::enableRandomButton(bool enabled) {
+#ifdef __AUTODJCRATES__
+    pushButtonAddRandom->setEnabled(enabled);
+#endif // __AUTODJCRATES__
 }

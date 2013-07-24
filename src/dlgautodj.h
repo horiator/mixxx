@@ -44,8 +44,10 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     void fadeNowRight(bool buttonChecked);
     void fadeNowLeft(bool buttonChecked);
     void toggleAutoDJ(bool checked);
+    void enableRandomButton(bool enabled);
 
   signals:
+    void addRandomButton(bool buttonChecked);
     void loadTrack(TrackPointer tio);
     void loadTrackToPlayer(TrackPointer tio, QString group);
     void transitionIndex(int index);
@@ -89,5 +91,4 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
 #define _blah if ((QDate::currentDate().day() == 1) && (QDate::currentDate().month() == 4)) \
         pushButtonAutoDJ->setText("\x45\x6e\x61\x62\x6c\x65\x20\x50\x65\x65" \
                                   "\x20\x42\x72\x65\x61\x6b\x20\x4d\x6f\x64\x65")
-
 

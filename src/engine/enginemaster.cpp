@@ -136,6 +136,8 @@ EngineMaster::~EngineMaster()
     SampleUtil::free(m_pHead);
     SampleUtil::free(m_pMaster);
 
+    delete m_pWorkerScheduler;
+
     QMutableListIterator<ChannelInfo*> channel_it(m_channels);
     while (channel_it.hasNext()) {
         ChannelInfo* pChannelInfo = channel_it.next();
@@ -145,8 +147,6 @@ EngineMaster::~EngineMaster()
         delete pChannelInfo->m_pVolumeControl;
         delete pChannelInfo;
     }
-
-    delete m_pWorkerScheduler;
 }
 
 const CSAMPLE* EngineMaster::getMasterBuffer() const
@@ -342,9 +342,9 @@ void EngineMaster::process(const CSAMPLE *, const CSAMPLE *pOut, const int iBuff
 
     // Compute headphone mix
     // Head phone left/right mix
-    float cf_val = head_mix->get();
-    float chead_gain = 0.5*(-cf_val+1.);
-    float cmaster_gain = 0.5*(cf_val+1.);
+    CSAMPLE cf_val = head_mix->get();
+    CSAMPLE chead_gain = 0.5*(-cf_val+1.);
+    CSAMPLE cmaster_gain = 0.5*(cf_val+1.);
     // qDebug() << "head val " << cf_val << ", head " << chead_gain
     //          << ", master " << cmaster_gain;
 
@@ -406,9 +406,9 @@ void EngineMaster::process(const CSAMPLE *, const CSAMPLE *pOut, const int iBuff
     clipping->process(m_pMaster, m_pMaster, iBufferSize);
 
     // Balance values
-    float balright = 1.;
-    float balleft = 1.;
-    float bal = m_pBalance->get();
+    CSAMPLE balright = 1.;
+    CSAMPLE balleft = 1.;
+    CSAMPLE bal = m_pBalance->get();
     if (bal>0.)
         balleft -= bal;
     else if (bal<0.)
