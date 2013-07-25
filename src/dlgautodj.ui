@@ -74,6 +74,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="pushButtonFadeNow">
+       <property name="toolTip">
+        <string>Trigger the transition to the next track.</string>
+       </property>
+       <property name="text">
+        <string>Fade Now</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QComboBox" name="comboBoxTransitionType">
        <item>
         <property name="text">

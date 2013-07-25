@@ -38,6 +38,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCOTrackSamples1 = new ControlObjectThreadMain("[Channel1]", "track_samples");
     m_pCOTrackSamples2 = new ControlObjectThreadMain("[Channel2]", "track_samples");
     m_pCOCrossfader = new ControlObjectThreadMain("[Master]", "crossfader");
+    m_pCOCrossfaderReverse = new ControlObjectThreadMain("[Mixer Profile]", "xFaderReverse");
     m_pCOScratch1 = new ControlObjectThreadMain("[Channel1]", "scratch2");
     m_pCOScratch2 = new ControlObjectThreadMain("[Channel2]", "scratch2");
     m_pCOScratchEnable1 = new ControlObjectThreadMain("[Channel1]", "scratch2_enable");
@@ -49,57 +50,64 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     connect(m_pCOSkipNext, SIGNAL(valueChanged(double)),
         this, SLOT(skipNext(double)));
 
+    m_pCOFadeNow = new ControlPushButton(
+            ConfigKey("[AutoDJ]", "fade_now"));
+    m_pCOFadeNowThread = new ControlObjectThreadMain(m_pCOFadeNow->getKey());
+    connect(m_pCOFadeNowThread, SIGNAL(valueChanged(double)),
+            this, SLOT(fadeNow(double)));
+    m_pCOFadeNowThread->slotSet(0.0);
+
     m_pCOFadeNowRight = new ControlPushButton(
-        ConfigKey("[AutoDJ]", "fade_now_right"));
+            ConfigKey("[AutoDJ]", "fade_now_right"));
     m_pCOFadeNowRight->setButtonMode(ControlPushButton::TOGGLE);
     m_pCOFadeNowRightThread = new ControlObjectThreadMain(m_pCOFadeNowRight->getKey());
     connect(m_pCOFadeNowRightThread, SIGNAL(valueChanged(double)),
-        this, SLOT(fadeNowRight(double)));
+            this, SLOT(fadeNowRight(double)));
     m_pCOFadeNowRightThread->slotSet(0.0);
 
     m_pCOFadeNowLeft = new ControlPushButton(
-        ConfigKey("[AutoDJ]", "fade_now_left"));
+            ConfigKey("[AutoDJ]", "fade_now_left"));
     m_pCOFadeNowLeft->setButtonMode(ControlPushButton::TOGGLE);
     m_pCOFadeNowLeftThread = new ControlObjectThreadMain(m_pCOFadeNowLeft->getKey());
     connect(m_pCOFadeNowLeftThread, SIGNAL(valueChanged(double)),
-        this, SLOT(fadeNowLeft(double)));
+            this, SLOT(fadeNowLeft(double)));
     m_pCOFadeNowLeftThread->slotSet(0.0);
 
     m_pCOShufflePlaylist = new ControlPushButton(
-        ConfigKey("[AutoDJ]", "shuffle_playlist"));
+            ConfigKey("[AutoDJ]", "shuffle_playlist"));
     connect(m_pCOShufflePlaylist, SIGNAL(valueChanged(double)),
-        this, SLOT(shufflePlaylist(double)));
+            this, SLOT(shufflePlaylist(double)));
 
     m_pCOToggleAutoDJ = new ControlPushButton(
-        ConfigKey("[AutoDJ]", "toggle_autodj"));
+            ConfigKey("[AutoDJ]", "toggle_autodj"));
     m_pCOToggleAutoDJ->setButtonMode(ControlPushButton::TOGGLE);
     connect(m_pCOToggleAutoDJ, SIGNAL(valueChanged(double)),
-        this, SLOT(toggleAutoDJ(double)));
+            this, SLOT(toggleAutoDJ(double)));
     m_pCOToggleAutoDJThread = new ControlObjectThreadMain(m_pCOToggleAutoDJ->getKey());
 
     m_pCOSetCueOut1 = new ControlPushButton(
-        ConfigKey("[AutoDJ]", "set_cue_out_1"));
+            ConfigKey("[AutoDJ]", "set_cue_out_1"));
     m_pCOSetCueOut1->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCOSetCueOut1, SIGNAL(valueChanged(double)),
-    	this, SLOT(setCueOut1(double)));
+            this, SLOT(setCueOut1(double)));
 
     m_pCOSetCueOut2 = new ControlPushButton(
-        ConfigKey("[AutoDJ]", "set_cue_out_2"));
+            ConfigKey("[AutoDJ]", "set_cue_out_2"));
     m_pCOSetCueOut2->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCOSetCueOut2, SIGNAL(valueChanged(double)),
-        this, SLOT(setCueOut2(double)));
+            this, SLOT(setCueOut2(double)));
 
     m_pCODeleteCueOut1 = new ControlPushButton(
-        ConfigKey("[AutoDJ]", "delete_cue_out_1"));
+            ConfigKey("[AutoDJ]", "delete_cue_out_1"));
     m_pCODeleteCueOut1->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCODeleteCueOut1, SIGNAL(valueChanged(double)),
-        this, SLOT(deleteCueOut1(double)));
+            this, SLOT(deleteCueOut1(double)));
 
     m_pCODeleteCueOut2 = new ControlPushButton(
-        ConfigKey("[AutoDJ]", "delete_cue_out_2"));
+            ConfigKey("[AutoDJ]", "delete_cue_out_2"));
     m_pCODeleteCueOut2->setButtonMode(ControlPushButton::PUSH);
     connect(m_pCODeleteCueOut2, SIGNAL(valueChanged(double)),
-        this, SLOT(deleteCueOut2(double)));
+            this, SLOT(deleteCueOut2(double)));
 
     // Setting up Playlist
     m_pAutoDJTableModel = new PlaylistTableModel(this, pTrackCollection,
@@ -112,23 +120,23 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pAutoDJTableModel->setTableModel(playlistId);
 
     transitionValue = m_pConfig->getValueString(
-        ConfigKey("[Auto DJ]", "Transition")).toInt();
+            ConfigKey("[Auto DJ]", "Transition")).toInt();
 
     // Setting up ControlObjects for the GUI
     m_pCOCueOutPosition1 = ControlObject::getControl(
-        ConfigKey("[Channel1]", "autodj_cue_out_position"));
+            ConfigKey("[Channel1]", "autodj_cue_out_position"));
 
     m_pCOCueOutPosition2 = ControlObject::getControl(
-        ConfigKey("[Channel2]", "autodj_cue_out_position"));
+            ConfigKey("[Channel2]", "autodj_cue_out_position"));
 
     connect(m_pCOPlayPos1, SIGNAL(valueChanged(double)),
-        this, SLOT(player1PositionChanged(double)));
+            this, SLOT(player1PositionChanged(double)));
     connect(m_pCOPlayPos2, SIGNAL(valueChanged(double)),
-        this, SLOT(player2PositionChanged(double)));
+            this, SLOT(player2PositionChanged(double)));
 
     m_pTrackTransition = new TrackTransition(this, m_pConfig);
     connect(m_pTrackTransition, SIGNAL(transitionDone()),
-        this, SLOT(setTransitionDone()));
+            this, SLOT(setTransitionDone()));
 }
 
 AutoDJ::~AutoDJ() {
@@ -161,20 +169,20 @@ PlaylistTableModel* AutoDJ::getTableModel() {
 
 void AutoDJ::player1PositionChanged(double value) {
     if (m_eState == ADJ_DISABLED) {
-        //nothing to do
+        // nothing to do
         return;
     }
-    if (m_eState == ADJ_FADENOW) {
+    if (m_eState == ADJ_FADENOWRIGHT || m_eState == ADJ_FADENOWLEFT) {
         switch (m_eTransition) {
-    	      case CD:
-    	          m_pTrackTransition->cdTransition(value);
-    	   		    break;
-    	      case CUE:
-    	   		    m_pTrackTransition->cueTransition(value);
-    	   		    break;
-    	      case BEAT:
-    	   		    m_pTrackTransition->beatTransition(value);
-        	      break;
+        case CD:
+            m_pTrackTransition->cdTransition(value);
+            break;
+        case CUE:
+            m_pTrackTransition->cueTransition(value);
+            break;
+        case BEAT:
+            m_pTrackTransition->beatTransition(value);
+            break;
         }
         return;
     }
@@ -188,7 +196,7 @@ void AutoDJ::player1PositionChanged(double value) {
     if (m_eState == ADJ_ENABLE_P1LOADED) {
         // Auto DJ Start
         if (!deck1Playing && !deck2Playing) {
-            m_pCOCrossfader->slotSet(-1.0f);  // Move crossfader to the left!
+            setCrossfader(-1.0f);  // Move crossfader to the left!
             // Play the track in player 1
             m_pCOPlay1->slotSet(1.0f);
             removePlayingTrackFromQueue("[Channel1]");
@@ -228,6 +236,25 @@ void AutoDJ::player1PositionChanged(double value) {
     }
     // Fading
     switch (m_eTransition) {
+    case CUE:
+        m_pTrackTransition->cueTransition(value);
+        break;
+    case BEAT:
+        m_pTrackTransition->beatTransition(value);
+        break;
+    case CD:
+        m_pTrackTransition->cdTransition(value);
+        break;
+    }
+}
+
+void AutoDJ::player2PositionChanged(double value) {
+    if (m_eState == ADJ_DISABLED) {
+        //nothing to do
+        return;
+    }
+    if (m_eState == ADJ_FADENOWRIGHT || m_eState == ADJ_FADENOWLEFT) {
+        switch (m_eTransition) {
         case CUE:
             m_pTrackTransition->cueTransition(value);
             break;
@@ -237,25 +264,6 @@ void AutoDJ::player1PositionChanged(double value) {
         case CD:
             m_pTrackTransition->cdTransition(value);
             break;
-    }
-}
-
-void AutoDJ::player2PositionChanged(double value) {
-    if (m_eState == ADJ_DISABLED) {
-        //nothing to do
-        return;
-    }
-    if (m_eState == ADJ_FADENOW) {
-        switch (m_eTransition) {
-            case CUE:
-    	          m_pTrackTransition->cueTransition(value);
-    	          break;
-    	      case BEAT:
-    	          m_pTrackTransition->beatTransition(value);
-    	          break;
-            case CD:
-                m_pTrackTransition->cdTransition(value);
-                break;
         }
         return;
     }
@@ -287,16 +295,16 @@ void AutoDJ::player2PositionChanged(double value) {
         }
     }
     // Fading
-    switch(m_eTransition) {
-        case CUE:
-            m_pTrackTransition->cueTransition(value);
-            break;
-        case BEAT:
-            m_pTrackTransition->beatTransition(value);
-            break;
-        case CD:
-            m_pTrackTransition->cdTransition(value);
-            break;
+    switch (m_eTransition) {
+    case CUE:
+        m_pTrackTransition->cueTransition(value);
+        break;
+    case BEAT:
+        m_pTrackTransition->beatTransition(value);
+        break;
+    case CD:
+        m_pTrackTransition->cdTransition(value);
+        break;
     }
 }
 
@@ -324,7 +332,7 @@ void AutoDJ::transitionValueChanged(int value) {
         }
     }
     m_pConfig->set(ConfigKey("[Auto DJ]", "Transition"),
-        ConfigValue(value));
+            ConfigValue(value));
     transitionValue = value;
     m_pTrackTransition->calculateCue();
 }
@@ -354,13 +362,43 @@ void AutoDJ::skipNext(double value) {
     /* Need a calculate cue call here? */
 }
 
+void AutoDJ::fadeNow(double value) {
+    if (value <= 0.0) {
+        return;
+    }
+    if (m_eState == ADJ_IDLE) {
+        double crossfader = getCrossfader();
+        if (crossfader <= 0.3f && m_pCOPlay1Fb->get() == 1.0f) {
+            m_eState = ADJ_FADENOWLEFT;
+            m_pTrackTransition->fadeNowLeft();
+            m_pCOFadeNowLeft->set(1.0);
+            /*
+            m_posThreshold1 = m_pCOPlayPos1->get() -
+                    ((crossfader + 1.0f) / 2 * (m_fadeDuration1));
+            // Repeat is disabled by FadeNow but disables auto Fade
+            m_pCORepeat1->slotSet(0.0f);
+            */
+        } else if (crossfader >= -0.3f && m_pCOPlay2Fb->get() == 1.0f) {
+            m_eState = ADJ_FADENOWRIGHT;
+            m_pTrackTransition->fadeNowRight();
+            m_pCOFadeNowRight->set(1.0);
+            /*
+            m_posThreshold2 = m_pCOPlayPos2->get() -
+                    ((1.0f - crossfader) / 2 * (m_fadeDuration2));
+            // Repeat is disabled by FadeNow but disables auto Fade
+            m_pCORepeat2->slotSet(0.0f);
+            */
+        }
+    }
+}
+
 void AutoDJ::fadeNowRight(double value) {
     if (value == 0) {
         if (m_pCOFadeNowLeft->get() == 1) {
             return;
         }
-	      if (m_eState == ADJ_FADENOW) {
-		        m_eState = ADJ_DISABLED;
+        if (m_eState == ADJ_FADENOWRIGHT || m_eState == ADJ_FADENOWLEFT) {
+            m_eState = ADJ_DISABLED;
             m_pTrackTransition->fadeNowStopped();
             return;
         } else {
@@ -374,7 +412,7 @@ void AutoDJ::fadeNowRight(double value) {
     if (m_pCOPlay1->get() == 1) {
         m_pTrackTransition->fadeNowRight();
         if (m_pCOToggleAutoDJ->get() == 0) {
-            m_eState = ADJ_FADENOW;
+            m_eState = ADJ_FADENOWRIGHT;
         } else {
             m_pCOFadeNowRightThread->slotSet(0.0);
         }
@@ -388,7 +426,7 @@ void AutoDJ::fadeNowLeft(double value) {
         if (m_pCOFadeNowRight->get() == 1) {
             return;
         }
-        if (m_eState == ADJ_FADENOW) {
+        if (m_eState == ADJ_FADENOWRIGHT || m_eState == ADJ_FADENOWLEFT) {
             m_eState = ADJ_DISABLED;
             m_pTrackTransition->fadeNowStopped();
             return;
@@ -403,7 +441,7 @@ void AutoDJ::fadeNowLeft(double value) {
     if (m_pCOPlay2->get() == 1) {
         m_pTrackTransition->fadeNowLeft();
         if (m_pCOToggleAutoDJ->get() == 0) {
-            m_eState = ADJ_FADENOW;
+            m_eState = ADJ_FADENOWLEFT;
         } else {
             m_pCOFadeNowLeftThread->slotSet(0.0);
         }
@@ -702,5 +740,19 @@ void AutoDJ::deleteCueOut2(double value) {
 
 bool AutoDJ::getEnabled() const {
     return (m_eState != ADJ_DISABLED);
+}
+
+double AutoDJ::getCrossfader() const {
+    if (m_pCOCrossfaderReverse->get() > 0) {
+        return m_pCOCrossfader->get() * -1.0;
+    }
+    return m_pCOCrossfader->get();
+}
+
+void AutoDJ::setCrossfader(double value) {
+    if (m_pCOCrossfaderReverse->get() > 0) {
+        value *= -1.0;
+    }
+    m_pCOCrossfader->slotSet(value);
 }
 

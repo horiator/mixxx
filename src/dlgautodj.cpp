@@ -87,6 +87,11 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     connect(pushButtonSkipNext, SIGNAL(clicked(bool)),
             this, SLOT(skipNextButton(bool)));
 
+    m_pCOTFadeNow = new ControlObjectThreadMain("[AutoDJ]", "fade_now");
+    connect(pushButtonFadeNow, SIGNAL(clicked(bool)),
+            this, SLOT(fadeNowButton(bool)));
+
+
 #ifdef __AUTODJCRATES__
     connect(pushButtonAddRandom, SIGNAL(clicked(bool)),
             this, SIGNAL(addRandomButton(bool)));
@@ -106,6 +111,7 @@ DlgAutoDJ::~DlgAutoDJ() {
     delete m_pCOShufflePlaylist;
     delete m_pCOToggleAutoDJ;
     delete m_pTrackTableView;
+    delete m_pCOTFadeNow;
 }
 
 void DlgAutoDJ::onShow() {
@@ -182,6 +188,12 @@ void DlgAutoDJ::skipNextButton(bool buttonChecked) {
     m_pCOSkipNext->slotSet(0.0);
 }
 
+void DlgAutoDJ::fadeNowButton(bool buttonChecked) {
+    Q_UNUSED(buttonChecked);
+    // Activate regardless of button being checked
+    m_pCOTFadeNow->slotSet(1.0);
+}
+
 void DlgAutoDJ::fadeNowRight(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
 }
@@ -198,11 +210,13 @@ void DlgAutoDJ::toggleAutoDJButton(bool) {
 void DlgAutoDJ::setAutoDJEnabled() {
     pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
     pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
+    pushButtonFadeNow->setEnabled(true);
 }
 
 void DlgAutoDJ::setAutoDJDisabled() {
     pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
     pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
+    pushButtonFadeNow->setEnabled(false);
 }
 
 bool DlgAutoDJ::appendTrack(int trackId) {

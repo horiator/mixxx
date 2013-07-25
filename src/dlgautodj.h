@@ -41,6 +41,7 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
   public slots:
     void shufflePlaylistButton(bool buttonChecked);
     void skipNextButton(bool buttonChecked);
+    void fadeNowButton(bool buttonChecked);
     void fadeNowRight(bool buttonChecked);
     void fadeNowLeft(bool buttonChecked);
     void toggleAutoDJButton(bool checked);
@@ -70,9 +71,10 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     ControlObjectThreadMain* m_pCORepeat1;
     ControlObjectThreadMain* m_pCORepeat2;
     ControlObjectThreadMain* m_pCOCrossfader;
+    ControlObjectThreadMain* m_pCOTFadeNow;
 };
 
-#endif //DLGTRIAGE_H
+#endif //DLGAUTODJ_H
 
 
 
@@ -89,4 +91,5 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
 #define _blah if ((QDate::currentDate().day() == 1) && (QDate::currentDate().month() == 4)) \
         pushButtonAutoDJ->setText("\x45\x6e\x61\x62\x6c\x65\x20\x50\x65\x65" \
                                   "\x20\x42\x72\x65\x61\x6b\x20\x4d\x6f\x64\x65")
+
 

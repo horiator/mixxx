@@ -35,6 +35,7 @@ public slots:
     void transitionValueChanged(int value);
     void shufflePlaylist(double value);
     void skipNext(double value);
+    void fadeNow(double value);
     void fadeNowRight(double value);
     void fadeNowLeft(double value);
     void toggleAutoDJ(double value);
@@ -59,7 +60,8 @@ private:
         ADJ_ENABLE_P1PLAYING,
         ADJ_DISABLED,
         ADJ_WAITING,
-        ADJ_FADENOW
+        ADJ_FADENOWRIGHT,
+        ADJ_FADENOWLEFT
     };
     enum ADJstates m_eState;
     enum TranSelect {
@@ -67,6 +69,14 @@ private:
         BEAT,
         CD
     };
+
+    // Gets or sets the crossfader position while normalizing it so that -1 is
+    // all the way mixed to the left side and 1 is all the way mixed to the
+    // right side. (prevents AutoDJ logic from having to check for hamster mode
+    // every time)
+    double getCrossfader() const;
+    void setCrossfader(double value);
+
     enum TranSelect m_eTransition;
     bool m_btransitionDone;
     PlaylistDAO& m_playlistDao;
@@ -91,7 +101,9 @@ private:
     ControlObjectThreadMain* m_pCOTrackSamples1;
     ControlObjectThreadMain* m_pCOTrackSamples2;
     ControlObjectThreadMain* m_pCOCrossfader;
+    ControlObjectThreadMain* m_pCOCrossfaderReverse;
     ControlObjectThreadMain* m_pCOToggleAutoDJThread;
+    ControlObjectThreadMain* m_pCOFadeNowThread;
     ControlObjectThreadMain* m_pCOFadeNowRightThread;
     ControlObjectThreadMain* m_pCOFadeNowLeftThread;
     ControlObjectThreadMain* m_pCOScratch1;
@@ -99,6 +111,7 @@ private:
     ControlObjectThreadMain* m_pCOScratchEnable1;
     ControlObjectThreadMain* m_pCOScratchEnable2;
     ControlPushButton* m_pCOSkipNext;
+    ControlPushButton* m_pCOFadeNow;
     ControlPushButton* m_pCOFadeNowRight;
     ControlPushButton* m_pCOFadeNowLeft;
     ControlPushButton* m_pCOShufflePlaylist;
