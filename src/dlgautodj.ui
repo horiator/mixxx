@@ -74,7 +74,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="comboBoxTransition">
+      <widget class="QComboBox" name="comboBoxTransitionType">
        <item>
         <property name="text">
          <string>Cue Transition</string>
@@ -93,7 +93,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="spinBoxTransition">
+      <widget class="QSpinBox" name="spinBoxTransitionBeats">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -120,7 +120,7 @@
         <string comment="&quot;sec.&quot; as in seconds">Seconds</string>
        </property>
        <property name="text">
-        <string>beats</string>
+        <string>Beats</string>
        </property>
       </widget>
      </item>

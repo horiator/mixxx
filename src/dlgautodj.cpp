@@ -20,10 +20,8 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
                      MixxxKeyboard* pKeyboard, AutoDJ* pAutoDJ)
         : QWidget(parent),
           Ui::DlgAutoDJ(),
-          m_pConfig(pConfig),
-          m_pTrackCollection(pTrackCollection),
           m_pTrackTableView(
-                  new WTrackTableView(this, pConfig, m_pTrackCollection)),
+                  new WTrackTableView(this, pConfig, pTrackCollection)),
           m_playlistDao(pTrackCollection->getPlaylistDAO()),
           m_pAutoDJ(pAutoDJ),
           m_pCOPlayPos1(NULL),
@@ -39,12 +37,12 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
 
     m_pTrackTableView->installEventFilter(pKeyboard);
     connect(m_pTrackTableView, SIGNAL(loadTrack(TrackPointer)),
-        m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)));
+            m_pAutoDJ, SIGNAL(loadTrack(TrackPointer)));
     connect(m_pTrackTableView, SIGNAL(loadTrackToPlayer(TrackPointer, QString)),
-        m_pAutoDJ, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
+            m_pAutoDJ, SIGNAL(loadTrackToPlayer(TrackPointer, QString)));
 
     QBoxLayout* box = dynamic_cast<QBoxLayout*>(layout());
-    Q_ASSERT(box); //Assumes the form layout is a QVBox/QHBoxLayout!
+    Q_ASSERT(box); // Assumes the form layout is a QVBox/QHBoxLayout!
     box->removeWidget(m_pTrackTablePlaceholder);
     m_pTrackTablePlaceholder->hide();
     box->insertWidget(1, m_pTrackTableView);
@@ -52,33 +50,38 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     m_pAutoDJTableModel = m_pAutoDJ->getTableModel();
     m_pTrackTableView->loadTrackModel(m_pAutoDJTableModel);
 
-    // Override some playlist-view properties:
-
     // Do not set this because it disables auto-scrolling
     //m_pTrackTableView->setDragDropMode(QAbstractItemView::InternalMove);
 
-    pushButtonSkipNext->setEnabled(false);
-
-    connect(spinBoxTransition, SIGNAL(valueChanged(int)),
-        m_pAutoDJ, SLOT(transitionValueChanged(int)));
-    connect(comboBoxTransition, SIGNAL(currentIndexChanged(int)),
-        m_pAutoDJ, SLOT(transitionSelect(int)));
-    // TOD
-    switch(comboBoxTransition->currentIndex()) {
-        case 0:
-            spinBoxTransition->setEnabled(true);
-            break;
-        case 1:
-            spinBoxTransition->setEnabled(true);
-            break;
-        case 2:
-            spinBoxTransition->setEnabled(false);
-            break;
+    bool autoDjEnabled = m_pAutoDJ->getEnabled();
+    pushButtonAutoDJ->setChecked(autoDjEnabled);
+    if (autoDjEnabled) {
+        setAutoDJEnabled();
+    } else {
+        setAutoDJDisabled();
     }
+
+    // TODO(DSC) populate from AutoDJ class
+    switch (comboBoxTransitionType->currentIndex()) {
+    case 0:
+        spinBoxTransitionBeats->setEnabled(true);
+        break;
+    case 1:
+        spinBoxTransitionBeats->setEnabled(true);
+        break;
+    case 2:
+        spinBoxTransitionBeats->setEnabled(false);
+        break;
+    }
+
+    connect(spinBoxTransitionBeats, SIGNAL(valueChanged(int)),
+            m_pAutoDJ, SLOT(transitionValueChanged(int)));
+    connect(comboBoxTransitionType, SIGNAL(currentIndexChanged(int)),
+            m_pAutoDJ, SLOT(transitionSelect(int)));
 
     m_pCOShufflePlaylist = new ControlObjectThreadMain("[AutoDJ]", "shuffle_playlist");
     connect(pushButtonShuffle, SIGNAL(clicked(bool)),
-        this, SLOT(shufflePlaylist(bool)));
+            this, SLOT(shufflePlaylistButton(bool)));
 
     m_pCOSkipNext = new ControlObjectThreadMain("[AutoDJ]", "skip_next");
     connect(pushButtonSkipNext, SIGNAL(clicked(bool)),
@@ -92,12 +95,9 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     horizontalLayout->removeWidget(pushButtonAddRandom);
 #endif // __AUTODJCRATES__
 
-    connect(spinBoxTransition, SIGNAL(valueChanged(int)),
-            this, SLOT(transitionValueChanged(int)));
-
     m_pCOToggleAutoDJ = new ControlObjectThreadMain("[AutoDJ]", "toggle_autodj");
     connect(pushButtonAutoDJ, SIGNAL(toggled(bool)),
-        this, SLOT(toggleAutoDJ(bool))); _blah;
+            this, SLOT(toggleAutoDJButton(bool))); _blah;
 }
 
 DlgAutoDJ::~DlgAutoDJ() {
@@ -172,12 +172,12 @@ void DlgAutoDJ::moveSelection(int delta) {
     m_pTrackTableView->moveSelection(delta);
 }
 
-void DlgAutoDJ::shufflePlaylist(bool buttonChecked) {
+void DlgAutoDJ::shufflePlaylistButton(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
     m_pCOShufflePlaylist->slotSet(0.0);
 }
 
-void DlgAutoDJ::skipNext(bool buttonChecked) {
+void DlgAutoDJ::skipNextButton(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
     m_pCOSkipNext->slotSet(0.0);
 }
@@ -190,7 +190,7 @@ void DlgAutoDJ::fadeNowLeft(bool buttonChecked) {
 	Q_UNUSED(buttonChecked);
 }
 
-void DlgAutoDJ::toggleAutoDJ(bool) {
+void DlgAutoDJ::toggleAutoDJButton(bool) {
     qDebug() << "toggle pushed";
     m_pCOToggleAutoDJ->slotSet(!m_pCOToggleAutoDJ->get());
 }
@@ -198,13 +198,11 @@ void DlgAutoDJ::toggleAutoDJ(bool) {
 void DlgAutoDJ::setAutoDJEnabled() {
     pushButtonAutoDJ->setToolTip(tr("Disable Auto DJ"));
     pushButtonAutoDJ->setText(tr("Disable Auto DJ"));
-    pushButtonSkipNext->setEnabled(true);
 }
 
 void DlgAutoDJ::setAutoDJDisabled() {
     pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
     pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
-    pushButtonSkipNext->setEnabled(false);
 }
 
 bool DlgAutoDJ::appendTrack(int trackId) {

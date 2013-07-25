@@ -428,10 +428,10 @@ void AutoDJ::toggleAutoDJ(double value) {
         m_pDlgAutoDJ->setAutoDJEnabled();
         // TODO(DSC): Do not mess with the config file
         m_iCueRecall = m_pConfig->getValueString(
-            ConfigKey("[Controls]" ,"CueRecall")).toInt();
+                ConfigKey("[Controls]" ,"CueRecall")).toInt();
         if (m_eTransition == CD) {
             m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
-                ConfigValue(1));
+                    ConfigValue(1));
         }
         if (deck1Playing && deck2Playing) {
             qDebug() << "AutoDJ waiting for one deck to stop";
@@ -578,10 +578,10 @@ void AutoDJ::setDlgAutoDJ(DlgAutoDJ* pDlgAutoDJ) {
         ConfigKey("[Auto DJ]", "Transition"));
     if (str_autoDjTransition.isEmpty()) {
         // Set 10 as the default
-        m_pDlgAutoDJ->spinBoxTransition->setValue(10);
+        m_pDlgAutoDJ->spinBoxTransitionBeats->setValue(10);
     } else {
         // Set the value that was set by the user
-        m_pDlgAutoDJ->spinBoxTransition->setValue(str_autoDjTransition.toInt());
+        m_pDlgAutoDJ->spinBoxTransitionBeats->setValue(str_autoDjTransition.toInt());
     }
 }
 
@@ -595,25 +595,22 @@ void AutoDJ::transitionSelect(int index) {
     case 0:
         m_eTransition = CUE;
         qDebug() << "Transition changed to CUE";
-        m_pDlgAutoDJ->spinBoxTransition->setEnabled(true);
-        m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
-            ConfigValue(0));
+        m_pDlgAutoDJ->spinBoxTransitionBeats->setEnabled(true);
+        m_pConfig->set(ConfigKey("[Controls]", "CueRecall"), ConfigValue(0));
         m_pTrackTransition->calculateCue();
         break;
     case 1:
         m_eTransition = BEAT;
         qDebug() << "Transition changed to BEAT";
-        m_pDlgAutoDJ->spinBoxTransition->setEnabled(true);
-        m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
-            ConfigValue(0));
+        m_pDlgAutoDJ->spinBoxTransitionBeats->setEnabled(true);
+        m_pConfig->set(ConfigKey("[Controls]", "CueRecall"), ConfigValue(0));
         m_pTrackTransition->calculateCue();
         break;
     case 2:
         m_eTransition = CD;
         qDebug() << "Transition changed to CD";
-        m_pDlgAutoDJ->spinBoxTransition->setEnabled(false);
-        m_pConfig->set(ConfigKey("[Controls]", "CueRecall"),
-            ConfigValue(1));
+        m_pDlgAutoDJ->spinBoxTransitionBeats->setEnabled(false);
+        m_pConfig->set(ConfigKey("[Controls]", "CueRecall"), ConfigValue(1));
         break;
     }
 }
@@ -702,3 +699,8 @@ void AutoDJ::deleteCueOut1(double value) {
 void AutoDJ::deleteCueOut2(double value) {
     deleteCueOut(value, 2);
 }
+
+bool AutoDJ::getEnabled() const {
+    return (m_eState != ADJ_DISABLED);
+}
+

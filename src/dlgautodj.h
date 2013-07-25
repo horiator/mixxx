@@ -39,11 +39,11 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     void setAutoDJDisabled();
 
   public slots:
-    void shufflePlaylist(bool buttonChecked);
-    void skipNext(bool buttonChecked);
+    void shufflePlaylistButton(bool buttonChecked);
+    void skipNextButton(bool buttonChecked);
     void fadeNowRight(bool buttonChecked);
     void fadeNowLeft(bool buttonChecked);
-    void toggleAutoDJ(bool checked);
+    void toggleAutoDJButton(bool checked);
     void enableRandomButton(bool enabled);
 
   signals:
@@ -53,8 +53,6 @@ class DlgAutoDJ : public QWidget, public Ui::DlgAutoDJ, public virtual LibraryVi
     void transitionIndex(int index);
 
   private:
-    ConfigObject<ConfigValue>* m_pConfig;
-    TrackCollection* m_pTrackCollection;
     WTrackTableView* m_pTrackTableView;
     PlaylistTableModel* m_pAutoDJTableModel;
     PlaylistDAO& m_playlistDao;

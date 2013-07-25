@@ -24,6 +24,7 @@ public:
     ~AutoDJ();
     PlaylistTableModel* getTableModel();
     void setDlgAutoDJ(DlgAutoDJ* pDlgAutoDJ);
+    bool getEnabled() const;
 
 public slots:
     void transitionSelect(int index);
