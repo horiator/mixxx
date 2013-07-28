@@ -415,7 +415,7 @@ void AutoDJ::fadeNowRight(double value) {
         if (m_pCOToggleAutoDJ->get() == 0) {
             m_eState = ADJ_FADENOWRIGHT;
         } else {
-            m_pCOFadeNowRightThread->slotSet(0.0);
+            m_pCOFadeNowRightThread->slotSet(1.0);
         }
     } else {
         m_pCOFadeNowRightThread->slotSet(0.0);
@@ -444,7 +444,7 @@ void AutoDJ::fadeNowLeft(double value) {
         if (m_pCOToggleAutoDJ->get() == 0) {
             m_eState = ADJ_FADENOWLEFT;
         } else {
-            m_pCOFadeNowLeftThread->slotSet(0.0);
+            m_pCOFadeNowLeftThread->slotSet(1.0);
         }
     } else {
         m_pCOFadeNowLeftThread->slotSet(0.0);
