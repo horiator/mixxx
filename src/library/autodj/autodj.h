@@ -43,7 +43,6 @@ public slots:
     void setCueOut2(double value);
     void deleteCueOut1(double value);
     void deleteCueOut2(double value);
-    void setTransitionDone();
 
 signals:
     void loadTrack(TrackPointer tio);
@@ -54,10 +53,8 @@ private:
     DlgAutoDJ* m_pDlgAutoDJ;
     enum ADJstates {
         ADJ_IDLE = 0,
-        ADJ_P1FADING,
-        ADJ_P2FADING,
-        ADJ_ENABLE_P1LOADED,
-        ADJ_ENABLE_P1PLAYING,
+        ADJ_ENABLE_D1LOADED,
+        ADJ_ENABLE_D1PLAYING,
         ADJ_DISABLED,
         ADJ_WAITING,
         ADJ_FADENOWRIGHT,

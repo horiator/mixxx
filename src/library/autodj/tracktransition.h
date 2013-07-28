@@ -24,9 +24,6 @@ public slots:
     void crossfaderChange(double value);
     void slotBpmChanged(double value);
 
-signals:
-    void transitionDone();
-
 private:
     double m_dcrossfadePosition;
     double m_dCurrentPlayPos;
@@ -59,9 +56,9 @@ private:
     void calculateShortCue();
     void calculateDeckBCue();
     void fadeNowStopped();
-    void cueTransition(double value);
-    void cdTransition(double value);
-    void beatTransition(double value);
+    bool cueTransition(double value);
+    bool cdTransition(double value);
+    bool beatTransition(double value);
     void fadeNowTransition(double value);
     void brakeTransition(double value);
     void spinBackTransition(double value);

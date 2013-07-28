@@ -16,7 +16,6 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
       m_pConfig(pConfig),
       m_eState(ADJ_DISABLED),
       m_eTransition(CUE),
-      m_btransitionDone(false),
       m_playlistDao(pTrackCollection->getPlaylistDAO()),
       m_lastToggleValue(-1),
       m_iCueRecall(0),
@@ -135,8 +134,6 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
             this, SLOT(player2PositionChanged(double)));
 
     m_pTrackTransition = new TrackTransition(this, m_pConfig);
-    connect(m_pTrackTransition, SIGNAL(transitionDone()),
-            this, SLOT(setTransitionDone()));
 }
 
 AutoDJ::~AutoDJ() {
@@ -168,32 +165,33 @@ PlaylistTableModel* AutoDJ::getTableModel() {
 }
 
 void AutoDJ::player1PositionChanged(double value) {
+    bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
+    bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
     if (m_eState == ADJ_DISABLED) {
         // nothing to do
         return;
-    }
-    if (m_eState == ADJ_FADENOWRIGHT || m_eState == ADJ_FADENOWLEFT) {
+    } else if (m_eState == ADJ_FADENOWRIGHT) {
         switch (m_eTransition) {
         case CD:
-            m_pTrackTransition->cdTransition(value);
+            m_btransitionDone = m_pTrackTransition->cdTransition(value);
             break;
         case CUE:
-            m_pTrackTransition->cueTransition(value);
+            m_btransitionDone = m_pTrackTransition->cueTransition(value);
             break;
         case BEAT:
-            m_pTrackTransition->beatTransition(value);
+            m_btransitionDone = m_pTrackTransition->beatTransition(value);
+            break;
+        default:
+            m_btransitionDone = true;
             break;
         }
         return;
-    }
-    if (m_eState == ADJ_WAITING && value == 1.0) {
-        // Waiting for a deck to stop and deck 1 is finished
-        m_pCOToggleAutoDJThread->slotSet(1.0);
-    }
-    bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
-    bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
-
-    if (m_eState == ADJ_ENABLE_P1LOADED) {
+    } else if (m_eState == ADJ_WAITING) {
+        if (value == 1.0) {
+            // Waiting for a deck to stop and deck 1 is finished
+            m_pCOToggleAutoDJThread->slotSet(1.0);
+        }
+    } else if (m_eState == ADJ_ENABLE_D1LOADED) {
         // Auto DJ Start
         if (!deck1Playing && !deck2Playing) {
             setCrossfader(-1.0f);  // Move crossfader to the left!
@@ -217,7 +215,7 @@ void AutoDJ::player1PositionChanged(double value) {
         return;
     }
 
-    if (m_btransitionDone && m_pCOToggleAutoDJ->get() == 1) {
+    if (m_btransitionDone) {
         if (deck1Playing && !deck2Playing) {
             m_eState = ADJ_IDLE;
             m_btransitionDone = false;
@@ -237,47 +235,46 @@ void AutoDJ::player1PositionChanged(double value) {
     // Fading
     switch (m_eTransition) {
     case CUE:
-        m_pTrackTransition->cueTransition(value);
+        m_btransitionDone = m_pTrackTransition->cueTransition(value);
         break;
     case BEAT:
-        m_pTrackTransition->beatTransition(value);
+        m_btransitionDone = m_pTrackTransition->beatTransition(value);
         break;
     case CD:
-        m_pTrackTransition->cdTransition(value);
+        m_btransitionDone = m_pTrackTransition->cdTransition(value);
+        break;
+    default:
+        m_btransitionDone = true;
         break;
     }
 }
 
 void AutoDJ::player2PositionChanged(double value) {
+    bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
+    bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
     if (m_eState == ADJ_DISABLED) {
         //nothing to do
         return;
-    }
-    if (m_eState == ADJ_FADENOWRIGHT || m_eState == ADJ_FADENOWLEFT) {
+    } else if (m_eState == ADJ_FADENOWLEFT) {
         switch (m_eTransition) {
         case CUE:
-            m_pTrackTransition->cueTransition(value);
+            m_btransitionDone = m_pTrackTransition->cueTransition(value);
             break;
         case BEAT:
-            m_pTrackTransition->beatTransition(value);
+            m_btransitionDone = m_pTrackTransition->beatTransition(value);
             break;
         case CD:
-            m_pTrackTransition->cdTransition(value);
+            m_btransitionDone = m_pTrackTransition->cdTransition(value);
             break;
         }
         return;
-    }
-    if (m_eState == ADJ_WAITING && value == 1.0) {
+    } else if (m_eState == ADJ_WAITING && value == 1.0) {
         // Waiting for a deck to stop and deck 2 is finished
         qDebug() << "Should be turning AutoDJ on";
         m_pCOToggleAutoDJThread->slotSet(1.0);
-        qDebug() << "CO = " << m_pCOToggleAutoDJ->get();
     }
 
-    bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
-    bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
-
-    if (m_btransitionDone && m_pCOToggleAutoDJ->get() == 1) {
+    if (m_btransitionDone) {
         if (!deck1Playing && deck2Playing) {
             m_eState = ADJ_IDLE;
             m_btransitionDone = false;
@@ -297,13 +294,16 @@ void AutoDJ::player2PositionChanged(double value) {
     // Fading
     switch (m_eTransition) {
     case CUE:
-        m_pTrackTransition->cueTransition(value);
+        m_btransitionDone = m_pTrackTransition->cueTransition(value);
         break;
     case BEAT:
-        m_pTrackTransition->beatTransition(value);
+        m_btransitionDone = m_pTrackTransition->beatTransition(value);
         break;
     case CD:
-        m_pTrackTransition->cdTransition(value);
+        m_btransitionDone = m_pTrackTransition->cdTransition(value);
+        break;
+    default:
+        m_btransitionDone = true;
         break;
     }
 }
@@ -363,15 +363,16 @@ void AutoDJ::skipNext(double value) {
 }
 
 void AutoDJ::fadeNow(double value) {
+    //qDebug() << "AutoDJ::fadeNow(" << value << ")";
     if (value <= 0.0) {
         return;
     }
     if (m_eState == ADJ_IDLE) {
         double crossfader = getCrossfader();
         if (crossfader <= 0.3f && m_pCOPlay1Fb->get() == 1.0f) {
-            m_eState = ADJ_FADENOWLEFT;
-            m_pTrackTransition->fadeNowLeft();
-            m_pCOFadeNowLeft->set(1.0);
+            m_eState = ADJ_FADENOWRIGHT;
+            m_pTrackTransition->fadeNowRight();
+            m_pCOFadeNowRight->set(1.0);
             /*
             m_posThreshold1 = m_pCOPlayPos1->get() -
                     ((crossfader + 1.0f) / 2 * (m_fadeDuration1));
@@ -379,9 +380,9 @@ void AutoDJ::fadeNow(double value) {
             m_pCORepeat1->slotSet(0.0f);
             */
         } else if (crossfader >= -0.3f && m_pCOPlay2Fb->get() == 1.0f) {
-            m_eState = ADJ_FADENOWRIGHT;
-            m_pTrackTransition->fadeNowRight();
-            m_pCOFadeNowRight->set(1.0);
+            m_eState = ADJ_FADENOWLEFT;
+            m_pTrackTransition->fadeNowLeft();
+            m_pCOFadeNowLeft->set(1.0);
             /*
             m_posThreshold2 = m_pCOPlayPos2->get() -
                     ((1.0f - crossfader) / 2 * (m_fadeDuration2));
@@ -501,7 +502,7 @@ void AutoDJ::toggleAutoDJ(double value) {
 
         if (!deck1Playing && !deck2Playing) {
             // both decks are stopped
-            m_eState = ADJ_ENABLE_P1LOADED;
+            m_eState = ADJ_ENABLE_D1LOADED;
             // Force Update on load Track
             player1PositionChanged(-0.001f);
         } else {
@@ -621,10 +622,6 @@ void AutoDJ::setDlgAutoDJ(DlgAutoDJ* pDlgAutoDJ) {
         // Set the value that was set by the user
         m_pDlgAutoDJ->spinBoxTransitionBeats->setValue(str_autoDjTransition.toInt());
     }
-}
-
-void AutoDJ::setTransitionDone() {
-    m_btransitionDone = true;
 }
 
 void AutoDJ::transitionSelect(int index) {

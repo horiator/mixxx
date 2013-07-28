@@ -6,18 +6,18 @@
 #include "playerinfo.h"
 #include "library/dao/cue.h"
 
-TrackTransition::TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pConfig) :
-    QObject(parent),
-    m_pConfig(pConfig) {
-    m_bShortCue = false;
-    m_bFadeNow = false;
-    m_bTransitioning = false;
-    m_bSpinBack = false;
-    m_bDeckBCue = false;
+TrackTransition::TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pConfig)
+        : QObject(parent),
+          m_bTransitioning(false),
+          m_bShortCue(false),
+          m_bDeckBCue(false),
+          m_bFadeNow(false),
+          m_bSpinBack(false),
+          m_pConfig(pConfig) {
 
     m_pCOCrossfader = new ControlObjectThreadMain("[Master]", "crossfader");
     connect(m_pCOCrossfader, SIGNAL(valueChanged(double)),
-        this, SLOT(crossfaderChange(double)));
+            this, SLOT(crossfaderChange(double)));
     m_dCrossfaderStart = m_pCOCrossfader->get();
     m_pCOPlayPos1 = new ControlObjectThreadMain("[Channel1]", "playposition");
     m_pCOPlayPos2 = new ControlObjectThreadMain("[Channel2]", "playposition");
@@ -45,9 +45,9 @@ TrackTransition::TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pCo
     m_pCOBpm1 = new ControlObjectThreadMain("[Channel1]", "bpm");
     m_pCOBpm2 = new ControlObjectThreadMain("[Channel2]", "bpm");
     connect(m_pCOBpm1, SIGNAL(valueChanged(double)),
-        this, SLOT(slotBpmChanged(double)));
+            this, SLOT(slotBpmChanged(double)));
     connect(m_pCOBpm2, SIGNAL(valueChanged(double)),
-        this, SLOT(slotBpmChanged(double)));
+            this, SLOT(slotBpmChanged(double)));
 }
 
 TrackTransition::~TrackTransition() {
@@ -205,57 +205,61 @@ void TrackTransition::transitioning() {
     m_bTransitioning = true;
 }
 
-void TrackTransition::cueTransition(double value) {
+bool TrackTransition::cueTransition(double value) {
+    bool transitionDone = false;
     transitioning();
-    // Crossfading from Player 1 to Player 2
-    if (m_groupA == "[Channel1]" && m_bTransitioning) {
-        double crossfadePos = m_dCrossfaderStart + (1 - m_dCrossfaderStart) *
-            ((1.0f * m_iCurrentPos) - m_iFadeStart) /
-            (m_iFadeEnd - m_iFadeStart);
-        if (m_pCOPlay2->get() != 1.0) {
-            m_pCOPlay2->slotSet(1.0);
-        }
-        m_pCOCrossfader->slotSet(crossfadePos);
-        if (crossfadePos >= 1.0) {
-            m_pCOCrossfader->slotSet(1.0);
-            m_dCrossfaderStart = 1.0;
-            if (m_pCOFadeNowRight->get() == 0.0) {
-                m_pCOPlay1->slotSet(0.0);
-            } else {
-                m_pCOFadeNowRight->slotSet(0.0);
+    if (m_bTransitioning) {
+        if (m_groupA == "[Channel1]") {
+            // Crossfading from Player 1 to Player 2
+            double crossfadePos = m_dCrossfaderStart + (1 - m_dCrossfaderStart) *
+                    ((1.0f * m_iCurrentPos) - m_iFadeStart) /
+                    (m_iFadeEnd - m_iFadeStart);
+            if (m_pCOPlay2->get() != 1.0) {
+                m_pCOPlay2->slotSet(1.0);
             }
-            m_bShortCue = false;
-            m_bTransitioning = false;
-            emit(transitionDone());
+            m_pCOCrossfader->slotSet(crossfadePos);
+            if (crossfadePos >= 1.0) {
+                m_pCOCrossfader->slotSet(1.0);
+                m_dCrossfaderStart = 1.0;
+                if (m_pCOFadeNowRight->get() == 0.0) {
+                    m_pCOPlay1->slotSet(0.0);
+                } else {
+                    m_pCOFadeNowRight->slotSet(0.0);
+                }
+                m_bShortCue = false;
+                m_bTransitioning = false;
+                transitionDone = true;
+            }
+        } else if (m_groupA == "[Channel2]" && m_bTransitioning) {
+            // Crossfading from Player2 to Player 1
+            double crossfadePos = m_dCrossfaderStart + (-1 - m_dCrossfaderStart) *
+                    ((1.0f * m_iCurrentPos) - m_iFadeStart) /
+                    (m_iFadeEnd - m_iFadeStart);
+            if (m_pCOPlay1->get() != 1.0) {
+                m_pCOPlay1->slotSet(1.0);
+            }
+            m_pCOCrossfader->slotSet(crossfadePos);
+            if (crossfadePos <= -1.0) {
+                m_pCOCrossfader->slotSet(-1.0);
+                m_dCrossfaderStart = -1.0;
+                if (m_pCOFadeNowLeft->get() == 0.0) {
+                    m_pCOPlay2->slotSet(0.0);
+                } else {
+                    m_pCOFadeNowLeft->slotSet(0.0);
+                }
+                transitionDone = true;
+                m_bShortCue = false;
+                m_bTransitioning = false;
+            }
         }
     }
-    // Crossfading from Player2 to Player 1
-    if (m_groupA == "[Channel2]" && m_bTransitioning) {
-        double crossfadePos = m_dCrossfaderStart + (-1 - m_dCrossfaderStart) *
-            ((1.0f * m_iCurrentPos) - m_iFadeStart) /
-            (m_iFadeEnd - m_iFadeStart);
-        if (m_pCOPlay1->get() != 1.0) {
-            m_pCOPlay1->slotSet(1.0);
-        }
-        m_pCOCrossfader->slotSet(crossfadePos);
-        if (crossfadePos <= -1.0) {
-            m_pCOCrossfader->slotSet(-1.0);
-            m_dCrossfaderStart = -1.0;
-            if (m_pCOFadeNowLeft->get() == 0.0) {
-                m_pCOPlay2->slotSet(0.0);
-            } else {
-                m_pCOFadeNowLeft->slotSet(0.0);
-            }
-            emit(transitionDone());
-            m_bShortCue = false;
-            m_bTransitioning = false;
-        }
-    }
+    return transitionDone;
 }
 
-void TrackTransition::beatTransition(double value) {
+bool TrackTransition::beatTransition(double value) {
+    bool transitionDone = false;
     if (m_trackBPointer == NULL || !m_bTrackLoaded) {
-        return;
+        return transitionDone;
     }
     if (!m_bTrackBSynced) {
         if (m_dBpmShift > 0.94 && m_dBpmShift < 1.06) {
@@ -274,7 +278,7 @@ void TrackTransition::beatTransition(double value) {
             }
         }
         m_bTrackBSynced = true;
-        return;
+        return transitionDone;
     }
     transitioning();
     double crossfadePos;
@@ -337,7 +341,7 @@ void TrackTransition::beatTransition(double value) {
             } else {
                 m_pCOFadeNowRight->slotSet(0.0);
             }
-            emit(transitionDone());
+            transitionDone = true;
             m_bShortCue = false;
             m_bTransitioning = false;
             m_dBrakeRate = 1;
@@ -364,7 +368,9 @@ void TrackTransition::beatTransition(double value) {
             if (m_pCOPlay1->get() != 1.0) {
                 m_pCOPlay1->slotSet(1.0);
             }
-            if (m_iCurrentPos == 0 && m_iFadeEnd == 0) return;
+            if (m_iCurrentPos == 0 && m_iFadeEnd == 0) {
+                return transitionDone;
+            }
             crossfadePos = m_dCrossfaderStart + (-1 - m_dCrossfaderStart) *
                 (((1.0f * m_iCurrentPos) - m_iFadeStart) /
                 (m_iFadeEnd - m_iFadeStart));
@@ -402,15 +408,17 @@ void TrackTransition::beatTransition(double value) {
             } else {
                 m_pCOFadeNowLeft->slotSet(0.0);
             }
-            emit(transitionDone());
+            transitionDone = true;
             m_dBrakeRate = 1;
             m_bShortCue = false;
             m_bTransitioning = false;
         }
     }
+    return transitionDone;
 }
 
-void TrackTransition::cdTransition(double value) {
+bool TrackTransition::cdTransition(double value) {
+    bool transitionDone = false;
     transitioning();
     if (value == 1.0 || m_pCOFadeNowLeft->get() == 1 ||
         m_pCOFadeNowRight->get() == 1) {
@@ -431,8 +439,9 @@ void TrackTransition::cdTransition(double value) {
                 m_pCOFadeNowLeft->slotSet(0.0);
             }
         }
-        emit(transitionDone());
+        transitionDone = true;
     }
+    return transitionDone;
 }
 
 void TrackTransition::spinBackTransition(double value) {
