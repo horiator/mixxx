@@ -410,12 +410,12 @@ void AutoDJ::fadeNowRight(double value) {
         m_pCOFadeNowRightThread->slotSet(0.0);
         return;
     }
-    if (m_pCOPlay1->get() == 1) {
+    if (m_pCOPlay1Fb->get() == 1) {
         m_pTrackTransition->fadeNowRight();
-        if (m_pCOToggleAutoDJ->get() == 0) {
+        if (m_eState == ADJ_IDLE) {
             m_eState = ADJ_FADENOWRIGHT;
         } else {
-            m_pCOFadeNowRightThread->slotSet(1.0);
+            m_pCOFadeNowRightThread->slotSet(0.0);
         }
     } else {
         m_pCOFadeNowRightThread->slotSet(0.0);
@@ -439,12 +439,13 @@ void AutoDJ::fadeNowLeft(double value) {
         m_pCOFadeNowLeftThread->slotSet(0.0);
         return;
     }
-    if (m_pCOPlay2->get() == 1) {
+    if (m_pCOPlay2Fb->get() == 1) {
         m_pTrackTransition->fadeNowLeft();
-        if (m_pCOToggleAutoDJ->get() == 0) {
+
+        if (m_eState == ADJ_IDLE) {
             m_eState = ADJ_FADENOWLEFT;
         } else {
-            m_pCOFadeNowLeftThread->slotSet(1.0);
+            m_pCOFadeNowLeftThread->slotSet(0.0);
         }
     } else {
         m_pCOFadeNowLeftThread->slotSet(0.0);
@@ -580,26 +581,27 @@ bool AutoDJ::loadNextTrackFromQueue() {
 
 bool AutoDJ::removePlayingTrackFromQueue(QString group) {
     TrackPointer nextTrack, loadedTrack;
-    int nextId = 0, loadedId = 0;
-
-    // Get the track at the top of the playlist...
-    nextTrack = m_pAutoDJTableModel->getTrack(m_pAutoDJTableModel->index(0, 0));
-    if (nextTrack) {
-        nextId = nextTrack->getId();
-    }
 
     // Get loaded track
     loadedTrack = PlayerInfo::Instance().getTrackInfo(group);
-    if (loadedTrack) {
-        loadedId = loadedTrack->getId();
+    if (!loadedTrack) {
+        return false;
     }
+    int loadedId = loadedTrack->getId();
+
+    // Get the track at the top of the playlist...
+    nextTrack = m_pAutoDJTableModel->getTrack(m_pAutoDJTableModel->index(0, 0));
+    if (!nextTrack) {
+        return false;
+    }
+    int nextId = nextTrack->getId();
 
     // When enable auto DJ and Topmost Song is already on second deck, nothing to do
     //BaseTrackPlayer::getLoadedTrack()
     //pTrack = PlayerInfo::Instance().getCurrentPlayingTrack();
 
     if (loadedId != nextId) {
-        // Do not remove when the user has loaded a track manually
+        // Do not remove when the user has loaded a different track manually
         return false;
     }
 
