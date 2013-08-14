@@ -16,9 +16,9 @@ public:
     TrackTransition(QObject* parent, ConfigObject<ConfigValue>* pConfig);
     virtual ~TrackTransition();
     void setGroups(QString groupA, QString groupB);
-    void calculateCue();
+    void calculateCueOut();
     void loadTrack();
-    bool m_bTrackBSynced;
+    bool m_bTrackToSynced;
 
 public slots:
     void crossfaderChange(double value);
@@ -32,20 +32,20 @@ private:
     bool m_bDeckBCue;
     bool m_bFadeNow;
     bool m_bSpinBack;
-    QString m_groupA;
-    QString m_groupB;
-    TrackPointer m_trackA;
-    TrackPointer m_trackB;
+    QString m_groupFrom;
+    QString m_groupTo;
+    TrackPointer m_trackFrom;
+    TrackPointer m_trackTo;
     TrackPointer* m_trackAPointer;
-    TrackPointer* m_trackBPointer;
-    double m_dBpmA;
-    double m_dBpmB;
+    TrackPointer* m_trackToPointer;
+    double m_dBpmFrom;
+    double m_dBpmTo;
     double m_dBpmShift;
     bool m_bTrackLoaded;
     int m_iCurrentPos;
     int m_iShortCue;
-    int m_iCuePoint;
-    int m_iEndPoint;
+    int m_cueOutPoint;
+    int m_latestCueOutPoint;
     int m_iFadeStart;
     int m_iFadeEnd;
     int m_iFadeLength;

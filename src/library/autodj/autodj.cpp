@@ -43,6 +43,7 @@ AutoDJ::AutoDJ(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pCOScratchEnable1 = new ControlObjectThreadMain("[Channel1]", "scratch2_enable");
     m_pCOScratchEnable2 = new ControlObjectThreadMain("[Channel2]", "scratch2_enable");
 
+
         // Setting up ControlPushButtons
     m_pCOSkipNext = new ControlPushButton(
         ConfigKey("[AutoDJ]", "skip_next"));
@@ -334,7 +335,7 @@ void AutoDJ::transitionValueChanged(int value) {
     m_pConfig->set(ConfigKey("[Auto DJ]", "Transition"),
             ConfigValue(value));
     transitionValue = value;
-    m_pTrackTransition->calculateCue();
+    m_pTrackTransition->calculateCueOut();
 }
 
 void AutoDJ::shufflePlaylist(double value) {
@@ -363,7 +364,7 @@ void AutoDJ::skipNext(double value) {
 }
 
 void AutoDJ::fadeNow(double value) {
-    //qDebug() << "AutoDJ::fadeNow(" << value << ")";
+    qDebug() << "AutoDJ::fadeNow(" << value << ")";
     if (value <= 0.0) {
         return;
     }
@@ -371,8 +372,9 @@ void AutoDJ::fadeNow(double value) {
         double crossfader = getCrossfader();
         if (crossfader <= 0.3f && m_pCOPlay1Fb->get() == 1.0f) {
             m_eState = ADJ_FADENOWRIGHT;
-            m_pTrackTransition->fadeNowRight();
             m_pCOFadeNowRight->set(1.0);
+            m_pTrackTransition->fadeNowRight();
+
             /*
             m_posThreshold1 = m_pCOPlayPos1->get() -
                     ((crossfader + 1.0f) / 2 * (m_fadeDuration1));
@@ -381,8 +383,9 @@ void AutoDJ::fadeNow(double value) {
             */
         } else if (crossfader >= -0.3f && m_pCOPlay2Fb->get() == 1.0f) {
             m_eState = ADJ_FADENOWLEFT;
-            m_pTrackTransition->fadeNowLeft();
             m_pCOFadeNowLeft->set(1.0);
+            m_pTrackTransition->fadeNowLeft();
+
             /*
             m_posThreshold2 = m_pCOPlayPos2->get() -
                     ((1.0f - crossfader) / 2 * (m_fadeDuration2));
@@ -394,6 +397,7 @@ void AutoDJ::fadeNow(double value) {
 }
 
 void AutoDJ::fadeNowRight(double value) {
+    qDebug() << "AutoDJ::fadeNowRight(" << value << ")";
     if (value == 0) {
         if (m_pCOFadeNowLeft->get() == 1) {
             return;
@@ -423,6 +427,7 @@ void AutoDJ::fadeNowRight(double value) {
 }
 
 void AutoDJ::fadeNowLeft(double value) {
+    qDebug() << "AutoDJ::fadeNowLeft(" << value << ")";
     if (value == 0) {
         if (m_pCOFadeNowRight->get() == 1) {
             return;
@@ -634,14 +639,14 @@ void AutoDJ::transitionSelect(int index) {
         qDebug() << "Transition changed to CUE";
         m_pDlgAutoDJ->spinBoxTransitionBeats->setEnabled(true);
         m_pConfig->set(ConfigKey("[Controls]", "CueRecall"), ConfigValue(0));
-        m_pTrackTransition->calculateCue();
+        m_pTrackTransition->calculateCueOut();
         break;
     case 1:
         m_eTransition = BEAT;
         qDebug() << "Transition changed to BEAT";
         m_pDlgAutoDJ->spinBoxTransitionBeats->setEnabled(true);
         m_pConfig->set(ConfigKey("[Controls]", "CueRecall"), ConfigValue(0));
-        m_pTrackTransition->calculateCue();
+        m_pTrackTransition->calculateCueOut();
         break;
     case 2:
         m_eTransition = CD;
@@ -656,6 +661,7 @@ void AutoDJ::setCueOut(double position, int channel) {
     // Enforcing uniqueness
     qDebug() << "Deleting old AutoDJ cue to enforce uniqueness";
     deleteCueOut(1.0, channel);
+
     qDebug() << "Setting AutoDJ cue out for channel " << channel;
     Cue* pCue = NULL;
     int pos = 0;
@@ -671,17 +677,20 @@ void AutoDJ::setCueOut(double position, int channel) {
         pCOcuePos = m_pCOCueOutPosition2;
         pos = position * m_pCOTrackSamples2->get();
     }
+
     if (track) {
         pCue = track->addCue();
         pCue->setType(Cue::CUEOUT);
-        if (pos % 2 != 0) pos--;
+        if (pos % 2 != 0) {
+            pos--;
+        }
         pCue->setPosition(pos);
         pCOcuePos->set(pos);
         track->setCuePoint(pos);
     } else {
         qDebug() << "Null trackpointer - no cue added";
     }
-    m_pTrackTransition->calculateCue();
+    m_pTrackTransition->calculateCueOut();
 }
 
 void AutoDJ::deleteCueOut(double value, int channel) {
