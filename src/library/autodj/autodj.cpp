@@ -173,14 +173,14 @@ void AutoDJ::player1PositionChanged(double value) {
         return;
     } else if (m_eState == ADJ_FADENOWRIGHT) {
         switch (m_eTransition) {
-        case CD:
-            m_btransitionDone = m_pTrackTransition->cdTransition(value);
-            break;
         case CUE:
             m_btransitionDone = m_pTrackTransition->cueTransition(value);
             break;
         case BEAT:
             m_btransitionDone = m_pTrackTransition->beatTransition(value);
+            break;
+        case CD:
+            m_btransitionDone = m_pTrackTransition->cdTransition(value);
             break;
         default:
             m_btransitionDone = true;

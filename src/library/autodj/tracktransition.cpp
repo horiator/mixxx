@@ -122,7 +122,7 @@ void TrackTransition::calculateCueOut() {
             ConfigKey("[Auto DJ]", "Transition")).toInt();
     m_iFadeLength = transitionBeats * m_trackFrom->getSampleRate() * 2 * 60 /
             m_trackFrom->getBpm();
-    m_latestCueOutPoint = std::max(samples - m_iFadeLength, pos);
+    m_latestCueOutPoint = std::max(samples - std::max(m_iFadeLength, 0), pos);
 
     // Setting m_iCuePoint
     if (m_bFadeNow) {
@@ -230,9 +230,17 @@ bool TrackTransition::cueTransition(double value) {
     if (m_bTransitioning) {
         if (m_groupFrom == "[Channel1]") {
             // Crossfading from Player 1 to Player 2
-            double crossfadePos = m_dCrossfaderStart + (1 - m_dCrossfaderStart) *
-                    ((1.0f * m_iCurrentPos) - m_iFadeStart) /
-                    (m_iFadeEnd - m_iFadeStart);
+            double crossfadePos;
+
+            if (m_iFadeEnd > m_iFadeStart) {
+                crossfadePos = m_dCrossfaderStart + (1 - m_dCrossfaderStart) *
+                        ((1.0f * m_iCurrentPos) - m_iFadeStart) /
+                        (m_iFadeEnd - m_iFadeStart);
+            } else {
+                crossfadePos = 1;
+            }
+
+
             if (m_pCOPlay2->get() != 1.0) {
                 m_pCOPlay2->set(1.0);
             }
@@ -251,9 +259,14 @@ bool TrackTransition::cueTransition(double value) {
             }
         } else if (m_groupFrom == "[Channel2]" && m_bTransitioning) {
             // Crossfading from Player2 to Player 1
-            double crossfadePos = m_dCrossfaderStart + (-1 - m_dCrossfaderStart) *
-                    ((1.0f * m_iCurrentPos) - m_iFadeStart) /
-                    (m_iFadeEnd - m_iFadeStart);
+            double crossfadePos;
+            if (m_iFadeEnd > m_iFadeStart) {
+                crossfadePos = m_dCrossfaderStart + (-1 - m_dCrossfaderStart) *
+                        ((1.0f * m_iCurrentPos) - m_iFadeStart) /
+                        (m_iFadeEnd - m_iFadeStart);
+            } else {
+                crossfadePos = -1;
+            }
             if (m_pCOPlay1->get() != 1.0) {
                 m_pCOPlay1->set(1.0);
             }
@@ -311,9 +324,13 @@ bool TrackTransition::beatTransition(double value) {
                 m_pCOSync2->set(1.0);
                 m_pCOSync2->set(0.0);
             }
-            crossfadePos = m_dCrossfaderStart
-                    + (1 - m_dCrossfaderStart) * ((1.0f * m_iCurrentPos) - m_iFadeStart)
-                    / (m_iFadeEnd - m_iFadeStart);
+            if (m_iFadeEnd > m_iFadeStart) {
+                crossfadePos = m_dCrossfaderStart
+                        + (1 - m_dCrossfaderStart) * ((1.0f * m_iCurrentPos) - m_iFadeStart)
+                        / (m_iFadeEnd - m_iFadeStart);
+            } else {
+                crossfadePos = 1;
+            }
         } else if (m_dBpmShift >= 1.06) {
             if (!m_bDeckBCue) {
                 calculateDeckBCue();
@@ -323,9 +340,14 @@ bool TrackTransition::beatTransition(double value) {
             if (m_pCOPlay2->get() != 1.0) {
                 m_pCOPlay2->set(1.0);
             }
-            crossfadePos = m_dCrossfaderStart
-                    + (1 - m_dCrossfaderStart) * ((1.0f * m_iCurrentPos) - m_iFadeStart)
-                    / (m_iFadeEnd - m_iFadeStart);
+
+            if (m_iFadeEnd > m_iFadeStart) {
+                crossfadePos = m_dCrossfaderStart
+                        + (1 - m_dCrossfaderStart) * ((1.0f * m_iCurrentPos) - m_iFadeStart)
+                        / (m_iFadeEnd - m_iFadeStart);
+            } else {
+                crossfadePos = 1;
+            }
             m_dBrakeRate = 1 - (crossfadePos + 1) / 2.0;
             spinBackTransition(m_dBrakeRate);
             if (crossfadePos >= 1) {
@@ -375,10 +397,16 @@ bool TrackTransition::beatTransition(double value) {
                 m_pCOSync1->set(1.0);
                 m_pCOSync1->set(0.0);
             }
-            crossfadePos = m_dCrossfaderStart
-                    + (-1 - m_dCrossfaderStart)
-                    * ((1.0f * m_iCurrentPos) - m_iFadeStart)
-                    / (m_iFadeEnd - m_iFadeStart);
+
+            if (m_iFadeEnd > m_iFadeStart) {
+                crossfadePos = m_dCrossfaderStart
+                        + (-1 - m_dCrossfaderStart)
+                        * ((1.0f * m_iCurrentPos) - m_iFadeStart)
+                        / (m_iFadeEnd - m_iFadeStart);
+            } else {
+                crossfadePos = 1;
+            }
+
         } else if (m_dBpmShift >= 1.06) {
             if (!m_bDeckBCue) {
                 calculateDeckBCue();
@@ -391,10 +419,15 @@ bool TrackTransition::beatTransition(double value) {
             if (m_iCurrentPos == 0 && m_iFadeEnd == 0) {
                 return transitionDone;
             }
-            crossfadePos = m_dCrossfaderStart
-                    + (-1 - m_dCrossfaderStart)
-                    * (((1.0f * m_iCurrentPos) - m_iFadeStart)
-                            / (m_iFadeEnd - m_iFadeStart));
+
+            if (m_iFadeEnd > m_iFadeStart) {
+                crossfadePos = m_dCrossfaderStart
+                        + (-1 - m_dCrossfaderStart)
+                        * (((1.0f * m_iCurrentPos) - m_iFadeStart)
+                        / (m_iFadeEnd - m_iFadeStart));
+            } else {
+                crossfadePos = 1;
+            }
             m_dBrakeRate = (crossfadePos + 1) / 2.0;
             spinBackTransition(m_dBrakeRate);
             if (crossfadePos <= -1) {
