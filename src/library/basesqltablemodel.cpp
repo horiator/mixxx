@@ -3,6 +3,7 @@
 #include <QtAlgorithms>
 #include <QtDebug>
 #include <QTime>
+#include <QVector>
 
 #include "library/basesqltablemodel.h"
 
@@ -24,7 +25,8 @@ BaseSqlTableModel::BaseSqlTableModel(QObject* pParent,
            TrackModel(pTrackCollection->getDatabase(), settingsNamespace),
            m_pTrackCollection(pTrackCollection),
            m_trackDAO(m_pTrackCollection->getTrackDAO()),
-           m_database(pTrackCollection->getDatabase()),
+           m_pRowInfo(new QVector<RowInfo>),
+           m_pNewRowInfo(new QVector<RowInfo>),
            m_currentSearch(""),
            m_previewDeckGroup(PlayerManager::groupForPreviewDeck(0)),
            m_iPreviewDeckTrackId(-1) {
@@ -38,6 +40,8 @@ BaseSqlTableModel::BaseSqlTableModel(QObject* pParent,
 }
 
 BaseSqlTableModel::~BaseSqlTableModel() {
+    delete m_pRowInfo;
+    delete m_pNewRowInfo;
 }
 
 void BaseSqlTableModel::initHeaderData() {
@@ -86,10 +90,6 @@ void BaseSqlTableModel::initHeaderData() {
 
     setHeaderData(fieldIndex("preview"),
                   Qt::Horizontal, tr("Preview"));
-}
-
-QSqlDatabase BaseSqlTableModel::database() const {
-    return m_database;
 }
 
 bool BaseSqlTableModel::setHeaderData(int section, Qt::Orientation orientation,
@@ -154,11 +154,11 @@ QString BaseSqlTableModel::orderByClause() const {
     return s;
 }
 
+// must be called only from from TrackCollection thread (via callSync/callAsync)
 void BaseSqlTableModel::select() {
     if (!m_bInitialized) {
         return;
     }
-
     // We should be able to detect when a select() would be a no-op. The DAO's
     // do not currently broadcast signals for when common things happen. In the
     // future, we can turn this check on and avoid a lot of needless

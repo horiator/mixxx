@@ -133,6 +133,7 @@ void AnalysisFeature::cleanupAnalyser() {
 }
 
 bool AnalysisFeature::dropAccept(QList<QUrl> urls, QWidget *pSource) {
+    Q_UNUSED(pSource);
     QList<QFileInfo> files;
     foreach (QUrl url, urls) {
         // XXX: Possible WTF alert - Previously we thought we needed toString() here

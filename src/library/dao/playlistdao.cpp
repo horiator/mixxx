@@ -15,12 +15,13 @@ PlaylistDAO::~PlaylistDAO() {
 }
 
 void PlaylistDAO::initialize() {
+    qDebug() << "PlaylistDAO::initialize" << QThread::currentThread() << m_database.connectionName();
 }
 
 int PlaylistDAO::createPlaylist(const QString& name, const HiddenType hidden) {
-    // qDebug() << "PlaylistDAO::createPlaylist"
-    //          << QThread::currentThread()
-    //          << m_database.connectionName();
+    qDebug() << "PlaylistDAO::createPlaylist"
+             << QThread::currentThread()
+             << m_database.connectionName();
     //Start the transaction
     ScopedTransaction transaction(m_database);
 
@@ -241,10 +242,10 @@ bool PlaylistDAO::appendTrackToPlaylist(const int trackId, const int playlistId)
     return appendTracksToPlaylist(tracks, playlistId);
 }
 
-/** Find out how many playlists exist. */
-unsigned int PlaylistDAO::playlistCount()
-{
-    // qDebug() << "PlaylistDAO::playlistCount" << QThread::currentThread() << m_database.connectionName();
+// Find out how many playlists exist.
+unsigned int PlaylistDAO::playlistCount() {
+    qDebug() << "PlaylistDAO::playlistCount" << QThread::currentThread() << m_database.connectionName();
+
     QSqlQuery query(m_database);
     query.prepare("SELECT count(*) as count FROM Playlists");
     if (!query.exec()) {
