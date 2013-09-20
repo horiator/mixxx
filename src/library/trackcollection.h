@@ -20,9 +20,15 @@
 
 #include <QtSql>
 #include <QList>
+#include <QQueue>
 #include <QRegExp>
+#include <QSemaphore>
+#include <QMutex>
 #include <QSharedPointer>
 #include <QSqlDatabase>
+#include <QApplication>
+#include <QThread>
+#include <QAtomicInt>
 
 #include "configobject.h"
 #include "library/basetrackcache.h"
@@ -31,27 +37,107 @@
 #include "library/dao/cuedao.h"
 #include "library/dao/playlistdao.h"
 #include "library/dao/analysisdao.h"
-
-class TrackInfoObject;
+#include "library/queryutil.h"
 
 #define AUTODJ_TABLE "Auto DJ"
 
+// Lambda function
+typedef std::function <void ()> func;
+
+class TrackInfoObject;
+class ControlObjectThread;
 class BpmDetector;
 
 /**
    @author Albert Santoni
 */
-class TrackCollection : public QObject
-{
+
+// Helper class for calling some code in Main thread
+class MainExecuter : public QObject {
+    Q_OBJECT
+public:
+    ~MainExecuter() {}
+
+    // singletone
+    static MainExecuter& getInstance() {
+        static MainExecuter instance;
+        return instance;
+    }
+
+    static void callAsync(func lambda, QString where = QString()) {
+        DBG() << where;
+        MainExecuter& instance = getInstance();
+        instance.m_lambdaMutex.lock();
+        instance.setLambda(lambda);
+        emit(instance.runOnMainThread());
+    }
+
+    static void callSync(func lambda, QString where = QString()) {
+        DBG() << where;
+        if (QThread::currentThread() == qApp->thread()) {
+            // We are already on Main thread
+            lambda();
+        } else {
+            MainExecuter& instance = getInstance();
+            instance.m_lambdaMutex.lock();
+            instance.setLambda(lambda);
+            emit(instance.runOnMainThread());
+            instance.m_lambdaMutex.lock();
+            instance.m_lambdaMutex.unlock();
+        }
+    }
+
+signals:
+    void runOnMainThread();
+
+public slots:
+    void call() {
+        if (m_lamdaCount.testAndSetAcquire(1, 0)) {;
+            DBG() << "calling m_lambda in " << QThread::currentThread()->objectName();
+            m_lambda();
+            m_lambdaMutex.unlock();
+        }
+    }
+
+private:
+    MainExecuter()
+            : m_lambda(NULL) {
+        moveToThread(qApp->thread());
+        connect(this, SIGNAL(runOnMainThread()),
+                this, SLOT(call()), Qt::QueuedConnection);
+    }
+
+    void setLambda(func newLambda) {
+        m_lambda = newLambda;
+        m_lamdaCount = 1;
+    }
+
+    QMutex m_lambdaMutex;
+    func m_lambda;
+    QAtomicInt m_lamdaCount;
+};
+
+
+// Separate thread providing database access. Holds all DAO. To make access to DB
+// see callAsync/callSync methods.
+class TrackCollection : public QThread {
     Q_OBJECT
   public:
     TrackCollection(ConfigObject<ConfigValue>* pConfig);
     ~TrackCollection();
+    void run();
+
+    void callAsync(func lambda, QString where = QString());
+    void callSync(func lambda, QString where = QString());
+
+    void stopThread();
+    void addLambdaToQueue(func lambda);
+
     bool checkForTables();
 
-    /** Import the files in a given diretory, without recursing into subdirectories */
-    bool importDirectory(const QString &directory, TrackDAO &trackDao,
-                         const QStringList & nameFilters, volatile bool* cancel);
+    // Import the files in a given diretory, without recursing into subdirectories
+    bool importDirectory(const QString& directory, TrackDAO& trackDao,
+                         const QStringList& nameFilters, volatile bool* cancel, volatile bool* pause);
 
     void resetLibaryCancellation();
     QSqlDatabase& getDatabase();
@@ -71,8 +157,10 @@ class TrackCollection : public QObject
     void startedLoading();
     void progressLoading(QString path);
     void finishedLoading();
+    void initialized();
 
   private:
+    void createAndPopulateDbConnection();
     ConfigObject<ConfigValue>* m_pConfig;
     QSqlDatabase m_db;
     QHash<QString, QSharedPointer<BaseTrackCache> > m_trackSources;

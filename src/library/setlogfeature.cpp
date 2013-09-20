@@ -10,6 +10,7 @@
 #include "controlobject.h"
 #include "library/playlisttablemodel.h"
 #include "library/trackcollection.h"
+#include "library/queryutil.h"
 #include "library/treeitem.h"
 #include "playerinfo.h"
 #include "playermanager.h"
@@ -20,7 +21,7 @@ SetlogFeature::SetlogFeature(QObject* parent,
         : BasePlaylistFeature(parent, pConfig, pTrackCollection, "SETLOGHOME") {
     m_pPlaylistTableModel = new PlaylistTableModel(this, pTrackCollection,
                                                    "mixxx.db.model.setlog",
-                                                   true);//show all tracks
+                                                   true); //show all tracks
     m_pJoinWithPreviousAction = new QAction(tr("Join with previous"), this);
     connect(m_pJoinWithPreviousAction, SIGNAL(triggered()),
             this, SLOT(slotJoinWithPrevious()));
@@ -92,6 +93,7 @@ void SetlogFeature::onRightClick(const QPoint& globalPos) {
 
 void SetlogFeature::onRightClickChild(const QPoint& globalPos, QModelIndex index) {
     //Save the model index so we can get it in the action slots...
+
     m_lastRightClickedIndex = index;
     QString playlistName = index.data().toString();
     int playlistId = m_playlistDao.getPlaylistIdFromName(playlistName);

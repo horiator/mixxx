@@ -12,10 +12,9 @@ namespace {
 const bool sDebug = false;
 
 const QHash<QString, int> buildReverseIndex(const QList<QString> items) {
-    int i = 0;
     QHash<QString, int> index;
-    foreach (const QString item, items) {
-        index[item] = i++;
+    for (int i = 0; i < items.count(); ++i) {
+        index[items.at(i)] = i;
     }
     return index;
 }

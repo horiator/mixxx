@@ -17,27 +17,25 @@
 #include "trackinfoobject.h" //needed for importing 1.7.x library
 #include "xmlparse.h" //needed for importing 1.7.x library
 #include "legacylibraryimporter.h"
+#include "library/trackcollection.h"
 
-struct LegacyPlaylist
-{
+struct LegacyPlaylist {
     QString name;
     QList<int> indexes;
 };
 
 void doNothing(TrackInfoObject*) {
-
 }
 
-LegacyLibraryImporter::LegacyLibraryImporter(TrackDAO& trackDao,
+LegacyLibraryImporter::LegacyLibraryImporter(TrackCollection* pTrackCollection, TrackDAO& trackDao,
                                              PlaylistDAO& playlistDao) : QObject(),
     m_trackDao(trackDao),
-    m_playlistDao(playlistDao)
-{
+    m_playlistDao(playlistDao),
+    m_pTrackCollection(pTrackCollection) {
 }
 
 /** Upgrade from <= 1.7 library to 1.8 DB format */
-void LegacyLibraryImporter::import()
-{
+void LegacyLibraryImporter::import() {
     // TODO(XXX) SETTINGS_PATH may change in new Mixxx Versions. Here we need
     // the SETTINGS_PATH from Mixxx V <= 1.7
     QString settingPath17 = QDir::homePath().append("/").append(SETTINGS_PATH);
@@ -64,8 +62,7 @@ void LegacyLibraryImporter::import()
 
         QDomNodeList playlistList = doc.elementsByTagName("Playlist");
         QDomNode playlist;
-        for (int i = 0; i < playlistList.size(); i++)
-        {
+        for (int i = 0; i < playlistList.size(); i++) {
             LegacyPlaylist legPlaylist;
             playlist = playlistList.at(i);
 
@@ -77,8 +74,7 @@ void LegacyLibraryImporter::import()
             //and also store them in-order in a temporary playlist struct.
             QDomElement listNode = playlist.firstChildElement("List").toElement();
             QDomNodeList trackIDs = listNode.elementsByTagName("Id");
-            for (int j = 0; j < trackIDs.size(); j++)
-            {
+            for (int j = 0; j < trackIDs.size(); j++) {
                 int id = trackIDs.at(j).toElement().text().toInt();
                 if (!playlistHashTable.contains(id))
                     playlistHashTable.insert(id, "");
@@ -129,7 +125,11 @@ void LegacyLibraryImporter::import()
 
                 // Provide a no-op deleter b/c this Track is on the stack.
                 TrackPointer pTrack(&trackInfo17, &doNothing);
-                m_trackDao.saveTrack(pTrack);
+                // tro's lambda idea. This code calls synchronously!
+                m_pTrackCollection->callSync(
+                            [this, &pTrack] (void) {
+                    m_trackDao.saveTrack(pTrack);
+                }, __PRETTY_FUNCTION__);
 
                 //Check if this track is used in a playlist anywhere. If it is, save the
                 //track location. (The "id" of a track in 1.8 is a database index, so it's totally

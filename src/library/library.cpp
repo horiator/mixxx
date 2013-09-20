@@ -34,17 +34,21 @@
 // WLibrary
 const QString Library::m_sTrackViewName = QString("WTrackTableView");
 
-Library::Library(QObject* parent, ConfigObject<ConfigValue>* pConfig, bool firstRun,
+Library::Library(QObject* parent, ConfigObject<ConfigValue>* pConfig, TrackCollection* pTrackCollection, bool firstRun,
                  RecordingManager* pRecordingManager) :
         m_pConfig(pConfig),
-        m_pSidebarModel(new SidebarModel(parent)),
-        m_pTrackCollection(new TrackCollection(pConfig)),
+        m_pTrackCollection(pTrackCollection),
         m_pLibraryControl(new LibraryControl),
         m_pRecordingManager(pRecordingManager) {
 
+    m_pSidebarModel = new SidebarModel(m_pTrackCollection, parent);
+
     // TODO(rryan) -- turn this construction / adding of features into a static
     // method or something -- CreateDefaultLibrary
-    m_pMixxxLibraryFeature = new MixxxLibraryFeature(this, m_pTrackCollection,m_pConfig);
+
+    m_pMixxxLibraryFeature = new MixxxLibraryFeature(this, m_pTrackCollection, m_pConfig);
+    m_pMixxxLibraryFeature->init();
+    m_pMixxxLibraryFeature->initUI();
     addFeature(m_pMixxxLibraryFeature);
 
 #ifdef __PROMO__
@@ -177,7 +181,7 @@ void Library::addFeature(LibraryFeature* feature) {
 }
 
 void Library::slotShowTrackModel(QAbstractItemModel* model) {
-    //qDebug() << "Library::slotShowTrackModel" << model;
+    qDebug() << "Library::slotShowTrackModel" << model;
     TrackModel* trackModel = dynamic_cast<TrackModel*>(model);
     Q_ASSERT(trackModel);
     emit(showTrackModel(model));
@@ -236,6 +240,10 @@ void Library::slotCreateCrate() {
 void Library::onSkinLoadFinished() {
     // Enable the default selection when a new skin is loaded.
     m_pSidebarModel->activateDefaultSelection();
+}
+
+void Library::setUiEnabled(const bool enabled) {
+    qDebug() << "Library::setUiEnabled" << enabled;
 }
 
 QList<TrackPointer> Library::getTracksToAutoLoad() {

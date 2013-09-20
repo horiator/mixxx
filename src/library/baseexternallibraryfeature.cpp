@@ -68,8 +68,7 @@ void BaseExternalLibraryFeature::addToAutoDJ(bool bTop) {
         // Qt::UserRole asks TreeItemModel for the TreeItem's dataPath. We need to
         // use the dataPath because models with nested playlists need to use the
         // full path/name of the playlist.
-        QScopedPointer<BaseSqlTableModel> pPlaylistModelToAdd(
-            createPlaylistModelForPlaylist(playlist));
+        QScopedPointer<BaseSqlTableModel> pPlaylistModelToAdd(createPlaylistModelForPlaylist(playlist));
 
         if (!pPlaylistModelToAdd || !pPlaylistModelToAdd->initialized()) {
             qDebug() << "BaseExternalLibraryFeature::addToAutoDJ could not initialize a playlist model for playlist:" << playlist;

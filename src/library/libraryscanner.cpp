@@ -26,21 +26,21 @@
 #include "library/queryutil.h"
 #include "trackinfoobject.h"
 
-LibraryScanner::LibraryScanner(TrackCollection* collection) :
-    m_pCollection(collection),
+LibraryScanner::LibraryScanner(TrackCollection* pTrackCollection) :
+    m_pTrackCollection(pTrackCollection),
     m_pProgress(NULL),
     m_libraryHashDao(m_database),
     m_cueDao(m_database),
     m_playlistDao(m_database),
     m_crateDao(m_database),
-    m_analysisDao(m_database, collection->getConfig()),
+    m_analysisDao(m_database, pTrackCollection->getConfig()),
     m_trackDao(m_database, m_cueDao, m_playlistDao, m_crateDao,
-               m_analysisDao, collection->getConfig()),
+               m_analysisDao, pTrackCollection->getConfig()),
     // Don't initialize m_database here, we need to do it in run() so the DB
     // conn is in the right thread.
     m_nameFilters(SoundSourceProxy::supportedFileExtensionsString().split(" ")),
-    m_bCancelLibraryScan(0)
-{
+    m_bCancelLibraryScan(false),
+    m_bPauseLibraryScan(false) {
 
     qDebug() << "Constructed LibraryScanner";
 
@@ -49,7 +49,7 @@ LibraryScanner::LibraryScanner(TrackCollection* collection) :
     // when we detected moved files, and the TIOs corresponding to the moved
     // files would then have the wrong track location.
     connect(this, SIGNAL(scanFinished()),
-            &(collection->getTrackDAO()), SLOT(clearCache()));
+            &(pTrackCollection->getTrackDAO()), SLOT(clearCache()));
 
     // The "Album Artwork" folder within iTunes stores Album Arts.
     // It has numerous hundreds of sub folders but no audio files
@@ -69,8 +69,7 @@ LibraryScanner::LibraryScanner(TrackCollection* collection) :
 #endif
 }
 
-LibraryScanner::~LibraryScanner()
-{
+LibraryScanner::~LibraryScanner() {
     // IMPORTANT NOTE: This code runs in the GUI thread, so it should _NOT_ use
     //                the m_trackDao that lives inside this class. It should use
     //                the DAOs that live in m_pTrackCollection.
@@ -130,12 +129,10 @@ LibraryScanner::~LibraryScanner()
         // Close our database connection
         m_database.close();
     }
-
     qDebug() << "LibraryScanner destroyed";
 }
 
-void LibraryScanner::run()
-{
+void LibraryScanner::run() {
     unsigned static id = 0; // the id of this thread, for debugging purposes
             //XXX copypasta (should factor this out somehow), -kousu 2/2009
     QThread::currentThread()->setObjectName(QString("LibraryScanner %1").arg(++id));
@@ -147,7 +144,7 @@ void LibraryScanner::run()
     qRegisterMetaType<QSet<int> >("QSet<int>");
 
     if (!m_database.isValid()) {
-        m_database = QSqlDatabase::cloneDatabase(m_pCollection->getDatabase(), "LIBRARY_SCANNER");
+        m_database = QSqlDatabase::cloneDatabase(m_pTrackCollection->getDatabase(), "LIBRARY_SCANNER");
     }
 
     if (!m_database.isOpen()) {
@@ -184,7 +181,7 @@ void LibraryScanner::run()
     qDebug() << "upgrade filename is " << upgrade_filename;
     QFile upgradefile(upgrade_filename);
     if (!upgradefile.exists()) {
-        LegacyLibraryImporter libImport(m_trackDao, m_playlistDao);
+        LegacyLibraryImporter libImport(m_pTrackCollection, m_trackDao, m_playlistDao);
         connect(&libImport, SIGNAL(progress(QString)),
                 m_pProgress, SLOT(slotUpdate(QString)),
                 Qt::BlockingQueuedConnection);
@@ -299,9 +296,9 @@ void LibraryScanner::scan(const QString& libraryPath, QWidget *parent)
     // processed immediately, we have to use
     // BlockingQueuedConnection. (DirectConnection isn't an option for sending
     // signals across threads.)
-    connect(m_pCollection, SIGNAL(progressLoading(QString)),
-            m_pProgress, SLOT(slotUpdate(QString)));
-            //Qt::BlockingQueuedConnection);
+    connect(m_pTrackCollection, SIGNAL(progressLoading(QString)),
+            m_pProgress, SLOT(slotUpdate(QString)),
+            Qt::QueuedConnection);
     connect(this, SIGNAL(progressHashing(QString)),
             m_pProgress, SLOT(slotUpdate(QString)));
             //Qt::BlockingQueuedConnection);
@@ -337,17 +334,14 @@ bool LibraryScanner::recursiveScan(const QString& dirPath, QStringList& verified
     QDirIterator fileIt(dirPath, m_nameFilters, QDir::Files | QDir::NoDotAndDotDot);
     QString currentFile;
     bool bScanFinishedCleanly = true;
-
     //qDebug() << "Scanning dir:" << dirPath;
-
     QString newHashStr;
     bool prevHashExists = false;
     int newHash = -1;
     int prevHash = -1;
     // Note: A hash of "0" is a real hash if the directory contains no files!
 
-    while (fileIt.hasNext())
-    {
+    while (fileIt.hasNext()) {
         currentFile = fileIt.next();
         //qDebug() << currentFile;
         newHashStr += currentFile;
@@ -373,7 +367,8 @@ bool LibraryScanner::recursiveScan(const QString& dirPath, QStringList& verified
         }
 
         // Rescan that mofo!
-        bScanFinishedCleanly = m_pCollection->importDirectory(dirPath, m_trackDao, m_nameFilters, &m_bCancelLibraryScan);
+
+        bScanFinishedCleanly = m_pTrackCollection->importDirectory(dirPath, m_trackDao, m_nameFilters, &m_bCancelLibraryScan, &m_bPauseLibraryScan);
     } else { //prevHash == newHash
         // Add the directory to the verifiedDirectories list, so that later they
         // (and the tracks inside them) will be marked as verified
@@ -386,23 +381,18 @@ bool LibraryScanner::recursiveScan(const QString& dirPath, QStringList& verified
     if (m_bCancelLibraryScan) {
         return false;
     }
-
     // Look at all the subdirectories and scan them recursively...
     QDirIterator dirIt(dirPath, QDir::Dirs | QDir::NoDotAndDotDot);
     while (dirIt.hasNext() && bScanFinishedCleanly) {
         QString nextPath = dirIt.next();
         //qDebug() << "nextPath: " << nextPath;
-
-        // Skip the iTunes Album Art Folder since it is probably a waste of
-        // time.
+        // Skip the iTunes Album Art Folder since it is probably a waste of time.
         if (m_directoriesBlacklist.contains(nextPath))
             continue;
-
         if (!recursiveScan(nextPath, verifiedDirectories)) {
             bScanFinishedCleanly = false;
         }
     }
-
     return bScanFinishedCleanly;
 }
 

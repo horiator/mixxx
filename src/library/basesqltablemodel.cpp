@@ -365,11 +365,17 @@ void BaseSqlTableModel::setSearch(const QString& searchText, const QString& extr
 }
 
 void BaseSqlTableModel::search(const QString& searchText, const QString& extraFilter) {
+    // here callAsync uses
     if (sDebug) {
         qDebug() << this << "search" << searchText;
     }
     setSearch(searchText, extraFilter);
-    select();
+
+    // tro's lambda idea. This code calls asynchronously!
+    m_pTrackCollection->callAsync(
+                [this] (void) {
+        select();
+    }, __PRETTY_FUNCTION__);
 }
 
 void BaseSqlTableModel::setSort(int column, Qt::SortOrder order) {
@@ -632,7 +638,7 @@ int BaseSqlTableModel::getTrackId(const QModelIndex& index) const {
     return index.sibling(index.row(), fieldIndex(m_idColumn)).data().toInt();
 }
 
-// must be called from TrackCollection
+// Must be called from Main
 TrackPointer BaseSqlTableModel::getTrack(const QModelIndex& index) const {
     return m_trackDAO.getTrack(getTrackId(index));
 }

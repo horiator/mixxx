@@ -587,14 +587,20 @@ void CrateFeature::slotImportPlaylist() {
         delete playlist_parser;
 }
 
+// Must be called from Main thread
 void CrateFeature::slotAnalyzeCrate() {
     if (m_lastRightClickedIndex.isValid()) {
-        int playlistId = m_crateDao.getCrateIdByName(
-                m_lastRightClickedIndex.data().toString());
-        if (playlistId >= 0) {
-            QList<int> ids = m_crateDao.getTrackIds(playlistId);
-            emit(analyzeTracks(ids));
-        }
+        const QString name = m_lastRightClickedIndex.data().toString();
+
+        // tro's lambda idea. This code calls asynchronously!
+        m_pTrackCollection->callAsync(
+                    [this, name] (void) {
+            int playlistId = m_crateDao.getCrateIdByName(name);
+            if (playlistId >= 0) {
+                QList<int> ids = m_crateDao.getTrackIds(playlistId);
+                emit(analyzeTracks(ids));
+            }
+        }, __PRETTY_FUNCTION__);
     }
 }
 
