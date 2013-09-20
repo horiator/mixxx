@@ -6,15 +6,16 @@
 
 #include "widget/wlibrary.h"
 #include "library/libraryview.h"
+#include "library/trackcollection.h"
 #include "mixxxkeyboard.h"
 
-WLibrary::WLibrary(QWidget* parent)
+WLibrary::WLibrary(QWidget* parent, TrackCollection *pTrackCollection)
         : QStackedWidget(parent),
-          m_mutex(QMutex::Recursive) {
+          m_mutex(QMutex::Recursive),
+          m_pTrackCollection(pTrackCollection) {
 }
 
 WLibrary::~WLibrary() {
-
 }
 
 bool WLibrary::registerView(QString name, QWidget* view) {

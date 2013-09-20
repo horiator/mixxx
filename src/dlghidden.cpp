@@ -8,11 +8,12 @@ DlgHidden::DlgHidden(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
                      TrackCollection* pTrackCollection, MixxxKeyboard* pKeyboard)
          : QWidget(parent),
            Ui::DlgHidden(),
+           m_pTrackCollection(pTrackCollection),
            m_pTrackTableView(
-               new WTrackTableView(this,pConfig,pTrackCollection, false)) {
+               new WTrackTableView(this, pConfig, pTrackCollection, false)) {
     setupUi(this);
     m_pTrackTableView->installEventFilter(pKeyboard);
-    
+
     // Install our own trackTable
     QBoxLayout* box = dynamic_cast<QBoxLayout*>(layout());
     Q_ASSERT(box); //Assumes the form layout is a QVBox/QHBoxLayout!
@@ -23,9 +24,9 @@ DlgHidden::DlgHidden(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     m_pHiddenTableModel = new HiddenTableModel(this, pTrackCollection);
     m_pTrackTableView->loadTrackModel(m_pHiddenTableModel);
 
-    connect(btnUnhide, SIGNAL(clicked()), 
+    connect(btnUnhide, SIGNAL(clicked()),
             m_pTrackTableView, SLOT(slotUnhide()));
-    connect(btnUnhide, SIGNAL(clicked()), 
+    connect(btnUnhide, SIGNAL(clicked()),
             this, SLOT(clicked()));
     connect(btnPurge, SIGNAL(clicked()),
             m_pTrackTableView, SLOT(slotPurge()));
@@ -65,7 +66,7 @@ void DlgHidden::selectAll() {
     m_pTrackTableView->selectAll();
 }
 
-void DlgHidden::activateButtons(bool enable) {
+void DlgHidden::slotActivateButtons(bool enable) {
     btnPurge->setEnabled(enable);
     btnUnhide->setEnabled(enable);
 }
@@ -73,5 +74,5 @@ void DlgHidden::activateButtons(bool enable) {
 void DlgHidden::selectionChanged(const QItemSelection &selected,
                                  const QItemSelection &deselected) {
     Q_UNUSED(deselected);
-    activateButtons(!selected.indexes().isEmpty());
+    slotActivateButtons(!selected.indexes().isEmpty());
 }

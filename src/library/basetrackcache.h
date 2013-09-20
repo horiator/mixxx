@@ -69,7 +69,7 @@ class BaseTrackCache : public QObject {
 
   private:
     TrackPointer lookupCachedTrack(int trackId) const;
-    bool updateIndexWithQuery(QString query);
+    bool updateIndexWithQuery(const QString& query);
     bool updateIndexWithTrackpointer(TrackPointer pTrack);
     void updateTrackInIndex(int trackId);
     void updateTracksInIndex(QSet<int> trackIds);
@@ -120,6 +120,7 @@ class BaseTrackCache : public QObject {
     QRegExp m_operatorMatcher;
     QRegExp m_numericFilterMatcher;
     QRegExp m_stringFilterMatcher;
+    QMutex* m_pTrackInfoMutex;
 
     DISALLOW_COPY_AND_ASSIGN(BaseTrackCache);
 };

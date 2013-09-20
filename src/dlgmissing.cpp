@@ -7,6 +7,7 @@ DlgMissing::DlgMissing(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
                      TrackCollection* pTrackCollection, MixxxKeyboard* pKeyboard)
          : QWidget(parent),
            Ui::DlgMissing(),
+           m_pTrackCollection(pTrackCollection),
            m_pTrackTableView(
                new WTrackTableView(this,pConfig,pTrackCollection, false)) {
     setupUi(this);
@@ -20,6 +21,8 @@ DlgMissing::DlgMissing(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     box->insertWidget(1, m_pTrackTableView);
 
     m_pMissingTableModel = new MissingTableModel(this, pTrackCollection);
+    m_pMissingTableModel->init();
+
     m_pTrackTableView->loadTrackModel(m_pMissingTableModel);
 
     connect(btnPurge, SIGNAL(clicked()),
@@ -32,6 +35,9 @@ DlgMissing::DlgMissing(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
             SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
             this,
             SLOT(selectionChanged(const QItemSelection&, const QItemSelection&)));
+
+    connect(this, SIGNAL(activateButtons(bool)),
+            this, SLOT(slotActivateButtons(bool)), Qt::QueuedConnection);
 }
 
 DlgMissing::~DlgMissing() {

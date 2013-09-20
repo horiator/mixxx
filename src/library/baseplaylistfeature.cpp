@@ -95,21 +95,22 @@ void BasePlaylistFeature::activate() {
 }
 
 void BasePlaylistFeature::activateChild(const QModelIndex& index) {
-    //qDebug() << "BasePlaylistFeature::activateChild()" << index;
+    qDebug() << "BasePlaylistFeature::activateChild()" << objectName() << index;
 
     // Switch the playlist table model's playlist.
+    QString playlistName = index.data().toString();
+    int playlistId = -1;
     // tro's lambda idea. This code calls synchronously!
     m_pTrackCollection->callSync(
-                [this, index] (void) {
-        QString playlistName = index.data().toString();
-        int playlistId = m_playlistDao.getPlaylistIdFromName(playlistName);
-        if (m_pPlaylistTableModel) {
-            m_pPlaylistTableModel->setTableModel(playlistId);
-        }
-        if (m_pPlaylistTableModel) {
-            emit(showTrackModel(m_pPlaylistTableModel));
-        }
+                [this, &playlistName, &playlistId] (void) {
+        playlistId = m_playlistDao.getPlaylistIdFromName(playlistName);
     }, __PRETTY_FUNCTION__);
+    if (m_pPlaylistTableModel) {
+        m_pPlaylistTableModel->setTableModel(playlistId);
+    }
+    if (m_pPlaylistTableModel) {
+        emit(showTrackModel(m_pPlaylistTableModel));
+    }
 }
 
 void BasePlaylistFeature::slotRenamePlaylist() {
@@ -221,12 +222,18 @@ void BasePlaylistFeature::slotDuplicatePlaylist() {
         }
     }
 
-    int newPlaylistId = m_playlistDao.createPlaylist(name);
+    // tro's lambda idea. This code calls Asynchronously!
+    m_pTrackCollection->callAsync(
+                [this, name, oldPlaylistId] (void) {
+        bool copiedPlaylistTracks = false;
+        int newPlaylistId = -1;
+        newPlaylistId = m_playlistDao.createPlaylist(name);
+        copiedPlaylistTracks = m_playlistDao.copyPlaylistTracks(oldPlaylistId, newPlaylistId);
 
-    if (newPlaylistId != -1 &&
-        m_playlistDao.copyPlaylistTracks(oldPlaylistId, newPlaylistId)) {
-        emit(showTrackModel(m_pPlaylistTableModel));
-    }
+        if (newPlaylistId != -1 && copiedPlaylistTracks) {
+            emit(showTrackModel(m_pPlaylistTableModel));
+        }
+    }, __PRETTY_FUNCTION__);
 }
 
 void BasePlaylistFeature::slotTogglePlaylistLock() {
@@ -301,21 +308,22 @@ void BasePlaylistFeature::slotCreatePlaylist() {
 }
 
 void BasePlaylistFeature::slotDeletePlaylist() {
-    //qDebug() << "slotDeletePlaylist() row:" << m_lastRightClickedIndex.data();
-    int playlistId = m_playlistDao.getPlaylistIdFromName(m_lastRightClickedIndex.data().toString());
-    bool locked = m_playlistDao.isPlaylistLocked(playlistId);
-
-    if (locked) {
-        qDebug() << "Skipping playlist deletion because playlist" << playlistId << "is locked.";
-        return;
-    }
-
-    if (m_lastRightClickedIndex.isValid()) {
-        Q_ASSERT(playlistId >= 0);
-
-        m_playlistDao.deletePlaylist(playlistId);
-        activate();
-    }
+    // tro's lambda idea. This code calls synchronously!
+    const int playlistId = m_playlistDao.getPlaylistIdFromName(m_lastRightClickedIndex.data().toString());
+    m_pTrackCollection->callSync(
+                [this, &playlistId] (void) {
+        //qDebug() << "slotDeletePlaylist() row:" << m_lastRightClickedIndex.data();
+        bool locked = m_playlistDao.isPlaylistLocked(playlistId);
+        if (locked) {
+            qDebug() << "Skipping playlist deletion because playlist" << playlistId << "is locked.";
+            return;
+        }
+        if (m_lastRightClickedIndex.isValid()) {
+            Q_ASSERT(playlistId >= 0);
+            m_playlistDao.deletePlaylist(playlistId);
+        }
+    }, __PRETTY_FUNCTION__);
+    activate();
 }
 
 

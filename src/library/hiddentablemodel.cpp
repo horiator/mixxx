@@ -1,9 +1,8 @@
 #include "library/hiddentablemodel.h"
+#include "library/queryutil.h"
 
-HiddenTableModel::HiddenTableModel(QObject* parent,
-                                     TrackCollection* pTrackCollection)
-        : BaseSqlTableModel(parent,pTrackCollection,"mixxx.db.model.missing") {
-    setTableModel();
+HiddenTableModel::HiddenTableModel(QObject* parent, TrackCollection* pTrackCollection)
+        : BaseSqlTableModel(parent, pTrackCollection, "mixxx.db.model.missing") {  // WTF!? COPYPASTE
 }
 
 HiddenTableModel::~HiddenTableModel() {
@@ -11,7 +10,7 @@ HiddenTableModel::~HiddenTableModel() {
 
 void HiddenTableModel::setTableModel(int id){
     Q_UNUSED(id);
-    QSqlQuery query;
+    QSqlQuery query(m_pTrackCollection->getDatabase());
     QString tableName("hidden_songs");
 
     QStringList columns;
@@ -25,12 +24,7 @@ void HiddenTableModel::setTableModel(int id){
                   "ON library.location=track_locations.id "
                   "WHERE " + filter);
     if (!query.exec()) {
-        qDebug() << query.executedQuery() << query.lastError();
-    }
-
-    //Print out any SQL error, if there was one.
-    if (query.lastError().isValid()) {
-        qDebug() << __FILE__ << __LINE__ << query.lastError();
+        LOG_FAILED_QUERY(query);
     }
 
     QStringList tableColumns;
@@ -41,7 +35,6 @@ void HiddenTableModel::setTableModel(int id){
     initHeaderData();
     setDefaultSort(fieldIndex("artist"), Qt::AscendingOrder);
     setSearch("");
-
 }
 
 void HiddenTableModel::purgeTracks(const QModelIndexList& indices) {

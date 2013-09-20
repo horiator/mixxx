@@ -5,10 +5,12 @@
 #include "library/libraryfeature.h"
 #include "library/sidebarmodel.h"
 #include "library/treeitem.h"
+#include "library/trackcollection.h"
 
-SidebarModel::SidebarModel(QObject* parent)
+SidebarModel::SidebarModel(TrackCollection* tc, QObject* parent)
         : QAbstractItemModel(parent),
-          m_iDefaultSelectedIndex(0) {
+          m_iDefaultSelectedIndex(0),
+          m_pTrackCollection(tc) {
 }
 
 SidebarModel::~SidebarModel() {

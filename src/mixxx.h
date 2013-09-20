@@ -42,6 +42,8 @@ class VinylControlManager;
 class DlgPreferences;
 class SoundManager;
 
+class TrackCollection;
+
 #include "configobject.h"
 #include "util/cmdlineargs.h"
 #include "util/timer.h"
@@ -65,7 +67,7 @@ class MixxxApp : public QMainWindow {
     void resizeEvent(QResizeEvent *e) { qDebug() << "resize" << e->size();}
 
     void setToolTipsCfg(int tt);
-    inline int getToolTipsCgf() { return m_toolTipsCfg; };
+    inline int getToolTipsCgf() { return m_toolTipsCfg; }
     void rebootMixxxView();
 
   public slots:
@@ -231,6 +233,8 @@ class MixxxApp : public QMainWindow {
     Timer m_runtime_timer;
 
     const CmdlineArgs& m_cmdLineArgs;
+
+    TrackCollection* m_pTrackCollection;
 };
 
 #endif

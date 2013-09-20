@@ -35,6 +35,7 @@
 #include "library/library.h"
 #include "library/libraryscanner.h"
 #include "library/librarytablemodel.h"
+#include "library/trackcollection.h"
 #include "controllers/controllermanager.h"
 #include "mixxxkeyboard.h"
 #include "playermanager.h"
@@ -379,7 +380,17 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     delete pModplugPrefs; // not needed anymore
 #endif
 
+    m_pTrackCollection = new TrackCollection(m_pConfig);
+    m_pTrackCollection->start();
+
+    // Since m_pTrackCollection is separate thread, here we must wait when
+    // all inside m_pTrackCollection will be initialized, so we can access members.
+    QEventLoop loop;
+    QObject::connect(m_pTrackCollection, SIGNAL(initialized()), &loop, SLOT(quit()));
+    loop.exec();
+
     m_pLibrary = new Library(this, m_pConfig,
+                             m_pTrackCollection,
                              bFirstRun || bUpgraded,
                              m_pRecordingManager);
     m_pPlayerManager->bindToLibrary(m_pLibrary);
@@ -487,7 +498,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
     // Loads the skin as a child of m_pView
     // assignment intentional in next line
     if (!(m_pWidgetParent = m_pSkinLoader->loadDefaultSkin(
-        m_pView, m_pKeyboard, m_pPlayerManager, m_pControllerManager, m_pLibrary, m_pVCManager))) {
+        m_pView, m_pKeyboard, m_pPlayerManager, m_pControllerManager, m_pLibrary, m_pVCManager, m_pTrackCollection))) {
         reportCriticalErrorAndQuit("default skin cannot be loaded see <b>mixxx</b> trace for more information.");
 
         //TODO (XXX) add dialog to warn user and launch skin choice page
@@ -551,7 +562,7 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
 
     // Scan the library directory. Initialize this after the skinloader has
     // loaded a skin, see Bug #1047435
-    m_pLibraryScanner = new LibraryScanner(m_pLibrary->getTrackCollection());
+    m_pLibraryScanner = new LibraryScanner( m_pLibrary->getTrackCollection() );
     connect(m_pLibraryScanner, SIGNAL(scanFinished()),
             this, SLOT(slotEnableRescanLibraryAction()));
 
@@ -636,6 +647,9 @@ MixxxApp::~MixxxApp()
     m_pConfig->Save();
 
     delete m_pPrefDlg;
+
+    m_pTrackCollection->stopThread();
+    m_pTrackCollection->wait();
 
     qDebug() << "delete config " << qTime.elapsed();
     delete m_pConfig;
@@ -1451,7 +1465,8 @@ void MixxxApp::rebootMixxxView() {
                                                            m_pPlayerManager,
                                                            m_pControllerManager,
                                                            m_pLibrary,
-                                                           m_pVCManager))) {
+                                                           m_pVCManager,
+                                                           m_pTrackCollection))) {
 
         QMessageBox::critical(this,
                               tr("Error in skin file"),
