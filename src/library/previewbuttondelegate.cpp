@@ -3,14 +3,16 @@
 
 #include "library/previewbuttondelegate.h"
 #include "library/trackmodel.h"
+#include "library/trackcollection.h"
 #include "playerinfo.h"
 #include "playermanager.h"
 #include "trackinfoobject.h"
 #include "controlobjectthreadmain.h"
 #include "controlobject.h"
 
-PreviewButtonDelegate::PreviewButtonDelegate(QObject *parent, int column)
+PreviewButtonDelegate::PreviewButtonDelegate(TrackCollection *pTrackCollection, QObject *parent, int column)
         : QStyledItemDelegate(parent),
+          m_pTrackCollection(pTrackCollection),
           m_pTableView(NULL),
           m_pButton(NULL),
           m_isOneCellInEditMode(false),
@@ -138,6 +140,7 @@ void PreviewButtonDelegate::cellEntered(const QModelIndex &index) {
     }
 }
 
+// Must be called from Main thread
 void PreviewButtonDelegate::buttonClicked() {
     if (!m_pTableView) {
         return;
@@ -162,6 +165,7 @@ void PreviewButtonDelegate::buttonClicked() {
     }
 }
 
+// Must be called from Main thread
 void PreviewButtonDelegate::previewDeckPlayChanged(double v) {
     m_pTableView->update();
     if (m_isOneCellInEditMode) {
@@ -169,6 +173,7 @@ void PreviewButtonDelegate::previewDeckPlayChanged(double v) {
         if (!pTrackModel) {
             return;
         }
+
         QString group = PlayerManager::groupForPreviewDeck(0);
         TrackPointer pPreviewTrack = PlayerInfo::Instance().getTrackInfo(group);
         TrackPointer pTrack = pTrackModel->getTrack(m_currentEditedCellIndex);
@@ -177,5 +182,3 @@ void PreviewButtonDelegate::previewDeckPlayChanged(double v) {
         }
     }
 }
-
-

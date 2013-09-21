@@ -11,7 +11,7 @@
 #include "library/parsercsv.h"
 
 #include "widget/wlibrary.h"
-#include "widget/wlibrarysidebar.h"
+//#include "widget/wlibrarysidebar.h"
 #include "widget/wlibrarytextbrowser.h"
 #include "library/trackcollection.h"
 #include "library/playlisttablemodel.h"
@@ -57,15 +57,21 @@ void PlaylistFeature::onRightClickChild(const QPoint& globalPos, QModelIndex ind
     //Save the model index so we can get it in the action slots...
     m_lastRightClickedIndex = index;
     QString playlistName = index.data().toString();
-    int playlistId = m_playlistDao.getPlaylistIdFromName(playlistName);
+    int playlistId = -1;
+    bool locked = false;
+
+    // tro's lambda idea. This code calls synchronously!
+     m_pTrackCollection->callSync(
+                 [this, &playlistName, &playlistId, &locked] (void) {
+         playlistId = m_playlistDao.getPlaylistIdFromName(playlistName);
+         locked = m_playlistDao.isPlaylistLocked(playlistId);
+     }, __PRETTY_FUNCTION__);
 
 
-    bool locked = m_playlistDao.isPlaylistLocked(playlistId);
     m_pDeletePlaylistAction->setEnabled(!locked);
     m_pRenamePlaylistAction->setEnabled(!locked);
 
     m_pLockPlaylistAction->setText(locked ? tr("Unlock") : tr("Lock"));
-
 
     //Create the right-click menu
     QMenu menu(NULL);
@@ -84,6 +90,7 @@ void PlaylistFeature::onRightClickChild(const QPoint& globalPos, QModelIndex ind
     menu.exec(globalPos);
 }
 
+// Must be called from TrackCollection thread
 bool PlaylistFeature::dropAcceptChild(const QModelIndex& index, QList<QUrl> urls,
                                       QWidget *pSource){
     //TODO: Filter by supported formats regex and reject anything that doesn't match.
@@ -135,28 +142,31 @@ bool PlaylistFeature::dragMoveAcceptChild(const QModelIndex& index, QUrl url) {
 }
 
 void PlaylistFeature::buildPlaylistList() {
-    m_playlistList.clear();
-    // Setup the sidebar playlist model
     QSqlTableModel playlistTableModel(this, m_pTrackCollection->getDatabase());
-    playlistTableModel.setTable("Playlists");
-    playlistTableModel.setFilter("hidden=0");
-    playlistTableModel.setSort(playlistTableModel.fieldIndex("name"),
-                               Qt::AscendingOrder);
-    playlistTableModel.select();
-    while (playlistTableModel.canFetchMore()) {
-        playlistTableModel.fetchMore();
-    }
-    QSqlRecord record = playlistTableModel.record();
-    int nameColumn = record.indexOf("name");
-    int idColumn = record.indexOf("id");
+    m_pTrackCollection->callSync(
+                [this, &playlistTableModel] (void) {
+        m_playlistList.clear();
+        // Setup the sidebar playlist model
 
-    for (int row = 0; row < playlistTableModel.rowCount(); ++row) {
-        int id = playlistTableModel.data(
-            playlistTableModel.index(row, idColumn)).toInt();
-        QString name = playlistTableModel.data(
-            playlistTableModel.index(row, nameColumn)).toString();
-        m_playlistList.append(qMakePair(id, name));
-    }
+        playlistTableModel.setTable("Playlists");
+        playlistTableModel.setFilter("hidden=0");
+        playlistTableModel.setSort(playlistTableModel.fieldIndex("name"), Qt::AscendingOrder);
+        playlistTableModel.select();
+        while (playlistTableModel.canFetchMore()) {
+            playlistTableModel.fetchMore();
+        }
+        QSqlRecord record = playlistTableModel.record();
+        int nameColumn = record.indexOf("name");
+        int idColumn = record.indexOf("id");
+
+        for (int row = 0; row < playlistTableModel.rowCount(); ++row) {
+            int id = playlistTableModel.data(
+                playlistTableModel.index(row, idColumn)).toInt();
+            QString name = playlistTableModel.data(
+                playlistTableModel.index(row, nameColumn)).toString();
+            m_playlistList.append(qMakePair(id, name));
+        }
+    }, __PRETTY_FUNCTION__);
 }
 
 void PlaylistFeature::decorateChild(TreeItem* item, int playlist_id) {
@@ -168,12 +178,20 @@ void PlaylistFeature::decorateChild(TreeItem* item, int playlist_id) {
 }
 
 void PlaylistFeature::slotPlaylistTableChanged(int playlistId) {
+    // here callSync uses
+    DBG() << sender();
+
     if (!m_pPlaylistTableModel) {
         return;
     }
 
-    //qDebug() << "slotPlaylistTableChanged() playlistId:" << playlistId;
-    enum PlaylistDAO::HiddenType type = m_playlistDao.getHiddenType(playlistId);
+    PlaylistDAO::HiddenType type;
+
+    m_pTrackCollection->callSync(
+                [this, &playlistId, &type] (void) {
+        type = m_playlistDao.getHiddenType(playlistId);
+    }, __PRETTY_FUNCTION__ + objectName());
+
     if (type == PlaylistDAO::PLHT_NOT_HIDDEN ||
         type == PlaylistDAO::PLHT_UNKNOWN) { // In case of a deleted Playlist
         clearChildModel();

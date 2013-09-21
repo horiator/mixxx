@@ -37,7 +37,8 @@ BaseTrackCache::BaseTrackCache(TrackCollection* pTrackCollection,
           m_pTrackCollection(pTrackCollection),
           m_trackDAO(m_pTrackCollection->getTrackDAO()),
           m_database(m_pTrackCollection->getDatabase()),
-          m_pQueryParser(new SearchQueryParser(m_pTrackCollection->getDatabase())) {
+          m_pQueryParser(new SearchQueryParser(m_pTrackCollection->getDatabase())),
+          m_pTrackInfoMutex(new QMutex()) {
     m_searchColumns << "artist"
                     << "album"
                     << "location"
@@ -67,6 +68,9 @@ BaseTrackCache::BaseTrackCache(TrackCollection* pTrackCollection,
 
 BaseTrackCache::~BaseTrackCache() {
     delete m_pQueryParser;
+
+    m_pTrackInfoMutex->unlock();
+    delete m_pTrackCollection;
 }
 
 const QStringList BaseTrackCache::columns() const {
@@ -81,6 +85,7 @@ int BaseTrackCache::fieldIndex(const QString columnName) const {
     return m_columnIndex.value(columnName, -1);
 }
 
+//
 void BaseTrackCache::slotTracksAdded(QSet<int> trackIds) {
     if (sDebug) {
         qDebug() << this << "slotTracksAdded" << trackIds.size();
@@ -96,12 +101,14 @@ void BaseTrackCache::slotDbTrackAdded(TrackPointer pTrack) {
 }
 
 void BaseTrackCache::slotTracksRemoved(QSet<int> trackIds) {
+    m_pTrackInfoMutex->lock();
     if (sDebug) {
         qDebug() << this << "slotTracksRemoved" << trackIds.size();
     }
     foreach (int trackId, trackIds) {
         m_trackInfo.remove(trackId);
     }
+    m_pTrackInfoMutex->unlock();
 }
 
 void BaseTrackCache::slotTrackDirty(int trackId) {
@@ -128,14 +135,18 @@ void BaseTrackCache::slotTrackClean(int trackId) {
     updateTrackInIndex(trackId);
 }
 
-bool BaseTrackCache::isCached(int trackId) const {
-    return m_trackInfo.contains(trackId);
+bool BaseTrackCache::isCached(int trackId) {
+    m_pTrackInfoMutex->lock();
+    bool result = m_trackInfo.contains(trackId);
+    m_pTrackInfoMutex->unlock();
+    return result;
 }
 
 void BaseTrackCache::ensureCached(int trackId) {
     updateTrackInIndex(trackId);
 }
 
+//
 void BaseTrackCache::ensureCached(QSet<int> trackIds) {
     updateTracksInIndex(trackIds);
 }
@@ -143,7 +154,9 @@ void BaseTrackCache::ensureCached(QSet<int> trackIds) {
 TrackPointer BaseTrackCache::lookupCachedTrack(int trackId) const {
     // Only get the Track from the TrackDAO if it's in the cache
     if (m_bIsCaching) {
-        return m_trackDAO.getTrack(trackId, true);
+        TrackPointer trackPointer;
+        trackPointer = m_trackDAO.getTrack(trackId, true);
+        return trackPointer;
     }
     return TrackPointer();
 }
@@ -162,20 +175,22 @@ bool BaseTrackCache::updateIndexWithTrackpointer(TrackPointer pTrack) {
     int id = pTrack->getId();
 
     if (id > 0) {
+        m_pTrackInfoMutex->lock();
         // m_trackInfo[id] will insert a QVector<QVariant> into the
         // m_trackInfo HashTable with the key "id"
         QVector<QVariant>& record = m_trackInfo[id];
         // prealocate memory for all columns at once
         record.resize(numColumns);
-
         for (int i = 0; i < numColumns; ++i) {
             getTrackValueForColumn(pTrack, i, record[i]);
         }
+        m_pTrackInfoMutex->unlock();
     }
     return true;
 }
 
-bool BaseTrackCache::updateIndexWithQuery(QString queryString) {
+// Must be called from TrackCollection thread
+bool BaseTrackCache::updateIndexWithQuery(const QString& queryString) {
     QTime timer;
     timer.start();
 
@@ -199,7 +214,7 @@ bool BaseTrackCache::updateIndexWithQuery(QString queryString) {
 
     while (query.next()) {
         int id = query.value(idColumn).toInt();
-
+        m_pTrackInfoMutex->lock();
         //m_trackInfo[id] will insert a QVector<QVariant> into the
         //m_trackInfo HashTable with the key "id"
         QVector<QVariant>& record = m_trackInfo[id];
@@ -208,6 +223,7 @@ bool BaseTrackCache::updateIndexWithQuery(QString queryString) {
         for (int i = 0; i < numColumns; ++i) {
             record[i] = query.value(i);
         }
+        m_pTrackInfoMutex->unlock();
     }
 
     qDebug() << this << "updateIndexWithQuery took" << timer.elapsed() << "ms";
@@ -229,7 +245,9 @@ void BaseTrackCache::buildIndex() {
     // TODO(rryan) for very large tables, it probably makes more sense to NOT
     // clear the table, and keep track of what IDs we see, then delete the ones
     // we don't see.
+    m_pTrackInfoMutex->lock();
     m_trackInfo.clear();
+    m_pTrackInfoMutex->unlock();
 
     if (!updateIndexWithQuery(queryString)) {
         qDebug() << "buildIndex failed!";
@@ -238,6 +256,7 @@ void BaseTrackCache::buildIndex() {
     m_bIndexBuilt = true;
 }
 
+//
 void BaseTrackCache::updateTrackInIndex(int trackId) {
     QSet<int> trackIds;
     trackIds.insert(trackId);
@@ -347,12 +366,14 @@ QVariant BaseTrackCache::data(int trackId, int column) const {
     // metadata. Currently the upper-levels will not delegate row-specific
     // columns to this method, but there should still be a check here I think.
     if (!result.isValid()) {
+        m_pTrackInfoMutex->lock();
         QHash<int, QVector<QVariant> >::const_iterator it =
                 m_trackInfo.find(trackId);
         if (it != m_trackInfo.end()) {
             const QVector<QVariant>& fields = it.value();
             result = fields.value(column, result);
         }
+        m_pTrackInfoMutex->unlock();
     }
     return result;
 }
@@ -363,9 +384,9 @@ bool BaseTrackCache::trackMatches(const TrackPointer& pTrack,
     // if it matches the search query.
     // To properly AND search queries, concatenate all searchable fields
     QString combined_values;
-    int i = 0;
-    foreach (QString column, m_searchColumns) {
-        int columnIndex = m_searchColumnIndices[i++];
+
+    for (int i = 0; i < m_searchColumns.count(); ++i) {
+        int columnIndex = m_searchColumnIndices.at(i);
         QVariant value;
         getTrackValueForColumn(pTrack, columnIndex, value);
         if (value.isValid() && qVariantCanConvert<QString>(value)) {
@@ -765,8 +786,11 @@ int BaseTrackCache::findSortInsertionPoint(TrackPointer pTrack,
         int mid = min + (max - min) / 2;
         int otherTrackId = trackIds[mid];
 
+        m_pTrackInfoMutex->lock();
+        bool contains = m_trackInfo.contains(otherTrackId);
+        m_pTrackInfoMutex->unlock();
         // This should not happen, but it's a recoverable error so we should only log it.
-        if (!m_trackInfo.contains(otherTrackId)) {
+        if (!contains) {
             qDebug() << "WARNING: track" << otherTrackId << "was not in index";
             //updateTrackInIndex(otherTrackId);
         }

@@ -41,6 +41,8 @@ Library::Library(QObject* parent, ConfigObject<ConfigValue>* pConfig, TrackColle
         m_pLibraryControl(new LibraryControl),
         m_pRecordingManager(pRecordingManager) {
 
+    pTrackCollection->setupControlObject();
+
     m_pSidebarModel = new SidebarModel(m_pTrackCollection, parent);
 
     // TODO(rryan) -- turn this construction / adding of features into a static
@@ -64,12 +66,20 @@ Library::Library(QObject* parent, ConfigObject<ConfigValue>* pConfig, TrackColle
 
     addFeature(new AutoDJFeature(this, pConfig, m_pTrackCollection));
     m_pPlaylistFeature = new PlaylistFeature(this, m_pTrackCollection, m_pConfig);
+
     addFeature(m_pPlaylistFeature);
     m_pCrateFeature = new CrateFeature(this, m_pTrackCollection, m_pConfig);
+
     addFeature(m_pCrateFeature);
     addFeature(new BrowseFeature(this, pConfig, m_pTrackCollection, m_pRecordingManager));
     addFeature(new RecordingFeature(this, pConfig, m_pTrackCollection, m_pRecordingManager));
-    addFeature(new SetlogFeature(this, pConfig, m_pTrackCollection));
+    SetlogFeature* setlogFeature = new SetlogFeature(this, pConfig, m_pTrackCollection);
+
+    DBG() << "setlogFeature->init();";
+    setlogFeature->init();
+    DBG() << "addFeature(setlogFeature)";
+    addFeature(setlogFeature);
+
     m_pAnalysisFeature = new AnalysisFeature(this, pConfig, m_pTrackCollection);
     connect(m_pPlaylistFeature, SIGNAL(analyzeTracks(QList<int>)),
             m_pAnalysisFeature, SLOT(analyzeTracks(QList<int>)));
@@ -119,7 +129,8 @@ Library::~Library() {
     //Update:  - OR NOT! As of Dec 8, 2009, this pointer must be destroyed manually otherwise
     // we never see the TrackCollection's destructor being called... - Albert
     // Has to be deleted at last because the features holds references of it.
-    delete m_pTrackCollection;
+//    m_pTrackCollection->stopThread();
+//    delete m_pTrackCollection;
 }
 
 void Library::bindSidebarWidget(WLibrarySidebar* pSidebarWidget) {
@@ -186,7 +197,7 @@ void Library::slotShowTrackModel(QAbstractItemModel* model) {
     Q_ASSERT(trackModel);
     emit(showTrackModel(model));
     emit(switchToView(m_sTrackViewName));
-    emit(restoreSearch(trackModel->currentSearch()));
+    emit(restoreSearch(trackModel->currentSearch())); // #TRO#
 }
 
 void Library::slotSwitchToView(const QString& view) {
@@ -198,6 +209,7 @@ void Library::slotLoadTrack(TrackPointer pTrack) {
     emit(loadTrack(pTrack));
 }
 
+// Must be called from Main thread
 void Library::slotLoadLocationToPlayer(QString location, QString group) {
     TrackDAO& track_dao = m_pTrackCollection->getTrackDAO();
     int track_id = track_dao.getTrackId(location);

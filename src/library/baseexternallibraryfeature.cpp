@@ -84,7 +84,7 @@ void BaseExternalLibraryFeature::addToAutoDJ(bool bTop) {
             if (!index.isValid()) {
                 continue;
             }
-            TrackPointer track = pPlaylistModelToAdd->getTrack(index);
+            TrackPointer track = pPlaylistModelToAdd->getTrack(index); /////////// avoid getTrack
 
             if (!track || track->getId() == -1) {
                 continue;
@@ -148,7 +148,7 @@ void BaseExternalLibraryFeature::slotImportAsMixxxPlaylist() {
                 QModelIndex index = pPlaylistModelToAdd->index(i,0);
                 if (index.isValid()) {
                     qDebug() << pPlaylistModelToAdd->getTrackLocation(index);
-                    TrackPointer track = pPlaylistModelToAdd->getTrack(index);
+                    TrackPointer track = pPlaylistModelToAdd->getTrack(index);   ////////////////// avoid getTrack
                     // TODO(XXX): Care whether the append succeeded.
                     playlistDao.appendTrackToPlaylist(track->getId(), playlistId);
                 }

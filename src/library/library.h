@@ -66,6 +66,8 @@ public:
     void slotCreateCrate();
     void onSkinLoadFinished();
 
+    void setUiEnabled(const bool enabled);
+
   signals:
     void showTrackModel(QAbstractItemModel* model);
     void switchToView(const QString& view);

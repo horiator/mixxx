@@ -795,11 +795,9 @@ void TrackInfoObject::setDirty(bool bDirty) {
             emit(clean(this));
     }
     // Emit a changed signal regardless if this attempted to set us dirty.
-    if (bDirty) {
+    if (m_bDirty) {
         emit(changed(this));
     }
-
-    //qDebug() << QString("TrackInfoObject %1 %2 set to %3").arg(QString::number(m_iId), m_sLocation, m_bDirty ? "dirty" : "clean");
 }
 
 bool TrackInfoObject::isDirty() {

@@ -638,7 +638,7 @@ int BaseSqlTableModel::getTrackId(const QModelIndex& index) const {
     return index.sibling(index.row(), fieldIndex(m_idColumn)).data().toInt();
 }
 
-// Must be called from Main
+// Must be called from Main thread
 TrackPointer BaseSqlTableModel::getTrack(const QModelIndex& index) const {
     return m_trackDAO.getTrack(getTrackId(index));
 }
@@ -826,6 +826,7 @@ QAbstractItemDelegate* BaseSqlTableModel::delegateForColumn(const int i, QObject
     return NULL;
 }
 
+// Must be called from Main thread
 void BaseSqlTableModel::hideTracks(const QModelIndexList& indices) {
     QList<int> trackIds;
     foreach (QModelIndex index, indices) {
@@ -833,9 +834,11 @@ void BaseSqlTableModel::hideTracks(const QModelIndexList& indices) {
         trackIds.append(trackId);
     }
 
-    m_trackDAO.hideTracks(trackIds);
-
-    // TODO(rryan) : do not select, instead route event to BTC and notify from
-    // there.
-    select(); //Repopulate the data model.
+    // tro's lambda idea. This code calls asynchronously!
+    m_pTrackCollection->callAsync(
+                [this, trackIds] (void) {
+        m_trackDAO.hideTracks(trackIds);
+        // TODO(rryan) : do not select, instead route event to BTC and notify from there.
+        select(); //Repopulate the data model.
+    }, __PRETTY_FUNCTION__);
 }

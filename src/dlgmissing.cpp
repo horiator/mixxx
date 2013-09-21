@@ -48,8 +48,13 @@ DlgMissing::~DlgMissing() {
 }
 
 void DlgMissing::onShow() {
-    m_pMissingTableModel->select();
-    activateButtons(false);
+    // no buttons can be selected
+    slotActivateButtons(false);
+    // tro's lambda idea. This code calls asynchronously!
+    m_pTrackCollection->callAsync(
+                [this] (void) {
+        m_pMissingTableModel->select();
+    }, __PRETTY_FUNCTION__);
 }
 
 void DlgMissing::clicked() {
@@ -65,12 +70,12 @@ void DlgMissing::selectAll() {
     m_pTrackTableView->selectAll();
 }
 
-void DlgMissing::activateButtons(bool enable) {
+void DlgMissing::slotActivateButtons(bool enable) {
     btnPurge->setEnabled(enable);
 }
 
 void DlgMissing::selectionChanged(const QItemSelection &selected,
                                   const QItemSelection &deselected) {
     Q_UNUSED(deselected);
-    activateButtons(!selected.indexes().isEmpty());
+    slotActivateButtons(!selected.indexes().isEmpty());
 }

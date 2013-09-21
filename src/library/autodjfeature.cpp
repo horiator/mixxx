@@ -3,8 +3,6 @@
 // Created 8/23/2009 by RJ Ryan (rryan@mit.edu)
 
 #include <QtDebug>
-//#define __AUTODJCRATES__ ////////////////////////////////////////////////////////////////////////////////////////////
-
 #ifdef __AUTODJCRATES__
 #include <QMenu>
 #endif // __AUTODJCRATES__
@@ -116,6 +114,7 @@ void AutoDJFeature::activate() {
     emit(restoreSearch(QString())); //Null String disables search box
 }
 
+// Must be called from TrackCollection thread
 bool AutoDJFeature::dropAccept(QList<QUrl> urls, QWidget *pSource) {
     //TODO: Filter by supported formats regex and reject anything that doesn't match.
     TrackDAO &trackDao = m_pTrackCollection->getTrackDAO();
@@ -280,20 +279,27 @@ void AutoDJFeature::slotCrateAutoDjChanged(int crateId, bool added) {
 
 void AutoDJFeature::slotAddRandomTrack(bool) {
 #ifdef __AUTODJCRATES__
-    // Get access to the auto-DJ playlist.
-    PlaylistDAO& playlistDao = m_pTrackCollection->getPlaylistDAO();                // TODO(tro) BEGIN wrap to callAsync
-    int iAutoDJPlaylistId = playlistDao.getPlaylistIdFromName(AUTODJ_TABLE);
-    if (iAutoDJPlaylistId >= 0) {
-        // Get the ID of a randomly-selected track.
-        int iTrackId = m_autoDjCratesDao.getRandomTrackId();
-        if (iTrackId != -1) {
-            // Add this randomly-selected track to the auto-DJ playlist.
-            playlistDao.appendTrackToPlaylist(iTrackId, iAutoDJPlaylistId);
-
-            // Display the newly-added track.
-            m_pAutoDJView->onShow();
+    bool needToDoSelect = false;
+    // tro's lambda idea. This code calls synchronously!
+    m_pTrackCollection->callSync(
+                [this, &needToDoSelect] (void) {
+        // Get access to the auto-DJ playlist.
+        PlaylistDAO& playlistDao = m_pTrackCollection->getPlaylistDAO();
+        int iAutoDJPlaylistId = playlistDao.getPlaylistIdFromName(AUTODJ_TABLE);
+        if (iAutoDJPlaylistId >= 0) {
+            // Get the ID of a randomly-selected track.
+            int iTrackId = m_autoDjCratesDao.getRandomTrackId();
+            if (iTrackId != -1) {
+                // Add this randomly-selected track to the auto-DJ playlist.
+                playlistDao.appendTrackToPlaylist(iTrackId, iAutoDJPlaylistId);
+                needToDoSelect = true;
+            }
         }
-    }                                                                               // TODO(tro) END wrap to callAsync
+    }, __PRETTY_FUNCTION__);
+    if (needToDoSelect) {
+        // Display the newly-added track.
+        m_pAutoDJView->onShow();
+    }
 #endif // __AUTODJCRATES__
 }
 

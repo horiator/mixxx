@@ -140,43 +140,47 @@ void LegacyLibraryImporter::import() {
             }
         }
 
+        // tro's lambda idea. This code calls synchronously!
+        m_pTrackCollection->callSync(
+                    [this, &legacyPlaylists, &playlistHashTable] (void) {
 
-        //Create the imported playlists
-        QListIterator<LegacyPlaylist> it(legacyPlaylists);
-        LegacyPlaylist current;
-        while (it.hasNext())
-        {
-            current = it.next();
-            emit(progress("Upgrading Mixxx 1.7 Playlists: " + current.name));
+            //Create the imported playlists
+            QListIterator<LegacyPlaylist> it(legacyPlaylists);
+            LegacyPlaylist current;
+            while (it.hasNext()) {
+                current = it.next();
+                emit(progress("Upgrading Mixxx 1.7 Playlists: " + current.name));
 
-            //Create the playlist with the imported name.
-            //qDebug() << "Importing playlist:" << current.name;
-            int playlistId = m_playlistDao.createPlaylist(current.name);
+                //Create the playlist with the imported name.
+                //qDebug() << "Importing playlist:" << current.name;
+                int playlistId = m_playlistDao.createPlaylist(current.name);
 
-            //For each track ID in the XML...
-            QList<int> trackIDs = current.indexes;
-            for (int i = 0; i < trackIDs.size(); i++)
-            {
-                QString trackLocation;
-                int id = trackIDs[i];
-                //qDebug() << "track ID:" << id;
+                //For each track ID in the XML...
+                QList<int> trackIDs = current.indexes;
+                for (int i = 0; i < trackIDs.size(); i++)
+                {
+                    QString trackLocation;
+                    int id = trackIDs[i];
+                    //qDebug() << "track ID:" << id;
 
-                //Try to resolve the (XML's) track ID to a track location.
-                if (playlistHashTable.contains(id)) {
-                    trackLocation = playlistHashTable[id];
-                    //qDebug() << "Resolved to:" << trackLocation;
-                }
+                    //Try to resolve the (XML's) track ID to a track location.
+                    if (playlistHashTable.contains(id)) {
+                        trackLocation = playlistHashTable[id];
+                        //qDebug() << "Resolved to:" << trackLocation;
+                    }
 
-                //Get the database's track ID (NOT the XML's track ID!)
-                int dbTrackId = m_trackDao.getTrackId(trackLocation);
+                    //Get the database's track ID (NOT the XML's track ID!)
+                    int dbTrackId = m_trackDao.getTrackId(trackLocation);
 
-                if (dbTrackId >= 0) {
-                    // Add it to the database's playlist.
-                    // TODO(XXX): Care if the append succeeded.
-                    m_playlistDao.appendTrackToPlaylist(dbTrackId, playlistId);
+                    if (dbTrackId >= 0) {
+                        // Add it to the database's playlist.
+                        // TODO(XXX): Care if the append succeeded.
+                        m_playlistDao.appendTrackToPlaylist(dbTrackId, playlistId);
+                    }
                 }
             }
-        }
+        }, __PRETTY_FUNCTION__);
+
 
         QString upgrade_filename = settingPath17.append("DBUPGRADED");
         //now create stub so that the library is not readded next time program loads

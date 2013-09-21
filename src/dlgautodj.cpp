@@ -6,6 +6,7 @@
 #include "controlobjectthreadmain.h"
 #include "library/playlisttablemodel.h"
 #include "library/trackcollection.h"
+#include "library/dao/playlistdao.h"
 #include "playerinfo.h"
 #include "widget/wskincolor.h"
 #include "widget/wtracktableview.h"
@@ -15,6 +16,7 @@
 const char* kTransitionPreferenceName = "Transition";
 const int kTransitionPreferenceDefault = 10;
 
+// TODO(xxx) Move initialization to separate method
 DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
                      TrackCollection* pTrackCollection,
                      MixxxKeyboard* pKeyboard)
@@ -23,7 +25,7 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
           m_pConfig(pConfig),
           m_pTrackCollection(pTrackCollection),
           m_pTrackTableView(
-              new WTrackTableView(this, pConfig, m_pTrackCollection, false)), // no sorting
+              new WTrackTableView(this, pConfig, pTrackCollection, false)), // no sorting
           m_bFadeNow(false),
           m_eState(ADJ_DISABLED),
           m_posThreshold1(1.0f),
@@ -42,15 +44,21 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
     m_pTrackTablePlaceholder->hide();
     box->insertWidget(1, m_pTrackTableView);
 
-    m_pAutoDJTableModel = new PlaylistTableModel(this, pTrackCollection,
+    m_pAutoDJTableModel = new PlaylistTableModel(this, m_pTrackCollection,
                                                  "mixxx.db.model.autodj");
-    PlaylistDAO& playlistDao = pTrackCollection->getPlaylistDAO();
-    int playlistId = playlistDao.getPlaylistIdFromName(AUTODJ_TABLE);
-    if (playlistId < 0) {
-        playlistId = playlistDao.createPlaylist(AUTODJ_TABLE,
-                                                PlaylistDAO::PLHT_AUTO_DJ);
-    }
+    int playlistId = -1;
+    // tro's lambda idea. This code calls synchronously!
+    m_pTrackCollection->callSync(
+                [this, &playlistId] (void) {
+        PlaylistDAO& playlistDao = m_pTrackCollection->getPlaylistDAO();
+        playlistId = playlistDao.getPlaylistIdFromName(AUTODJ_TABLE);
+        if (playlistId < 0) {
+            playlistId = playlistDao.createPlaylist(AUTODJ_TABLE,
+                                                    PlaylistDAO::PLHT_AUTO_DJ);
+        }
+    }, __PRETTY_FUNCTION__);
     m_pAutoDJTableModel->setTableModel(playlistId);
+
     m_pTrackTableView->loadTrackModel(m_pAutoDJTableModel);
 
     // Override some playlist-view properties:
@@ -126,6 +134,11 @@ DlgAutoDJ::DlgAutoDJ(QWidget* parent, ConfigObject<ConfigValue>* pConfig,
         spinBoxTransition->setValue(str_autoDjTransition.toInt());
     }
     m_backUpTransition = spinBoxTransition->value();
+
+    connect(this, SIGNAL(spinBoxTransitionSetValue(int)),
+            this, SLOT(slotSpinBoxTransitionSetValue(int)));
+    connect(this, SIGNAL(pushButtonAutoDJSetChecked(bool)),
+            this, SLOT(slotPushButtonAutoDJSetChecked(bool)));
 }
 
 DlgAutoDJ::~DlgAutoDJ() {
@@ -155,7 +168,11 @@ DlgAutoDJ::~DlgAutoDJ() {
 }
 
 void DlgAutoDJ::onShow() {
-    m_pAutoDJTableModel->select();
+    // tro's lambda idea. This code calls asynchronously!
+    m_pTrackCollection->callAsync(
+                [this] (void) {
+        m_pAutoDJTableModel->select();
+    }, __PRETTY_FUNCTION__);
 }
 
 void DlgAutoDJ::onSearch(const QString& text) {
@@ -212,6 +229,7 @@ void DlgAutoDJ::skipNext(double value) {
     if (value <= 0.0 || m_eState == ADJ_DISABLED) {
         return;
     }
+
     // Load the next song from the queue.
     if (m_pCOPlay1Fb->get() == 0.0f) {
         removePlayingTrackFromQueue("[Channel1]");
@@ -248,9 +266,10 @@ void DlgAutoDJ::fadeNow(double value) {
     }
 }
 
+// Must be called from Main
 void DlgAutoDJ::toggleAutoDJButton(bool enable) {
-    bool deck1Playing = m_pCOPlay1Fb->get() == 1.0f;
-    bool deck2Playing = m_pCOPlay2Fb->get() == 1.0f;
+    bool deck1Playing = m_pCOPlay1Fb->get() == 1.0;
+    bool deck2Playing = m_pCOPlay2Fb->get() == 1.0;
 
     if (enable) {  // Enable Auto DJ
         if (deck1Playing && deck2Playing) {
@@ -263,15 +282,14 @@ void DlgAutoDJ::toggleAutoDJButton(bool enable) {
             return;
         }
 
-        // Never load the same track if it is already playing
         if (deck1Playing) {
             removePlayingTrackFromQueue("[Channel1]");
         }
         if (deck2Playing) {
             removePlayingTrackFromQueue("[Channel2]");
         }
-
         TrackPointer nextTrack = getNextTrackFromQueue();
+
         if (!nextTrack) {
             qDebug() << "Queue is empty now";
             pushButtonAutoDJ->setChecked(false);
@@ -312,10 +330,10 @@ void DlgAutoDJ::toggleAutoDJButton(bool enable) {
             pushButtonFadeNow->setEnabled(true);
             if (deck1Playing) {
                 // deck 1 is already playing
-                player1PlayChanged(1.0f);
+                player1PlayChanged(1.0);
             } else {
                 // deck 2 is already playing
-                player2PlayChanged(1.0f);
+                player2PlayChanged(1.0);
             }
         }
         // Loads into first deck If stopped else into second else not
@@ -323,8 +341,8 @@ void DlgAutoDJ::toggleAutoDJButton(bool enable) {
     } else {  // Disable Auto DJ
         pushButtonAutoDJ->setToolTip(tr("Enable Auto DJ"));
         pushButtonAutoDJ->setText(tr("Enable Auto DJ"));
-        if (m_pCOTEnabledAutoDJ->get() != 0.0f) {
-            m_pCOTEnabledAutoDJ->slotSet(0.0f);
+        if (m_pCOTEnabledAutoDJ->get() != 0.0) {
+            m_pCOTEnabledAutoDJ->slotSet(0.0);
         }
         qDebug() << "Auto DJ disabled";
         m_eState = ADJ_DISABLED;
@@ -363,8 +381,8 @@ void DlgAutoDJ::player1PositionChanged(double value) {
     if (m_eState == ADJ_ENABLE_P1LOADED) {
         // Auto DJ Start
         if (!deck1Playing && !deck2Playing) {
-            setCrossfader(-1.0f);  // Move crossfader to the left!
-            m_pCOPlay1->slotSet(1.0f);  // Play the track in player 1
+            setCrossfader(-1.0);  // Move crossfader to the left!
+            m_pCOPlay1->slotSet(1.0);  // Play the track in player 1
             removePlayingTrackFromQueue("[Channel1]");
         } else {
             m_eState = ADJ_IDLE;
@@ -679,4 +697,12 @@ void DlgAutoDJ::enableRandomButton(bool enabled) {
 #ifdef __AUTODJCRATES__
     pushButtonAddRandom->setEnabled(enabled);
 #endif // __AUTODJCRATES__
+}
+
+void DlgAutoDJ::slotSpinBoxTransitionSetValue(int value) {
+    spinBoxTransition->setValue(value);
+}
+
+void DlgAutoDJ::slotPushButtonAutoDJSetChecked(bool checked) {
+    pushButtonAutoDJ->setChecked(checked);
 }

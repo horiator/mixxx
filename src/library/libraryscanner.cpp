@@ -28,6 +28,7 @@
 
 LibraryScanner::LibraryScanner(TrackCollection* pTrackCollection) :
     m_pTrackCollection(pTrackCollection),
+    m_database(pTrackCollection->getDatabase()),
     m_pProgress(NULL),
     m_libraryHashDao(m_database),
     m_cueDao(m_database),

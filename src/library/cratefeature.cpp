@@ -108,9 +108,9 @@ QIcon CrateFeature::getIcon() {
     return QIcon(":/images/library/ic_library_crates.png");
 }
 
+// Must be called from TrackCollection thread
 bool CrateFeature::dropAcceptChild(const QModelIndex& index, QList<QUrl> urls,
                                    QWidget *pSource) {
-    // NOTE(tro) This method will be called in lambda
     QString crateName = index.data().toString();
     int crateId = m_crateDao.getCrateIdByName(crateName);
     QList<QFileInfo> files;
@@ -625,8 +625,14 @@ void CrateFeature::slotExportPlaylist() {
     // Create a new table model since the main one might have an active search.
     QScopedPointer<CrateTableModel> pCrateTableModel(
         new CrateTableModel(this, m_pTrackCollection));
-    pCrateTableModel->setTableModel(m_crateTableModel.getCrate());
-    pCrateTableModel->select();
+
+    // TODO(tro) rewrite it, so we can do something w/ that Scoped Pointer inside TrackCollection
+    // tro's lambda idea. This code calls synchronously!
+//    m_pTrackCollection->callSync(
+//                [this, pCrateTableModel] (void) {
+        pCrateTableModel->setTableModel(m_crateTableModel.getCrate());
+        pCrateTableModel->select();
+//    }, __PRETTY_FUNCTION__);
 
     if (file_location.endsWith(".csv", Qt::CaseInsensitive)) {
             ParserCsv::writeCSVFile(file_location, pCrateTableModel.data(), useRelativePath);
