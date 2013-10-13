@@ -47,7 +47,7 @@ class PlayerInfo : public QObject {
     void timerEvent(QTimerEvent* pTimerEvent);
     void updateCurrentPlayingDeck();
     int getCurrentPlayingDeck();
-    ControlObjectThread* getControlObjectThread(QString group, QString name);
+    ControlObjectThread* getControlObjectThread(const ConfigKey& key);
 
     PlayerInfo();
     virtual ~PlayerInfo();

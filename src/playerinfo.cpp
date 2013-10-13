@@ -22,6 +22,7 @@
 #include "engine/enginechannel.h"
 #include "engine/enginexfader.h"
 #include "playermanager.h"
+#include "util/timer.h"
 
 static const int kPlayingDeckUpdateIntervalMillis = 2000;
 
@@ -99,27 +100,63 @@ void PlayerInfo::updateCurrentPlayingDeck() {
     int maxDeck = -1;
 
     for (unsigned int i = 0; i < PlayerManager::numDecks(); ++i) {
+
+
+
         QString group = PlayerManager::groupForDeck(i);
+        qDebug() << group;
 
-        if (getControlObjectThread(group, "play")->get() == 0.0) {
+        {
+            ScopedTimer t("PlayerInfo::updateCurrentPlayingDeck() 1");
+            // 1290ns
+            // min=2135ns
+            // min=2165ns
+            double fvol1 = ControlObject::get(ConfigKey(group, "volume"));
+        }
+        {
+            ScopedTimer t("PlayerInfo::updateCurrentPlayingDeck() 0");
+            // 1825ns
+            // min=2435ns
+            // min=1930ns
+            double fvol = getControlObjectThread(ConfigKey(group, "back"))->get();
+        }
+
+        ControlObjectThread* pCOT;
+        {
+            ScopedTimer t("PlayerInfo::updateCurrentPlayingDeck() 2");
+            // 1270ns
+            // min=1570ns
+            // min=1160ns
+            pCOT = getControlObjectThread(ConfigKey(group, "orientation"));
+        }
+        {
+            ScopedTimer t("PlayerInfo::updateCurrentPlayingDeck() 3");
+            // 645ns
+            // min=830ns
+            // min=695ns
+            double fvol2 = pCOT->get();
+        }
+
+        if (getControlObjectThread(ConfigKey(group, "play"))->get() == 0.0) {
             continue;
         }
 
-        if (getControlObjectThread(group, "pregain")->get() <= 0.5) {
+        if (getControlObjectThread(ConfigKey(group, "pregain"))->get() <= 0.5) {
             continue;
         }
 
-        double fvol = getControlObjectThread(group, "volume")->get();
-        if (fvol == 0.0) {
-            continue;
-        }
+
+
+//        if (fvol == 0.0) {
+//            continue;
+//        }
 
         double xfl, xfr;
         EngineXfader::getXfadeGains(
-                getControlObjectThread("[Master]", "crossfader")->get(),
+                getControlObjectThread(ConfigKey("[Master]", "crossfader"))->get(),
                 1.0, 0.0, false, false, &xfl, &xfr);
 
-        int orient = getControlObjectThread(group, "orientation")->get();
+        int orient = getControlObjectThread(ConfigKey(group, "orientation"))->get();
         double xfvol;
         if (orient == EngineChannel::LEFT) {
             xfvol = xfl;
@@ -128,13 +165,13 @@ void PlayerInfo::updateCurrentPlayingDeck() {
         } else {
             xfvol = 1.0;
         }
-
+/*
         double dvol = fvol * xfvol;
         if (dvol > maxVolume) {
             maxDeck = i;
             maxVolume = dvol;
         }
-    }
+*/    }
 
     if (maxDeck != m_currentlyPlayingDeck) {
         m_currentlyPlayingDeck = maxDeck;
@@ -156,8 +193,7 @@ TrackPointer PlayerInfo::getCurrentPlayingTrack() {
     return TrackPointer();
 }
 
-ControlObjectThread* PlayerInfo::getControlObjectThread(QString group, QString name) {
-    ConfigKey key = ConfigKey(group, name);
+ControlObjectThread* PlayerInfo::getControlObjectThread(const ConfigKey& key) {
     ControlObjectThread* cot = m_controlCache.value(key, NULL);
     if (cot == NULL) {
         // create COT
@@ -176,6 +212,7 @@ void PlayerInfo::clearControlCache() {
     QMutexLocker locker(&m_mutex);
     for (QHash<ConfigKey, ControlObjectThread*>::const_iterator it = m_controlCache.begin();
             it != m_controlCache.end(); ++it) {
+            qDebug() << "PlayerInfo::clearControlCache()";
             delete it.value();
     }
     m_controlCache.clear();
