@@ -117,10 +117,10 @@ void MixxxApp::logBuildDetails() {
     QStringList buildInfo;
     if (!buildBranch.isEmpty() && !buildRevision.isEmpty()) {
         buildInfo.append(
-            QString("bzr %1 r%2").arg(buildBranch, buildRevision));
+            QString("git %1 r%2").arg(buildBranch, buildRevision));
     } else if (!buildRevision.isEmpty()) {
         buildInfo.append(
-            QString("bzr r%2").arg(buildRevision));
+            QString("git r%2").arg(buildRevision));
     }
     buildInfo.append("built on: " __DATE__ " @ " __TIME__);
     if (!buildFlags.isEmpty()) {
@@ -279,8 +279,8 @@ MixxxApp::MixxxApp(QApplication *pApp, const CmdlineArgs& args)
 
     initializeTranslations(pApp);
 
-    // Set the visibility of tooltips
-    m_tooltips = m_pConfig->getValueString(ConfigKey("[Controls]", "Tooltips")).toInt();
+    // Set the visibility of tooltips, default "1" = ON
+    m_toolTipsCfg = m_pConfig->getValueString(ConfigKey("[Controls]", "Tooltips"), "1").toInt();
 
     // Store the path in the config database
     m_pConfig->set(ConfigKey("[Config]", "Path"), ConfigValue(resourcePath));
@@ -1331,7 +1331,7 @@ void MixxxApp::slotOptionsPreferences()
 void MixxxApp::slotControlVinylControl(double toggle)
 {
 #ifdef __VINYLCONTROL__
-    if (m_pVCManager->vinylInputEnabled(0)) {
+    if (m_pPlayerManager->hasVinylInput(0)) {
         m_pOptionsVinylControl->setChecked((bool)toggle);
     } else {
         m_pOptionsVinylControl->setChecked(false);
@@ -1360,7 +1360,7 @@ void MixxxApp::slotCheckboxVinylControl(bool toggle)
 void MixxxApp::slotControlVinylControl2(double toggle)
 {
 #ifdef __VINYLCONTROL__
-    if (m_pVCManager->vinylInputEnabled(1)) {
+    if (m_pPlayerManager->hasVinylInput(1)) {
         m_pOptionsVinylControl2->setChecked((bool)toggle);
     } else {
         m_pOptionsVinylControl2->setChecked(false);
@@ -1435,8 +1435,10 @@ void MixxxApp::slotHelpManual() {
     QDesktopServices::openUrl(qManualUrl);
 }
 
-void MixxxApp::setToolTips(int tt) {
-    m_tooltips = tt;
+void MixxxApp::setToolTipsCfg(int tt) {
+    m_pConfig->set(ConfigKey("[Controls]","Tooltips"),
+                   ConfigValue(tt));
+    m_toolTipsCfg = tt;
 }
 
 void MixxxApp::rebootMixxxView() {
@@ -1518,14 +1520,14 @@ bool MixxxApp::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::ToolTip) {
         // return true for no tool tips
-        if (m_tooltips == 2) {
+        if (m_toolTipsCfg == 2) {
             // ON (only in Library)
             WWidget* pWidget = dynamic_cast<WWidget*>(obj);
             WWaveformViewer* pWfViewer = dynamic_cast<WWaveformViewer*>(obj);
             WSpinny* pSpinny = dynamic_cast<WSpinny*>(obj);
             QLabel* pLabel = dynamic_cast<QLabel*>(obj);
             return (pWidget || pWfViewer || pSpinny || pLabel);
-        } else if (m_tooltips == 1) {
+        } else if (m_toolTipsCfg == 1) {
             // ON
             return false;
         } else {

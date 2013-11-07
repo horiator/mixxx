@@ -70,7 +70,8 @@ class MixxxApp : public QMainWindow {
 
     void resizeEvent(QResizeEvent *e) { qDebug() << "resize" << e->size();}
 
-    void setToolTips(int tt);
+    void setToolTipsCfg(int tt);
+    inline int getToolTipsCgf() { return m_toolTipsCfg; };
     void rebootMixxxView();
 
   public slots:
@@ -236,7 +237,7 @@ class MixxxApp : public QMainWindow {
 #ifdef __TAGREADER__
     TagReaderClient* m_tag_reader_client;
 #endif
-    int m_tooltips; //0=OFF, 1=ON, 2=ON (only in Library)
+    int m_toolTipsCfg; //0=OFF, 1=ON, 2=ON (only in Library)
     // Timer that tracks how long Mixxx has been running.
     Timer m_runtime_timer;
 
@@ -244,4 +245,3 @@ class MixxxApp : public QMainWindow {
 };
 
 #endif
-
