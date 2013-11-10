@@ -155,8 +155,8 @@ QString AudioPath::getStringFromType(AudioPathType type) {
         return QString::fromAscii("Master");
     case HEADPHONES:
         return QString::fromAscii("Headphones");
-    case XFADERINPUT:
-        return QString::fromAscii("Crossfader input");
+    case BUS:
+        return QString::fromAscii("Bus");
     case DECK:
         return QString::fromAscii("Deck");
     case VINYLCONTROL:
@@ -174,9 +174,6 @@ QString AudioPath::getStringFromType(AudioPathType type) {
  * @note This method is static.
  */
 QString AudioPath::getTrStringFromType(AudioPathType type, unsigned char index) {
-    QString str_type;
-    QString str_index = QString::number(index + 1);
-
     switch (type) {
     case INVALID:
         // this shouldn't happen but g++ complains if I don't
@@ -186,37 +183,28 @@ QString AudioPath::getTrStringFromType(AudioPathType type, unsigned char index) 
         return QString(QObject::tr("Master"));
     case HEADPHONES:
         return QString(QObject::tr("Headphones"));
-    case XFADERINPUT:
-        str_type = QObject::tr("Crossfader input");
+    case BUS:
         switch (index) {
         case EngineChannel::LEFT:
-            str_index = QObject::tr("left");
-            break;
+            return QString(QObject::tr("Left bus"));
         case EngineChannel::CENTER:
-            str_index = QObject::tr("center");
-            break;
+            return QString(QObject::tr("Center bus"));
         case EngineChannel::RIGHT:
-            str_index = QObject::tr("right");
-            break;
+            return QString(QObject::tr("Right bus"));
         default:
-            break;
+            return QObject::tr("Invalid Bus");
         }
-        break;
     case DECK:
-        str_type = QObject::tr("Deck");
-        break;
+        return QString("%1 %2").arg(QObject::tr("Deck"),
+                                    QString::number(index + 1));
     case VINYLCONTROL:
-        str_type = QObject::tr("Vinyl Control");
-        break;
+        return QString(QObject::tr("Vinyl Control"));
     case MICROPHONE:
         return QString(QObject::tr("Microphone"));
     case EXTPASSTHROUGH:
-        str_type = QObject::tr("Passthrough");
-        break;
-    default:
-        return QString(QObject::tr("Unknown path type %1")).arg(type);
+        return QString(QObject::tr("Passthrough"));
     }
-    return QString("%1 %2").arg(str_type, str_index);
+    return QString(QObject::tr("Unknown path type %1")).arg(type);
 }
 
 /**
@@ -229,8 +217,8 @@ AudioPathType AudioPath::getTypeFromString(QString string) {
         return AudioPath::MASTER;
     } else if (string == AudioPath::getStringFromType(AudioPath::HEADPHONES).toLower()) {
         return AudioPath::HEADPHONES;
-    } else if (string == AudioPath::getStringFromType(AudioPath::XFADERINPUT).toLower()) {
-        return AudioPath::XFADERINPUT;
+    } else if (string == AudioPath::getStringFromType(AudioPath::BUS).toLower()) {
+        return AudioPath::BUS;
     } else if (string == AudioPath::getStringFromType(AudioPath::DECK).toLower()) {
         return AudioPath::DECK;
     } else if (string == AudioPath::getStringFromType(AudioPath::VINYLCONTROL).toLower()) {
@@ -250,7 +238,7 @@ AudioPathType AudioPath::getTypeFromString(QString string) {
  */
 bool AudioPath::isIndexed(AudioPathType type) {
     switch (type) {
-    case XFADERINPUT:
+    case BUS:
     case DECK:
     case VINYLCONTROL:
     case EXTPASSTHROUGH:
@@ -303,7 +291,7 @@ AudioOutput::AudioOutput(AudioPathType type /* = INVALID */,
 }
 
 AudioOutput::~AudioOutput() {
-    
+
 }
 
 /**
@@ -338,7 +326,7 @@ QList<AudioPathType> AudioOutput::getSupportedTypes() {
     QList<AudioPathType> types;
     types.append(MASTER);
     types.append(HEADPHONES);
-    types.append(XFADERINPUT);
+    types.append(BUS);
     types.append(DECK);
     return types;
 }
@@ -371,7 +359,7 @@ AudioInput::AudioInput(AudioPathType type /* = INVALID */,
 }
 
 AudioInput::~AudioInput() {
-    
+
 }
 
 /**
@@ -407,9 +395,8 @@ QList<AudioPathType> AudioInput::getSupportedTypes() {
     // this disables vinyl control for all of the sound devices stuff
     // (prefs, etc), minimal ifdefs :) -- bkgood
     types.append(VINYLCONTROL);
-#else
-    types.append(EXTPASSTHROUGH);
 #endif
+    types.append(EXTPASSTHROUGH);
     types.append(MICROPHONE);
     return types;
 }

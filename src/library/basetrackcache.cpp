@@ -168,7 +168,6 @@ bool BaseTrackCache::updateIndexWithTrackpointer(TrackPointer pTrack) {
         QVector<QVariant>& record = m_trackInfo[id];
         // prealocate memory for all columns at once
         record.resize(numColumns);
-
         for (int i = 0; i < numColumns; ++i) {
             getTrackValueForColumn(pTrack, i, record[i]);
         }
@@ -176,7 +175,7 @@ bool BaseTrackCache::updateIndexWithTrackpointer(TrackPointer pTrack) {
     return true;
 }
 
-bool BaseTrackCache::updateIndexWithQuery(QString queryString) {
+bool BaseTrackCache::updateIndexWithQuery(const QString& queryString) {
     QTime timer;
     timer.start();
 
@@ -566,8 +565,7 @@ void BaseTrackCache::filterAndSort(const QSet<int>& trackIds,
         LOG_FAILED_QUERY(query);
     }
 
-    QSqlRecord record = query.record();
-    int idColumn = record.indexOf(m_idColumn);
+    int idColumn = query.record().indexOf(m_idColumn);
     int rows = query.size();
 
     if (sDebug) {
@@ -707,9 +705,6 @@ QString BaseTrackCache::orderByClause(int sortColumn,
     // This is all stolen from QSqlTableModel::orderByClause(), just rigged to
     // sort case-insensitively.
 
-    // TODO(rryan) I couldn't get QSqlRecord to work without exec'ing this damn
-    // query. Need to find out how to make it work without exec()'ing and remove
-    // this.
     QSqlQuery query(m_database);
     QString queryString = QString("SELECT %1 FROM %2 LIMIT 1")
             .arg(m_columnsJoined, m_tableName);

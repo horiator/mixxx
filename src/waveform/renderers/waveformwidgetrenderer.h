@@ -14,7 +14,7 @@
 //#define WAVEFORMWIDGETRENDERER_DEBUG
 
 class TrackInfoObject;
-class ControlObjectThreadMain;
+class ControlObjectThread;
 class VisualPlayPosition;
 class VSyncThread;
 
@@ -101,15 +101,15 @@ protected:
     VisualPlayPosition* m_visualPlayPosition;
     double m_playPos;
     int m_playPosVSample;
-    ControlObjectThreadMain* m_rateControlObject;
+    ControlObjectThread* m_pRateControlObject;
     double m_rate;
-    ControlObjectThreadMain* m_rateRangeControlObject;
+    ControlObjectThread* m_pRateRangeControlObject;
     double m_rateRange;
-    ControlObjectThreadMain* m_rateDirControlObject;
+    ControlObjectThread* m_pRateDirControlObject;
     double m_rateDir;
-    ControlObjectThreadMain* m_gainControlObject;
+    ControlObjectThread* m_pGainControlObject;
     double m_gain;
-    ControlObjectThreadMain* m_trackSamplesControlObject;
+    ControlObjectThread* m_pTrackSamplesControlObject;
     int m_trackSamples;
 
 #ifdef WAVEFORMWIDGETRENDERER_DEBUG

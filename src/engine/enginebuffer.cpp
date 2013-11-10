@@ -38,7 +38,11 @@
 #include "engine/bpmcontrol.h"
 #include "engine/quantizecontrol.h"
 #include "visualplayposition.h"
+#include "engine/cuecontrol.h"
+#include "engine/clockcontrol.h"
 #include "util/timer.h"
+#include "controlobjectslave.h"
+#include "util/compatibility.h"
 
 #ifdef __VINYLCONTROL__
 #include "engine/vinylcontrolcontrol.h"
@@ -110,8 +114,8 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     // Play button
     m_playButton = new ControlPushButton(ConfigKey(m_group, "play"));
     m_playButton->setButtonMode(ControlPushButton::TOGGLE);
-    connect(m_playButton, SIGNAL(valueChanged(double)),
-            this, SLOT(slotControlPlay(double)),
+    m_playButton->connectValueChangeRequest(
+            this, SLOT(slotControlPlayRequest(double)),
             Qt::DirectConnection);
 
     //Play from Start Button (for sampler)
@@ -174,7 +178,7 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     m_pRepeat->setButtonMode(ControlPushButton::TOGGLE);
 
     // Sample rate
-    m_pSampleRate = ControlObject::getControl(ConfigKey("[Master]","samplerate"));
+    m_pSampleRate = new ControlObjectSlave("[Master]", "samplerate", this);
 
     m_pTrackSamples = new ControlObject(ConfigKey(m_group, "track_samples"));
     m_pTrackSampleRate = new ControlObject(ConfigKey(m_group, "track_samplerate"));
@@ -205,6 +209,15 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     m_pBpmControl = new BpmControl(_group, _config);
     addControl(m_pBpmControl);
 
+    // Create the clock controller
+    m_pClockControl = new ClockControl(_group, _config);
+    addControl(m_pClockControl);
+
+    // Create the cue controller
+    m_pCueControl = new CueControl(_group, _config);
+    addControl(m_pCueControl);
+
+
     m_pReadAheadManager = new ReadAheadManager(m_pReader);
     m_pReadAheadManager->addEngineControl(m_pLoopingControl);
     m_pReadAheadManager->addEngineControl(m_pRateControl);
@@ -231,6 +244,9 @@ EngineBuffer::EngineBuffer(const char * _group, ConfigObject<ConfigValue> * _con
     df.open(QIODevice::WriteOnly | QIODevice::Text);
     writer.setDevice(&df);
 #endif
+
+
+    m_hintList.reserve(256); // Avoid reallocation
 }
 
 EngineBuffer::~EngineBuffer()
@@ -321,9 +337,12 @@ double EngineBuffer::getFileBpm() {
     return m_pBpmControl->getFileBpm();
 }
 
-void EngineBuffer::setEngineMaster(EngineMaster * pEngineMaster)
-{
-    m_pBpmControl->setEngineMaster(pEngineMaster);
+void EngineBuffer::setEngineMaster(EngineMaster * pEngineMaster) {
+    m_engineLock.lock();
+    foreach (EngineControl* pControl, m_engineControls) {
+        pControl->setEngineMaster(pEngineMaster);
+    }
+    m_engineLock.unlock();
 }
 
 void EngineBuffer::queueNewPlaypos(double newpos) {
@@ -384,7 +403,8 @@ void EngineBuffer::slotTrackLoading() {
     m_iTrackLoading = 1;
     m_pause.unlock();
 
-    m_playButton->set(0.0); // Stop playback
+    // Set play here, to signal the user that the play command is adopted
+    m_playButton->set((double)m_bPlayAfterLoading);
     m_pTrackSamples->set(0); // Stop renderer
 }
 
@@ -406,16 +426,12 @@ void EngineBuffer::slotTrackLoaded(TrackPointer pTrack,
     // Start buffer processing after all EngineContols are up to date
     // with the current track e.g track is seeked to Cue
     m_iTrackLoading = 0;
-    if (m_bPlayAfterLoading) {
-        m_bPlayAfterLoading = false;
-        m_playButton->set(1);
-    }
 }
 
 // WARNING: Always called from the EngineWorker thread pool
 void EngineBuffer::slotTrackLoadFailed(TrackPointer pTrack,
                                        QString reason) {
-    m_bPlayAfterLoading = false;
+    m_iTrackLoading = 0;
     m_playButton->set(0.0f);
     ejectTrack();
     emit(trackLoadFailed(pTrack, reason));
@@ -428,8 +444,9 @@ TrackPointer EngineBuffer::getLoadedTrack() const {
 void EngineBuffer::ejectTrack() {
     // Don't allow ejections while playing a track. We don't need to lock to
     // call ControlObject::get() so this is fine.
-    if (m_playButton->get() > 0)
+    if (m_playButton->get() > 0 || !m_pCurrentTrack) {
         return;
+    }
 
     m_pause.lock();
     m_iTrackLoading = 0;
@@ -476,14 +493,22 @@ void EngineBuffer::slotControlSeekAbs(double abs)
     slotControlSeek(abs / m_file_length_old);
 }
 
-void EngineBuffer::slotControlPlay(double v)
+void EngineBuffer::slotControlPlayRequest(double v)
 {
+    if (v == 0.0 && m_pCueControl->isCuePreviewing()) {
+        v = 1.0;
+    }
+
     // If no track is currently loaded, turn play off. If a track is loading
     // allow the set since it might apply to a track we are loading due to the
     // asynchrony.
-    if (v > 0.0 && !m_pCurrentTrack && m_iTrackLoading == 0) {
-        m_playButton->set(0.0f);
+
+    if (v > 0.0 && !m_pCurrentTrack && deref(m_iTrackLoading) == 0) {
+        v = 0.0;
     }
+
+    // set and confirm must be called in any case to update the widget toggle state
+    m_playButton->setAndConfirm(v);
 }
 
 void EngineBuffer::slotControlStart(double v)
@@ -565,7 +590,7 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
     bool bCurBufferPaused = false;
     double rate = 0;
 
-    bool bTrackLoading = m_iTrackLoading != 0;
+    bool bTrackLoading = deref(m_iTrackLoading) != 0;
     if (!bTrackLoading && m_pause.tryLock()) {
         ScopedTimer t("EngineBuffer::process_pauselock");
         float sr = m_pSampleRate->get();
@@ -577,7 +602,7 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
 
         bool paused = m_playButton->get() != 0.0f ? false : true;
 
-        bool is_scratching;
+        bool is_scratching = false;
         rate = m_pRateControl->calculateRate(baserate, paused, iBufferSize,
                                              &is_scratching);
 
@@ -735,9 +760,11 @@ void EngineBuffer::process(const CSAMPLE *, const CSAMPLE * pOut, const int iBuf
         bCurBufferPaused = true;
     }
 
-    // Give the Reader hints as to which chunks of the current song we
-    // really care about. It will try very hard to keep these in memory
-    hintReader(rate);
+    if (!bTrackLoading) {
+        // Give the Reader hints as to which chunks of the current song we
+        // really care about. It will try very hard to keep these in memory
+        hintReader(rate);
+    }
 
     const double kSmallRate = 0.005;
     if (m_bLastBufferPaused && !bCurBufferPaused) {
@@ -866,7 +893,7 @@ void EngineBuffer::hintReader(const double dRate) {
     QListIterator<EngineControl*> it(m_engineControls);
     while (it.hasNext()) {
         EngineControl* pControl = it.next();
-        pControl->hintReader(m_hintList);
+        pControl->hintReader(&m_hintList);
     }
     m_pReader->hintAndMaybeWake(m_hintList);
 
@@ -879,7 +906,6 @@ void EngineBuffer::slotLoadTrack(TrackPointer pTrack, bool play) {
     // trackLoading and then either with trackLoaded or trackLoadFailed signals.
     m_bPlayAfterLoading = play;
     m_pReader->newTrack(pTrack);
-    m_pReader->wake();
 }
 
 void EngineBuffer::addControl(EngineControl* pControl) {
@@ -897,7 +923,7 @@ void EngineBuffer::addControl(EngineControl* pControl) {
 }
 
 void EngineBuffer::bindWorkers(EngineWorkerScheduler* pWorkerScheduler) {
-    pWorkerScheduler->bindWorker(m_pReader);
+    m_pReader->setScheduler(pWorkerScheduler);
 }
 
 bool EngineBuffer::isTrackLoaded() {
@@ -913,6 +939,7 @@ void EngineBuffer::slotEjectTrack(double v) {
     }
 }
 
+/*
 void EngineBuffer::setReader(CachingReader* pReader) {
     disconnect(m_pReader, 0, this, 0);
     delete m_pReader;
@@ -928,3 +955,4 @@ void EngineBuffer::setReader(CachingReader* pReader) {
             this, SLOT(slotTrackLoadFailed(TrackPointer, QString)),
             Qt::DirectConnection);
 }
+*/

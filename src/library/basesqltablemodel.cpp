@@ -32,9 +32,9 @@ BaseSqlTableModel::BaseSqlTableModel(QObject* pParent,
     m_bDirty = true;
     m_iSortColumn = 0;
     m_eSortOrder = Qt::AscendingOrder;
-    connect(&PlayerInfo::Instance(), SIGNAL(trackLoaded(QString, TrackPointer)),
+    connect(&PlayerInfo::instance(), SIGNAL(trackLoaded(QString, TrackPointer)),
             this, SLOT(trackLoaded(QString, TrackPointer)));
-    trackLoaded(m_previewDeckGroup, PlayerInfo::Instance().getTrackInfo(m_previewDeckGroup));
+    trackLoaded(m_previewDeckGroup, PlayerInfo::instance().getTrackInfo(m_previewDeckGroup));
 }
 
 BaseSqlTableModel::~BaseSqlTableModel() {
@@ -158,7 +158,6 @@ void BaseSqlTableModel::select() {
     if (!m_bInitialized) {
         return;
     }
-
     // We should be able to detect when a select() would be a no-op. The DAO's
     // do not currently broadcast signals for when common things happen. In the
     // future, we can turn this check on and avoid a lot of needless
@@ -338,7 +337,7 @@ const QString BaseSqlTableModel::currentSearch() const {
     return m_currentSearch;
 }
 
-void BaseSqlTableModel::setSearch(const QString& searchText, const QString extraFilter) {
+void BaseSqlTableModel::setSearch(const QString& searchText, const QString& extraFilter) {
     if (sDebug) {
         qDebug() << this << "setSearch" << searchText;
     }

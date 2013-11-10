@@ -4,6 +4,7 @@ import os
 import util
 from mixxx import Feature
 import SCons.Script as SCons
+import depends
 
 class HSS1394(Feature):
     def description(self):
@@ -133,7 +134,7 @@ class Bulk(Feature):
         sources = ['controllers/bulk/bulkcontroller.cpp',
                    'controllers/bulk/bulkenumerator.cpp']
         if not int(build.flags['hid']):
-		    sources.append('controllers/hid/hidcontrollerpresetfilehandler.cpp')
+            sources.append('controllers/hid/hidcontrollerpresetfilehandler.cpp')
         return sources
 
 
@@ -141,14 +142,19 @@ class Mad(Feature):
     def description(self):
         return "MAD MP3 Decoder"
 
+    def default(self, build):
+        return 0 if build.platform_is_osx else 1
+
     def enabled(self, build):
-        build.flags['mad'] = util.get_flags(build.env, 'mad', 1)
+        build.flags['mad'] = util.get_flags(build.env, 'mad',
+                                            self.default(build))
         if int(build.flags['mad']):
             return True
         return False
 
     def add_options(self, build, vars):
-        vars.Add('mad', 'Set to 1 to enable MAD MP3 decoder support.', 1)
+        vars.Add('mad', 'Set to 1 to enable MAD MP3 decoder support.',
+                 self.default(build))
 
     def configure(self, build, conf):
         if not self.enabled(build):
@@ -168,29 +174,34 @@ class CoreAudio(Feature):
     def description(self):
         return "CoreAudio MP3/AAC Decoder"
 
+    def default(self, build):
+        return 1 if build.platform_is_osx else 0
+
     def enabled(self, build):
-        build.flags['coreaudio'] = util.get_flags(build.env, 'coreaudio', 0)
+        build.flags['coreaudio'] = util.get_flags(build.env, 'coreaudio', self.default(build))
         if int(build.flags['coreaudio']):
             return True
         return False
 
     def add_options(self, build, vars):
-        vars.Add('coreaudio', 'Set to 1 to enable CoreAudio MP3/AAC decoder support.', 0)
+        vars.Add('coreaudio', 'Set to 1 to enable CoreAudio MP3/AAC decoder support.',
+                 self.default(build))
 
     def configure(self, build, conf):
         if not self.enabled(build):
             return
+
         if not build.platform_is_osx:
             raise Exception('CoreAudio is only supported on OS X!');
-        else:
-            build.env.Append(CPPPATH='/System/Library/Frameworks/AudioToolbox.framework/Headers/')
-            build.env.Append(CPPPATH='#lib/apple/')
-            build.env.Append(LINKFLAGS='-framework AudioToolbox -framework CoreFoundation')
-            build.env.Append(CPPDEFINES = '__COREAUDIO__')
+
+        build.env.Append(CPPPATH='/System/Library/Frameworks/AudioToolbox.framework/Headers/')
+        build.env.Append(CPPPATH='#lib/apple/')
+        build.env.Append(LINKFLAGS='-framework AudioToolbox -framework CoreFoundation')
+        build.env.Append(CPPDEFINES = '__COREAUDIO__')
 
     def sources(self, build):
         return ['soundsourcecoreaudio.cpp',
-                '#lib/apple/CAStreamBasicDescription.h']
+                '#lib/apple/CAStreamBasicDescription.cpp']
 
 class MediaFoundation(Feature):
     FLAG = 'mediafoundation'
@@ -508,31 +519,6 @@ class VinylControl(Feature):
 
         return sources
 
-class Tonal(Feature):
-    def description(self):
-        return "NOT-WORKING Tonal Audio Detection"
-
-    def enabled(self, build):
-        build.flags['tonal'] = util.get_flags(build.env, 'tonal', 0)
-        if int(build.flags['tonal']):
-            return True
-        return False
-
-    def add_options(self, build, vars):
-        vars.Add('tonal', 'Set to 1 to enable tonal analysis', 0)
-
-    def configure(self, build, conf):
-        if not self.enabled(build):
-            return
-
-    def sources(self, build):
-        sources = ['tonal/FourierTransform.cxx',
-                   'tonal/Segmentation.cxx',
-                   'tonal/tonalanalyser.cpp',
-                   'tonal/ConstantQTransform.cxx',
-                   'tonal/ConstantQFolder.cxx']
-        return sources
-
 class Vamp(Feature):
     INTERNAL_LINK = False
     INTERNAL_VAMP_PATH = '#lib/vamp-2.3'
@@ -620,7 +606,7 @@ class ModPlug(Feature):
             raise Exception('Could not find libmodplug shared library.')
 
     def sources(self, build):
-        build.env.Uic4('dlgprefmodplugdlg.ui')
+        depends.Qt.uic(build)('dlgprefmodplugdlg.ui')
         return ['soundsourcemodplug.cpp', 'dlgprefmodplug.cpp']
 
 
@@ -782,10 +768,16 @@ class Verbose(Feature):
 
             build.env['QT4_LUPDATECOMSTR'] = '[LUPDATE] $SOURCE'
             build.env['QT4_LRELEASECOMSTR'] = '[LRELEASE] $SOURCE'
-            build.env['QT4_RCCCOMSTR'] = '[QRC] $SOURCE'
+            build.env['QT4_QRCCOMSTR'] = '[QRC] $SOURCE'
             build.env['QT4_UICCOMSTR'] = '[UIC4] $SOURCE'
             build.env['QT4_MOCFROMHCOMSTR'] = '[MOC] $SOURCE'
             build.env['QT4_MOCFROMCXXCOMSTR'] = '[MOC] $SOURCE'
+
+            build.env['QT5_LUPDATECOMSTR'] = '[LUPDATE] $SOURCE'
+            build.env['QT5_LRELEASECOMSTR'] = '[LRELEASE] $SOURCE'
+            build.env['QT5_QRCCOMSTR'] = '[QRC] $SOURCE'
+            build.env['QT5_UICCOMSTR'] = '[UIC5] $SOURCE'
+            build.env['QT5_MOCCOMSTR'] = '[MOC] $SOURCE'
 
 class MSVSHacks(Feature):
     """Visual Studio 2005 hacks (MSVS Express Edition users shouldn't enable
@@ -911,7 +903,7 @@ class Shoutcast(Feature):
             conf.CheckLib('ws2_32')
 
     def sources(self, build):
-        build.env.Uic4('dlgprefshoutcastdlg.ui')
+        depends.Qt.uic(build)('dlgprefshoutcastdlg.ui')
         return ['dlgprefshoutcast.cpp',
                 'shoutcast/shoutcastmanager.cpp',
                 'engine/sidechain/engineshoutcast.cpp']
@@ -1180,27 +1172,24 @@ class Tuned(Feature):
             else:
                 self.status = "Disabled (not supported on 32-bit MSVC)"
 
-class PromoTracks(Feature):
+class AutoDjCrates(Feature):
     def description(self):
-        return "Promotional tracks feature."
+        return "Auto-DJ crates (for random tracks)"
 
     def enabled(self, build):
-        build.flags['promo'] = util.get_flags(build.env, 'promo', 0)
-        if int(build.flags['promo']):
+        build.flags['autodjcrates'] = \
+            util.get_flags(build.env, 'autodjcrates', 1)
+        if int(build.flags['autodjcrates']):
             return True
         return False
 
     def add_options(self, build, vars):
-        vars.Add('promo', 'Set to 1 to include promo tracks feature (deprecated, unused).', 0)
+        vars.Add('autodjcrates', 'Set to 1 to enable crates as a source for random Auto-DJ tracks.', 1)
 
     def configure(self, build, conf):
         if not self.enabled(build):
             return
-        build.env.Append(CPPDEFINES = '__PROMO__')
+        build.env.Append(CPPDEFINES = '__AUTODJCRATES__')
 
     def sources(self, build):
-        return ['library/promotracksfeature.cpp',
-                'library/bundledsongswebview.cpp',
-                "library/featuredartistswebview.cpp",
-                ]
-
+        return ['library/dao/autodjcratesdao.cpp']

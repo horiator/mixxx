@@ -9,7 +9,7 @@
 #include "widget/wwidget.h"
 #include "vinylcontrol/vinylsignalquality.h"
 
-class ControlObjectThreadMain;
+class ControlObjectThread;
 class VisualPlayPosition;
 class VinylControlManager;
 
@@ -51,20 +51,21 @@ class WSpinny : public QGLWidget, public VinylSignalQualityListener {
     QImage* m_pBgImage;
     QImage* m_pFgImage;
     QImage* m_pGhostImage;
-    ControlObjectThreadMain* m_pPlay;
-    ControlObjectThreadMain* m_pPlayPos;
+    ControlObjectThread* m_pPlay;
+    ControlObjectThread* m_pPlayPos;
     VisualPlayPosition* m_pVisualPlayPos;
-    ControlObjectThreadMain* m_pDuration;
-    ControlObjectThreadMain* m_pTrackSamples;
-    ControlObjectThreadMain* m_pTrackSampleRate;
-    ControlObjectThreadMain* m_pScratch;
-    ControlObjectThreadMain* m_pScratchToggle;
-    ControlObjectThreadMain* m_pScratchPos;
-    ControlObjectThreadMain* m_pRate;
-    ControlObjectThreadMain* m_pVinylControlSpeedType;
-    ControlObjectThreadMain* m_pVinylControlEnabled;
-    ControlObjectThreadMain* m_pSignalEnabled;
-    ControlObjectThreadMain* m_pSlipEnabled;
+    ControlObjectThread* m_pDuration;
+    ControlObjectThread* m_pTrackSamples;
+    ControlObjectThread* m_pTrackSampleRate;
+    ControlObjectThread* m_pScratch;
+    ControlObjectThread* m_pScratchToggle;
+    ControlObjectThread* m_pScratchPos;
+    ControlObjectThread* m_pRate;
+    ControlObjectThread* m_pVinylControlSpeedType;
+    ControlObjectThread* m_pVinylControlEnabled;
+    ControlObjectThread* m_pSignalEnabled;
+    ControlObjectThread* m_pSlipEnabled;
+    ControlObjectThread* m_pSlipPosition;
 
 #ifdef __VINYLCONTROL__
     VinylControlManager* m_pVCManager;

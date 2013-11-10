@@ -22,7 +22,7 @@
 #include "configobject.h"
 
 class QWidget;
-class ControlObjectThreadMain;
+class ControlObjectThread;
 class ControlPotmeter;
 class SkinLoader;
 class PlayerManager;
@@ -60,6 +60,9 @@ public slots:
     void slotSetCueDefault(int);
     void slotSetCueRecall(int);
     void slotSetAutoDjRequeue(int);
+    void slotSetAutoDjMinimumAvailable(int);
+    void slotSetAutoDjUseIgnoreTime(int);
+    void slotSetAutoDjIgnoreTime(const QTime &a_rTime);
     void slotSetRateRamp(bool);
     void slotSetRateRampSensitivity(int);
     void slotSetLocale(int);
@@ -68,6 +71,7 @@ public slots:
     void slotSetFrameRate(int frameRate);
     void slotSetVSync(int index);
     void slotSetWaveformType(int index);
+    void slotSetWaveformOverviewType(int index);
     void slotSetDefaultZoom(int index);
     void slotSetZoomSynchronization(bool checked);
     void slotSetVisualGainAll(double gain);
@@ -87,10 +91,10 @@ private:
     ConfigObject<ConfigValue> *m_pConfig;
     int m_timer;
     ControlObject* m_pControlPositionDisplay;
-    QList<ControlObjectThreadMain*> m_cueControls;
-    QList<ControlObjectThreadMain*> m_rateControls;
-    QList<ControlObjectThreadMain*> m_rateDirControls;
-    QList<ControlObjectThreadMain*> m_rateRangeControls;
+    QList<ControlObjectThread*> m_cueControls;
+    QList<ControlObjectThread*> m_rateControls;
+    QList<ControlObjectThread*> m_rateDirControls;
+    QList<ControlObjectThread*> m_rateRangeControls;
     PlayerManager* m_pPlayerManager;
     MixxxApp *m_mixxx;
     SkinLoader* m_pSkinLoader;

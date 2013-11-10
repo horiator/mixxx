@@ -12,7 +12,7 @@
 #include "widget/wlibrarytableview.h"
 #include "dlgtagfetcher.h"
 
-class ControlObjectThreadMain;
+class ControlObjectThread;
 class DlgTrackInfo;
 class TrackCollection;
 
@@ -103,9 +103,9 @@ class WTrackTableView : public WLibraryTableView {
     QModelIndex currentTrackInfoIndex;
 
 
-    ControlObjectThreadMain* m_pNumSamplers;
-    ControlObjectThreadMain* m_pNumDecks;
-    ControlObjectThreadMain* m_pNumPreviewDecks;
+    ControlObjectThread* m_pNumSamplers;
+    ControlObjectThread* m_pNumDecks;
+    ControlObjectThread* m_pNumPreviewDecks;
 
     // Context menu machinery
     QMenu *m_pMenu, *m_pPlaylistMenu, *m_pCrateMenu, *m_pSamplerMenu, *m_pBPMMenu;

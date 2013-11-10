@@ -11,6 +11,7 @@
 #include "visualplayposition.h"
 #include "engine/enginechannel.h"
 #include "engine/enginemaster.h"
+#include "controlobjectslave.h"
 
 const int minBpm = 30;
 const int maxInterval = (int)(1000.*(60./(CSAMPLE)minBpm));
@@ -20,18 +21,11 @@ BpmControl::BpmControl(const char* _group,
                        ConfigObject<ConfigValue>* _config) :
         EngineControl(_group, _config),
         m_tapFilter(this, filterLength, maxInterval) {
-    m_pNumDecks = ControlObject::getControl(ConfigKey("[Master]", "num_decks"));
+    m_pPlayButton = new ControlObjectSlave(_group, "play", this);
+    m_pRateSlider = new ControlObjectSlave(_group, "rate", this);
+    m_pRateSlider->connectValueChanged(SLOT(slotAdjustBpm()), Qt::DirectConnection);
 
-    m_pPlayButton = ControlObject::getControl(ConfigKey(_group, "play"));
-    m_pRateSlider = ControlObject::getControl(ConfigKey(_group, "rate"));
-    connect(m_pRateSlider, SIGNAL(valueChanged(double)),
-            this, SLOT(slotAdjustBpm()),
-            Qt::DirectConnection);
-    connect(m_pRateSlider, SIGNAL(valueChangedFromEngine(double)),
-            this, SLOT(slotAdjustBpm()),
-            Qt::DirectConnection);
-
-    m_pRateRange = ControlObject::getControl(ConfigKey(_group, "rateRange"));
+    m_pRateRange = ControlObject::getControl(_group, "rateRange");
     connect(m_pRateRange, SIGNAL(valueChanged(double)),
             this, SLOT(slotAdjustBpm()),
             Qt::DirectConnection);
@@ -39,7 +33,7 @@ BpmControl::BpmControl(const char* _group,
             this, SLOT(slotAdjustBpm()),
             Qt::DirectConnection);
 
-    m_pRateDir = ControlObject::getControl(ConfigKey(_group, "rate_dir"));
+    m_pRateDir = ControlObject::getControl(_group, "rate_dir");
     connect(m_pRateDir, SIGNAL(valueChanged(double)),
             this, SLOT(slotAdjustBpm()),
             Qt::DirectConnection);
@@ -47,12 +41,9 @@ BpmControl::BpmControl(const char* _group,
             this, SLOT(slotAdjustBpm()),
             Qt::DirectConnection);
 
-    m_pLoopEnabled = ControlObject::getControl(
-        ConfigKey(_group, "loop_enabled"));
-    m_pLoopStartPosition = ControlObject::getControl(
-        ConfigKey(_group, "loop_start_position"));
-    m_pLoopEndPosition = ControlObject::getControl(
-        ConfigKey(_group, "loop_end_position"));
+    m_pLoopEnabled = ControlObject::getControl(_group, "loop_enabled");
+    m_pLoopStartPosition = ControlObject::getControl(_group, "loop_start_position");
+    m_pLoopEndPosition = ControlObject::getControl(_group, "loop_end_position");
 
     m_pFileBpm = new ControlObject(ConfigKey(_group, "file_bpm"));
     connect(m_pFileBpm, SIGNAL(valueChanged(double)),
@@ -85,8 +76,7 @@ BpmControl::BpmControl(const char* _group,
             this, SLOT(slotControlBeatSyncTempo(double)),
             Qt::DirectConnection);
 
-    m_pTranslateBeats = new ControlPushButton(
-        ConfigKey(_group, "beats_translate_curpos"));
+    m_pTranslateBeats = new ControlPushButton(ConfigKey(_group, "beats_translate_curpos"));
     connect(m_pTranslateBeats, SIGNAL(valueChanged(double)),
             this, SLOT(slotBeatsTranslate(double)),
             Qt::DirectConnection);
@@ -260,44 +250,6 @@ bool BpmControl::syncTempo(EngineBuffer* pOtherEngineBuffer) {
     return false;
 }
 
-EngineBuffer* BpmControl::pickSyncTarget() {
-    EngineMaster* pMaster = getEngineMaster();
-    if (!pMaster) {
-        return NULL;
-    }
-    QString group = getGroup();
-    QStringList deckGroups;
-    EngineBuffer* pFirstNonplayingDeck = NULL;
-
-    for (int i = 0; i < m_pNumDecks->get(); ++i) {
-        // TODO(XXX) format from PlayerManager
-        QString deckGroup = QString("[Channel%1]").arg(i+1);
-        if (deckGroup == group) {
-            continue;
-        }
-        EngineChannel* pChannel = pMaster->getChannel(deckGroup);
-        // Only consider channels that have a track loaded and are in the master
-        // mix.
-        if (pChannel && pChannel->isActive() && pChannel->isMaster()) {
-            EngineBuffer* pBuffer = pChannel->getEngineBuffer();
-            if (pBuffer && pBuffer->getBpm() > 0) {
-                // If the deck is playing then go with it immediately.
-                if (fabs(pBuffer->getRate()) > 0) {
-                    return pBuffer;
-                }
-                // Otherwise hold out for a deck that might be playing but
-                // remember the first deck that matched our criteria.
-                if (pFirstNonplayingDeck == NULL) {
-                    pFirstNonplayingDeck = pBuffer;
-                }
-            }
-        }
-    }
-    // No playing decks have a BPM. Go with the first deck that was stopped but
-    // had a BPM.
-    return pFirstNonplayingDeck;
-}
-
 bool BpmControl::syncPhase(EngineBuffer* pOtherEngineBuffer) {
     if (!pOtherEngineBuffer) {
         return false;
@@ -317,8 +269,8 @@ bool BpmControl::syncPhase(EngineBuffer* pOtherEngineBuffer) {
 
     // Get the current position of both decks
     double dThisPosition = getCurrentSample();
-    double dOtherLength = ControlObject::getControl(
-        ConfigKey(pOtherEngineBuffer->getGroup(), "track_samples"))->get();
+    double dOtherLength = ControlObject::get(
+        ConfigKey(pOtherEngineBuffer->getGroup(), "track_samples"));
     double dOtherEnginePlayPos =
             VisualPlayPosition::getVisualPlayPosition(pOtherEngineBuffer->getGroup())->getEnginePlayPos();
     double dOtherPosition = dOtherLength * dOtherEnginePlayPos;

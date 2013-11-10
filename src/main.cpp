@@ -34,7 +34,7 @@
 #include "qpixmap.h"
 #include "qsplashscreen.h"
 #include "errordialoghandler.h"
-#include "defs_version.h"
+#include "util/version.h"
 
 #ifdef __LADSPA__
 #include <ladspa/ladspaloader.h>
@@ -73,8 +73,6 @@ void InitDebugConsole() { // Open a Debug Console so we can printf
 #endif // DEBUGCONSOLE
 #endif // __WINDOWS__
 
-QApplication *a;
-
 QStringList plugin_paths; //yes this is global. sometimes global is good.
 
 //void qInitImages_mixxx();
@@ -85,8 +83,12 @@ QMutex mutexLogfile;
 /* Debug message handler which outputs to both a logfile and a
  * and prepends the thread the message came from too.
  */
-void MessageHandler(QtMsgType type, const char *input)
-{
+void MessageHandler(QtMsgType type,
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+                    const char* input) {
+#else
+                    const QMessageLogContext&, const QString& input) {
+#endif
     QMutexLocker locker(&mutexLogfile);
     QByteArray ba;
     QThread* thread = QThread::currentThread();
@@ -95,7 +97,11 @@ void MessageHandler(QtMsgType type, const char *input)
     } else {
         ba = "[?]: ";
     }
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     ba += input;
+#else
+    ba += input.toLocal8Bit();
+#endif
     ba += "\n";
 
     if (!Logfile.isOpen()) {
@@ -108,8 +114,6 @@ void MessageHandler(QtMsgType type, const char *input)
         Logfile.setFileName(logFileName);
         Logfile.open(QIODevice::WriteOnly | QIODevice::Text);
     }
-
-    ErrorDialogHandler* dialogHandler = ErrorDialogHandler::instance();
 
     switch (type) {
     case QtDebugMsg:
@@ -137,6 +141,11 @@ void MessageHandler(QtMsgType type, const char *input)
         Logfile.write("Fatal ");
         Logfile.write(ba);
         break; //NOTREACHED
+    default:
+        fprintf(stderr, "Unknown %s", ba.constData());
+        Logfile.write("Unknown ");
+        Logfile.write(ba);
+        break;
     }
     Logfile.flush();
 }
@@ -156,13 +165,15 @@ int main(int argc, char * argv[])
     QCoreApplication::setOrganizationDomain("mixxx.org");
     QCoreApplication::setOrganizationName("Mixxx");
     QCoreApplication::setApplicationName("Mixxx");
-    QCoreApplication::setApplicationVersion(VERSION);
+    QString mixxxVersion = Version::version();
+    QByteArray mixxxVersionBA = mixxxVersion.toLocal8Bit();
+    QCoreApplication::setApplicationVersion(mixxxVersion);
 
     // Construct a list of strings based on the command line arguments
     CmdlineArgs& args = CmdlineArgs::Instance();
     if (!args.Parse(argc, argv)) {
-        fputs("Mixxx digital DJ software v", stdout);
-        fputs(VERSION, stdout);
+        fputs("Mixxx DJ Software v", stdout);
+        fputs(mixxxVersionBA.constData(), stdout);
         fputs(" - Command line options", stdout);
         fputs(
                    "\n(These are case-sensitive.)\n\n\
@@ -216,7 +227,12 @@ int main(int argc, char * argv[])
     InitDebugConsole();
   #endif
 #endif
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     qInstallMsgHandler(MessageHandler);
+#else
+    qInstallMessageHandler(MessageHandler);
+#endif
 
     // Other things depend on this name to enforce thread exclusivity,
     //  so if you change it here, change it also in:
@@ -224,8 +240,12 @@ int main(int argc, char * argv[])
     QThread::currentThread()->setObjectName("Main");
     QApplication a(argc, argv);
 
-    //Support utf-8 for all translation strings
+    // Support utf-8 for all translation strings. Not supported in Qt 5.
+    // TODO(rryan): Is this needed when we switch to qt5? Some sources claim it
+    // isn't.
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+#endif
 
     //Enumerate and load SoundSource plugins
     SoundSourceProxy::loadPlugins();
@@ -314,7 +334,11 @@ int main(int argc, char * argv[])
 
     qDebug() << "Mixxx shutdown complete with code" << result;
 
-    qInstallMsgHandler(0); //Reset to default.
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    qInstallMsgHandler(NULL);  // Reset to default.
+#else
+    qInstallMessageHandler(NULL);  // Reset to default.
+#endif
 
     // Don't make any more output after this
     //    or mixxx.log will get clobbered!
@@ -328,4 +352,3 @@ int main(int argc, char * argv[])
     //delete plugin_paths;
     return result;
 }
-

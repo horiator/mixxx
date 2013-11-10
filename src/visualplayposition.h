@@ -10,7 +10,7 @@
 #include <QMap>
 #include <QAtomicPointer>
 
-class ControlObjectThreadMain;
+class ControlObjectThread;
 class VSyncThread;
 
 class VisualPlayPositionData {
@@ -43,7 +43,7 @@ class VisualPlayPosition
     ControlValueAtomic<VisualPlayPositionData> m_data;
     double m_playPosOld;
     int m_deltatime;
-    ControlObjectThreadMain* m_audioBufferSize;
+    ControlObjectThread* m_audioBufferSize;
     PaTime m_outputBufferDacTime;
     bool m_valid;
 

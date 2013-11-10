@@ -19,8 +19,7 @@ VisualPlayPosition::VisualPlayPosition()
       m_deltatime(0),
       m_outputBufferDacTime(0),
       m_valid(false) {
-    m_audioBufferSize = new ControlObjectThreadMain(
-        ControlObject::getControl(ConfigKey("[Master]","audio_buffer_size")));
+    m_audioBufferSize = new ControlObjectThread("[Master]","audio_buffer_size");
 }
 
 VisualPlayPosition::~VisualPlayPosition() {

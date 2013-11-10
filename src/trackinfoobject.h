@@ -56,8 +56,6 @@ class TrackInfoObject;
 typedef QSharedPointer<TrackInfoObject> TrackPointer;
 typedef QWeakPointer<TrackInfoObject> TrackWeakPointer;
 
-#include "segmentation.h"
-
 class TrackInfoObject : public QObject
 #ifdef __TAGREADER__
 , public ITagReaderMetaData
@@ -76,7 +74,6 @@ public:
     // Returns true if the object contains valid information 
     bool isValid() const;
     int parse();
-    //void writeToXML( QDomDocument &, QDomElement & );
 
     // Returns the duration in seconds 
     int getDuration() const;
@@ -110,6 +107,8 @@ public:
     QString getDirectory() const;
     // Returns the filename of the file.
     QString getFilename() const;
+    // Returns file creation date
+    QDateTime getCreateDate() const;
     // Returns the length of the file in bytes
     int getLength() const;
     // Returns whether the file exists on disk or not. Updated as of the time
@@ -250,7 +249,7 @@ public:
     bool locationChanged();
 
     // Set the track's full file path 
-    void setLocation(QString location);
+    void setLocation(const QString& location);
 
     // Get the track's Beats list
     BeatsPointer getBeats() const;
@@ -258,8 +257,6 @@ public:
     // Set the track's Beats
     void setBeats(BeatsPointer beats);
 
-    const Segmentation<QString>* getChordData();
-    void setChordData(Segmentation<QString> cd);
 
 #ifdef __TAGREADER__
     virtual void InitFromProtobuf(const pb::tagreader::SongMetadata& pb);
@@ -269,7 +266,8 @@ public:
   public slots:
     void slotCueUpdated();
 
-signals:
+  signals:
+    void waveformUpdated();
     void waveformSummaryUpdated();
     void analyserProgress(int progress);
     void bpmUpdated(double bpm);
@@ -281,11 +279,10 @@ signals:
     void clean(TrackInfoObject* pTrack);
     void save(TrackInfoObject* pTrack);
 
-private slots:
+  private slots:
     void slotBeatsUpdated();
 
-private:
-
+  private:
     // Common initialization function between all TIO constructors.
     void initialize(bool parseHeader);
 
@@ -296,6 +293,7 @@ private:
     // Set whether the TIO is dirty not. This should never be called except by
     // TIO local methods or the TrackDAO.
     void setDirty(bool bDirty);
+
 
     // Set a unique identifier for the track. Only used by services like
     // TrackDAO
@@ -356,7 +354,7 @@ private:
     // Cue point in samples or something 
     float m_fCuePoint;
     // Date. creation date of file 
-    // QDateTime m_dCreateDate;
+    QDateTime m_dCreateDate;
     // Date the track was added to the library
     QDateTime m_dateAdded;
 
@@ -373,8 +371,6 @@ private:
 
     // True if object contains valid information 
     bool m_bIsValid;
-
-    Segmentation<QString> m_chordData;
 
     // Storage for the track's beats
     BeatsPointer m_pBeats;
