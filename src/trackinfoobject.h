@@ -88,8 +88,10 @@ public:
     Q_PROPERTY(QString artist READ getArtist WRITE setArtist)
     Q_PROPERTY(QString title READ getTitle WRITE setTitle)
     Q_PROPERTY(QString album READ getAlbum WRITE setAlbum)
+    Q_PROPERTY(QString albumArtist READ getAlbumArtist WRITE setAlbumArtist)
     Q_PROPERTY(QString genre READ getGenre WRITE setGenre)
     Q_PROPERTY(QString composer READ getComposer WRITE setComposer)
+    Q_PROPERTY(QString grouping READ getGrouping WRITE setGrouping)
     Q_PROPERTY(QString year READ getYear WRITE setYear)
     Q_PROPERTY(QString track_number READ getTrackNumber WRITE setTrackNumber)
     Q_PROPERTY(int times_played READ getTimesPlayed)
@@ -172,7 +174,11 @@ public:
     QString getAlbum() const;
     // Set album 
     void setAlbum(const QString&);
-    // Return Year 
+    // Return album artist
+    QString getAlbumArtist() const;
+    // Set album artist
+    void setAlbumArtist(const QString&);
+    // Return Year
     QString getYear() const;
     // Set year 
     void setYear(const QString&);
@@ -183,8 +189,12 @@ public:
     // Return composer 
     QString getComposer() const;
     // Set composer 
-    void setComposer(QString);
-    // Return Track Number 
+    void setComposer(const QString&);
+    // Return grouping
+    QString getGrouping() const;
+    // Set grouping
+    void setGrouping(const QString&);
+    // Return Track Number
     QString getTrackNumber() const;
     // Set Track Number 
     void setTrackNumber(const QString&);
@@ -211,12 +221,12 @@ public:
     // Returns KEY_CODE 
     QString getKey() const;
     // Set KEY_CODE 
-    void setKey(QString);
+    void setKey(const QString&);
 
     // Get URL for track 
     QString getURL();
     // Set URL for track 
-    void setURL(QString url);
+    void setURL(const QString& url);
 
     Waveform* getWaveform();
     void waveformNew();
@@ -314,12 +324,16 @@ public:
     QString m_sAlbum;
     // Artist 
     QString m_sArtist;
-    // Title 
+    // Album Artist
+    QString m_sAlbumArtist;
+    // Title
     QString m_sTitle;
     // Genre
     QString m_sGenre;
     // Composer
     QString m_sComposer;
+    // Grouping
+    QString m_sGrouping;
     // Year
     QString m_sYear;
     // Track Number

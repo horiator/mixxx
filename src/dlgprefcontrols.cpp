@@ -43,12 +43,11 @@ DlgPrefControls::DlgPrefControls(QWidget * parent, MixxxApp * mixxx,
                                  SkinLoader* pSkinLoader,
                                  PlayerManager* pPlayerManager,
                                  ConfigObject<ConfigValue> * pConfig)
-        :  QWidget(parent) {
-    m_pConfig = pConfig;
-    m_mixxx = mixxx;
-    m_pSkinLoader = pSkinLoader;
-    m_pPlayerManager = pPlayerManager;
-
+        :  DlgPreferencePage(parent),
+           m_pConfig(pConfig),
+           m_mixxx(mixxx),
+           m_pSkinLoader(pSkinLoader),
+           m_pPlayerManager(pPlayerManager) {
     setupUi(this);
 
     for (unsigned int i = 0; i < PlayerManager::numDecks(); ++i) {

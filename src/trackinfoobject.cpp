@@ -133,6 +133,8 @@ void TrackInfoObject::initialize(bool parseHeader) {
     m_Rating = 0;
     //m_key = "";
     m_bBpmLock = false;
+    m_sGrouping = "";
+    m_sAlbumArtist = "";
 
     // parse() parses the metadata from file. This is not a quick operation!
     if (parseHeader) {
@@ -249,11 +251,11 @@ float TrackInfoObject::getReplayGain() const {
 
 void TrackInfoObject::setReplayGain(float f) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = m_fReplayGain != f;
-    m_fReplayGain = f;
     //qDebug() << "Reported ReplayGain value: " << m_fReplayGain;
-    if (dirty)
+    if (m_fReplayGain != f) {
+        m_fReplayGain = f;
         setDirty(true);
+    }
     lock.unlock();
     emit(ReplayGainUpdated(f));
 }
@@ -292,8 +294,9 @@ void TrackInfoObject::setBpm(double f) {
         dirty = true;
     }
 
-    if (dirty)
+    if (dirty) {
         setDirty(true);
+    }
 
     lock.unlock();
     // Tell the GUI to update the bpm label...
@@ -359,10 +362,10 @@ bool TrackInfoObject::getHeaderParsed()  const
 void TrackInfoObject::setHeaderParsed(bool parsed)
 {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = m_bHeaderParsed != parsed;
-    m_bHeaderParsed = parsed;
-    if (dirty)
+    if (m_bHeaderParsed != parsed) {
+        m_bHeaderParsed = parsed;
         setDirty(true);
+    }
 }
 
 QString TrackInfoObject::getInfo()  const
@@ -390,10 +393,10 @@ int TrackInfoObject::getDuration()  const {
 
 void TrackInfoObject::setDuration(int i) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = m_iDuration != i;
-    m_iDuration = i;
-    if (dirty)
+    if (m_iDuration != i) {
+        m_iDuration = i;
         setDirty(true);
+    }
 }
 
 QString TrackInfoObject::getTitle() const {
@@ -438,7 +441,21 @@ void TrackInfoObject::setAlbum(const QString& s) {
     }
 }
 
-QString TrackInfoObject::getYear() const {
+QString TrackInfoObject::getAlbumArtist()  const {
+    QMutexLocker lock(&m_qMutex);
+    return m_sAlbumArtist;
+}
+
+void TrackInfoObject::setAlbumArtist(const QString& s) {
+    QMutexLocker lock(&m_qMutex);
+    QString st = s.trimmed();
+    if (m_sAlbumArtist != st) {
+        m_sAlbumArtist = st;
+        setDirty(true);
+    }
+}
+
+QString TrackInfoObject::getYear()  const {
     QMutexLocker lock(&m_qMutex);
     return m_sYear;
 }
@@ -471,16 +488,30 @@ QString TrackInfoObject::getComposer() const {
     return m_sComposer;
 }
 
-void TrackInfoObject::setComposer(QString s) {
+void TrackInfoObject::setComposer(const QString& s) {
     QMutexLocker lock(&m_qMutex);
-    s = s.trimmed();
-    bool dirty = m_sComposer != s;
-    m_sComposer = s;
-    if (dirty)
+    QString composer = s.trimmed();
+    if (m_sComposer != composer) {
+        m_sComposer = composer;
         setDirty(true);
+    }
 }
 
-QString TrackInfoObject::getTrackNumber() const {
+QString TrackInfoObject::getGrouping()  const {
+    QMutexLocker lock(&m_qMutex);
+    return m_sGrouping;
+}
+
+void TrackInfoObject::setGrouping(const QString& s) {
+    QMutexLocker lock(&m_qMutex);
+    QString grouping = s.trimmed();
+    if (m_sGrouping != grouping) {
+        m_sGrouping = grouping;
+        setDirty(true);
+    }
+}
+
+QString TrackInfoObject::getTrackNumber()  const {
     QMutexLocker lock(&m_qMutex);
     return m_sTrackNumber;
 }
@@ -501,10 +532,10 @@ int TrackInfoObject::getTimesPlayed() const {
 
 void TrackInfoObject::setTimesPlayed(int t) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = t != m_iTimesPlayed;
-    m_iTimesPlayed = t;
-    if (dirty)
+    if (t != m_iTimesPlayed) {
+        m_iTimesPlayed = t;
         setDirty(true);
+    }
 }
 
 void TrackInfoObject::incTimesPlayed() {
@@ -558,18 +589,18 @@ QString TrackInfoObject::getType() const {
 
 void TrackInfoObject::setType(const QString& s) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = s != m_sType;
-    m_sType = s;
-    if (dirty)
+    if (s != m_sType) {
+        m_sType = s;
         setDirty(true);
+    }
 }
 
 void TrackInfoObject::setSampleRate(int iSampleRate) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = m_iSampleRate != iSampleRate;
-    m_iSampleRate = iSampleRate;
-    if (dirty)
+    if (m_iSampleRate != iSampleRate) {
+        m_iSampleRate = iSampleRate;
         setDirty(true);
+    }   
 }
 
 int TrackInfoObject::getSampleRate() const {
@@ -579,10 +610,10 @@ int TrackInfoObject::getSampleRate() const {
 
 void TrackInfoObject::setChannels(int iChannels) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = m_iChannels != iChannels;
-    m_iChannels = iChannels;
-    if (dirty)
+    if (m_iChannels != iChannels) {
+        m_iChannels = iChannels;
         setDirty(true);
+    }
 }
 
 int TrackInfoObject::getChannels() const {
@@ -606,10 +637,10 @@ QString TrackInfoObject::getBitrateStr() const {
 
 void TrackInfoObject::setBitrate(int i) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = m_iBitrate != i;
-    m_iBitrate = i;
-    if (dirty)
+    if (m_iBitrate != i) {
+        m_iBitrate = i;
         setDirty(true);
+    }
 }
 
 int TrackInfoObject::getId() const {
@@ -642,12 +673,12 @@ void TrackInfoObject::setWaveSummary(const QByteArray* pWave, bool updateUI)
     emit(wavesummaryUpdated(this));
 }*/
 
-void TrackInfoObject::setURL(QString url) {
+void TrackInfoObject::setURL(const QString& url) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = m_sURL != url;
-    m_sURL = url;
-    if (dirty)
+    if (m_sURL != url) {
+        m_sURL = url;
         setDirty(true);
+    }
 }
 
 QString TrackInfoObject::getURL() {
@@ -683,10 +714,10 @@ int TrackInfoObject::getAnalyserProgress() const {
 
 void TrackInfoObject::setCuePoint(float cue) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = m_fCuePoint != cue;
-    m_fCuePoint = cue;
-    if (dirty)
+    if (m_fCuePoint != cue) {
+        m_fCuePoint = cue;
         setDirty(true);
+    }
 }
 
 float TrackInfoObject::getCuePoint() {
@@ -755,10 +786,11 @@ void TrackInfoObject::setDirty(bool bDirty) {
     // qDebug() << "Track" << m_iId << getInfo() << (change? "changed" : "unchanged")
     //          << "set" << (bDirty ? "dirty" : "clean");
     if (change) {
-        if (m_bDirty)
+        if (m_bDirty) {
             emit(dirty(this));
-        else
+        } else {
             emit(clean(this));
+        }
     }
     // Emit a changed signal regardless if this attempted to set us dirty.
     if (bDirty) {
@@ -785,10 +817,10 @@ int TrackInfoObject::getRating() const {
 
 void TrackInfoObject::setRating (int rating) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = rating != m_Rating;
-    m_Rating = rating;
-    if (dirty)
+    if (rating != m_Rating) {
+        m_Rating = rating;
         setDirty(true);
+    }
 }
 
 QString TrackInfoObject::getKey() const {
@@ -796,12 +828,12 @@ QString TrackInfoObject::getKey() const {
     return m_key;
 }
 
-void TrackInfoObject::setKey(QString key) {
+void TrackInfoObject::setKey(const QString& key) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = key != m_key;
-    m_key = key;
-    if (dirty)
+    if (key != m_key) {
+        m_key = key;
         setDirty(true);
+    }
 }
 
 
@@ -883,10 +915,10 @@ void TrackInfoObject::ToProtobuf(pb::tagreader::SongMetadata* pb) const {
 
 void TrackInfoObject::setBpmLock(bool bpmLock) {
     QMutexLocker lock(&m_qMutex);
-    bool dirty = bpmLock != m_bBpmLock;
-    m_bBpmLock = bpmLock;
-    if (dirty)
+    if (bpmLock != m_bBpmLock) {
+        m_bBpmLock = bpmLock;
         setDirty(true);
+    }
 }
 
 bool TrackInfoObject::hasBpmLock() const {
