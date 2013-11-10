@@ -326,6 +326,13 @@ void EngineBuffer::setEngineMaster(EngineMaster * pEngineMaster)
     m_pBpmControl->setEngineMaster(pEngineMaster);
 }
 
+void EngineBuffer::queueNewPlaypos(double newpos) {
+    // Temp Workaround: All seeks need to be done in the Engine thread so queue
+    // it up.
+    m_dQueuedPosition = newpos;
+    m_bSeekQueued.fetchAndStoreRelease(1);
+}
+
 void EngineBuffer::setNewPlaypos(double newpos) {
     m_filepos_seek = newpos;
 }
