@@ -16,6 +16,7 @@
 #include "controlobjectthreadmain.h"
 #include "sharedglcontext.h"
 #include "visualplayposition.h"
+#include "widget/wspinny.h"
 #include "vinylcontrol/vinylcontrolmanager.h"
 #include "vinylcontrol/vinylcontrol.h"
 
@@ -67,7 +68,6 @@ WSpinny::~WSpinny() {
         WImageStore::deleteImage(m_pGhostImage);
         delete m_pPlay;
         delete m_pPlayPos;
-        delete m_pVisualPlayPos;
         delete m_pTrackSamples;
         delete m_pTrackSampleRate;
         delete m_pScratch;

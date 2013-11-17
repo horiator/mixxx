@@ -19,15 +19,15 @@
 #endif
 
 VSyncThread::VSyncThread(QWidget* parent)
-        : QThread(),
-          m_firstRun(false),
-          m_usSyncTime(33333),
+        : QThread(parent),
+          m_vSyncTypeChanged(false),
+          m_usSyncIntervalTime(33333),
           m_vSyncMode(ST_TIMER),
           m_syncOk(false),
           m_rtErrorCnt(0),
           m_swapWait(0),
           m_displayFrameRate(60.0),
-          m_interval(1) {
+          m_vSyncPerRendering(1) {
     doRendering = true;
 
     //QGLFormat glFormat = QGLFormat::defaultFormat();
@@ -71,7 +71,7 @@ VSyncThread::VSyncThread(QWidget* parent)
 
 VSyncThread::~VSyncThread() {
     doRendering = false;
-    m_sema.release(2); // Two slots
+    m_semaVsyncSlot.release(2); // Two slots
     wait();
     //delete m_glw;
 }
@@ -85,106 +85,106 @@ void VSyncThread::stop()
 void VSyncThread::run() {
     QThread::currentThread()->setObjectName("VSyncThread");
 
- //   m_glw->makeCurrent();
+    int usRemainingForSwap;
+    int usLastSwapTime;
 
-    int usRest;
-    int usLast;
-
-    m_usWait = m_usSyncTime;
+    m_usWaitToSwap = m_usSyncIntervalTime;
     m_timer.start();
 
     while (doRendering) {
         if (m_vSyncMode == ST_FREE) {
             // for benchmark only!
-            emit(vsync1()); // renders the waveform, Possible delayed due to anti tearing
-            m_sema.acquire();
-            emit(vsync2()); // swaps the new waveform to front
-            m_sema.acquire();
+            emit(vsyncRender()); // renders the waveform, Possible delayed due to anti tearing
+            m_semaVsyncSlot.acquire();
+            emit(vsyncSwap()); // swaps the new waveform to front
+            m_semaVsyncSlot.acquire();
             m_timer.restart();
-            m_usWait = 1000;
+            m_usWaitToSwap = 1000;
             usleep(1000);
         } else if (m_vSyncMode == ST_SGI_VIDEO_SYNC) {
             // This mode should be used wit vblank_mode = 0
 
             // sleep just before vsync
-            usRest = m_usWait - m_timer.elapsed() / 1000;
+            usRemainingForSwap = m_usWaitToSwap - m_timer.elapsed() / 1000;
             if (m_syncOk) {
                 // prepare for start waiting 1 ms before Vsync by GL
-                if (usRest > 5100) {
-                    usleep(usRest - 5000);
+                if (usRemainingForSwap > 5100) {
+                    usleep(usRemainingForSwap - 5000);
                 }
             } else {
                 // waiting for interval by sleep
-                if (usRest > 100) {
-                    usleep(usRest);
+                if (usRemainingForSwap > 100) {
+                    usleep(usRemainingForSwap);
                 }
             }
 
-            emit(vsync2()); // swaps the new waveform to front
-            m_sema.acquire();
+            emit(vsyncSwap()); // swaps the new waveform to front
+            m_semaVsyncSlot.acquire();
             // This is delayed until vsync the delay is stored in m_swapWait
             // <- Assume we are VSynced here ->
-            usLast = m_timer.restart() / 1000;
-            if (usRest < 0) {
+            usLastSwapTime = m_timer.restart() / 1000;
+            if (usRemainingForSwap < 0) {
                 // Swapping was delayed
                 // Assume the real swap happens on the following VSync
                 m_rtErrorCnt++; // Count as Real Time Error
             }
             // try to stay in right intervals
-            usRest = m_usWait - usLast;
-            m_usWait = m_usSyncTime + (usRest % m_usSyncTime);
+            usRemainingForSwap = m_usWaitToSwap - usLastSwapTime;
+            m_usWaitToSwap = m_usSyncIntervalTime + (usRemainingForSwap % m_usSyncIntervalTime);
             // m_swapWait of 1000 µs is desired
             if (m_syncOk) {
-                m_usWait += (m_swapWait - 5000); // shift interval to avoid waiting for swap again
+                m_usWaitToSwap += (m_swapWait - 5000); // shift interval to avoid waiting for swap again
             } else if (m_swapWait > 1000) {
                 // missed swap window, delayed by driver anti tearing
                 // assume we are hardware synced now
-                m_usWait = m_usSyncTime;
+                m_usWaitToSwap = m_usSyncIntervalTime;
                 m_rtErrorCnt++; // Count as Real Time Error
             }
-            emit(vsync1()); // renders the new waveform.
-            m_sema.acquire();
-            qDebug()  << "ST_SGI_VIDEO_SYNC                          " << usLast << m_swapWait << m_syncOk << usRest;
+            emit(vsyncRender()); // renders the new waveform.
+            m_semaVsyncSlot.acquire();
+            qDebug()  << "ST_SGI_VIDEO_SYNC                          " 
+                    << usLastSwapTime << m_swapWait << m_syncOk << usRemainingForSwap;
         } else if (m_vSyncMode == ST_MESA_VBLANK_MODE_1) {
             // This mode should be used wit vblank_mode = 1
 
             // sync by sleep
-            usRest = m_usWait - m_timer.elapsed() / 1000;
-            if (usRest > 100) {
-                usleep(usRest);
+            usRemainingForSwap = m_usWaitToSwap - m_timer.elapsed() / 1000;
+            if (usRemainingForSwap > 100) {
+                usleep(usRemainingForSwap);
             }
 
             // <- Assume we are VSynced here ->
             // now we have one VSync interval time for swap.
-            usLast = m_timer.restart() / 1000;
-            if (usRest < 0) {
+            usLastSwapTime = m_timer.restart() / 1000;
+            if (usRemainingForSwap < 0) {
                 // Swapping was delayed
                 // Assume the real swap happens on the following VSync
                 m_rtErrorCnt++; // Count as Real Time Error
             }
-            usRest = m_usWait - usLast;
-            if (usRest < -8333) { // -8.333 ms for up to 120 Hz Displays
+            usRemainingForSwap = m_usWaitToSwap - usLastSwapTime;
+            if (usRemainingForSwap < -8333) { // -8.333 ms for up to 120 Hz Displays
                 // Out of syc, start new
-                m_usWait = m_usSyncTime;
+                m_usWaitToSwap = m_usSyncIntervalTime;
             } else {
                 // try to stay in right intervals
-                m_usWait = m_usSyncTime + (usRest % m_usSyncTime);
+                m_usWaitToSwap = m_usSyncIntervalTime + (usRemainingForSwap % m_usSyncIntervalTime);
             }
 
-            emit(vsync1()); // renders the waveform, Possible delayed due to anti tearing
-            m_sema.acquire();
-            m_usWait += m_swapWait; // shift interval to avoid waiting for swap again
+            emit(vsyncRender()); // renders the waveform, Possible delayed due to anti tearing
+            m_semaVsyncSlot.acquire();
+            m_usWaitToSwap += m_swapWait; // shift interval to avoid waiting for swap again
 
             // Sleep to hit the desired interval and avoid a jitter
             // by swapping to early when using a frame rate smaler then the display refresh rate
-            usRest = m_usWait - m_timer.elapsed() / 1000;
-            usRest -= 8333; // -8.333 ms for up to 120 Hz Displays
-            if (usRest > 100) {
-                usleep(usRest);
+            usRemainingForSwap = m_usWaitToSwap - m_timer.elapsed() / 1000;
+            usRemainingForSwap -= 8333; // -8.333 ms for up to 120 Hz Displays
+            if (usRemainingForSwap > 100) {
+                usleep(usRemainingForSwap);
             }
-            emit(vsync2()); // swaps the new waveform to front
-            m_sema.acquire();
-            //qDebug()  << "ST_MESA_VBLANK_MODE_1                        " << usLast << inSync;
+            emit(vsyncSwap()); // swaps the new waveform to front
+            m_semaVsyncSlot.acquire();
+            //qDebug()  << "ST_MESA_VBLANK_MODE_1                        " 
+            //        << usLastSwapTime << inSync;
 
         } else if (m_vSyncMode == ST_OML_SYNC_CONTROL) {
 #if defined(__APPLE__)
@@ -194,8 +194,8 @@ void VSyncThread::run() {
 #else
             // Probably the best solution
             // Note: Does not work with vsync_mode = 0
-            emit(vsync1()); // renders the waveform, Possible delayed due to anti tearing
-            m_sema.acquire();
+            emit(vsyncRender()); // renders the waveform, Possible delayed due to anti tearing
+            m_semaVsyncSlot.acquire();
             usleep(1000); // ensure to have at least 1 ms time for other GUI events
             if (glXWaitForSbcOML && m_drawable) {
                 int64_t ust; // Time when the last Sync happens in µs
@@ -221,31 +221,31 @@ void VSyncThread::run() {
             }
 
             m_timer.restart();
-            m_usWait = 1000;
+            m_usWaitToSwap = 1000;
             usleep(1000);
 #endif
         } else { // if (m_vSyncMode == ST_TIMER) {
-            usRest = m_usWait - m_timer.elapsed() / 1000;
+            emit(vsyncRender()); // renders the new waveform.
+            m_semaVsyncSlot.acquire(); // wait until rendering was scheduled. It might be delayed due a pending swap (depends one driver vSync settings)
+            // qDebug() << "ST_TIMER                      " << usLastSwapTime << usRemainingForSwap;
+            usRemainingForSwap = m_usWaitToSwap - (int)m_timer.elapsed() / 1000;
             // waiting for interval by sleep
-            if (usRest > 100) {
-                usleep(usRest);
+            if (usRemainingForSwap > 100) {
+                usleep(usRemainingForSwap);
             }
 
-            emit(vsync2()); // swaps the new waveform to front in case of gl-wf
-            m_sema.acquire(); // wait until swap was scheduled. It might be delayed due to driver vSync settings  
+            emit(vsyncSwap()); // swaps the new waveform to front in case of gl-wf
+            m_semaVsyncSlot.acquire(); // wait until swap was scheduled. It might be delayed due to driver vSync settings  
             // <- Assume we are VSynced here ->
-            usLast = m_timer.restart() / 1000;
-            if (usRest < 0) {
+            usLastSwapTime = (int)m_timer.restart() / 1000;
+            if (usRemainingForSwap < 0) {
                 // Our swapping call was already delayed
                 // The real swap might happens on the following VSync, depending on driver settings 
                 m_rtErrorCnt++; // Count as Real Time Error
             }
             // try to stay in right intervals
-            usRest = m_usWait - usLast;
-            m_usWait = m_usSyncTime + (usRest % m_usSyncTime);
-            emit(vsync1()); // renders the new waveform.
-            m_sema.acquire(); // wait until rendreing was scheduled. It might be delayed due a pending swap (depends one driver vSync settings) 
- 			// qDebug() << "ST_TIMER                      " << usLast << usRest;
+            usRemainingForSwap = m_usWaitToSwap - usLastSwapTime;
+            m_usWaitToSwap = m_usSyncIntervalTime + (usRemainingForSwap % m_usSyncIntervalTime);
         }
     }
 }
@@ -268,9 +268,9 @@ bool VSyncThread::waitForVideoSync(QGLWidget* glw) {
 
 #else
 
-    if (!m_firstRun) {
+    if (!m_vSyncTypeChanged) {
         initGlxext(glw);
-        m_firstRun = true;
+        m_vSyncTypeChanged = true;
     }
 
     if (glXGetMscRateOML) {
@@ -381,9 +381,9 @@ void VSyncThread::setupSync(QGLWidget* glw, int index) {
 
 #else
 
-    if (!m_firstRun) {
+    if (!m_vSyncTypeChanged) {
         initGlxext(glw);
-        m_firstRun = true;
+        m_vSyncTypeChanged = true;
     }
 
     // The next three lines are required to make glXSwapBuffersMscOML working!
@@ -400,15 +400,15 @@ void VSyncThread::setupSync(QGLWidget* glw, int index) {
             glXGetMscRateOML(xinfo->display(), glXGetCurrentDrawable(), &numerator, &denominator);
             m_displayFrameRate = (double)numerator/denominator;
      //       qDebug() << "glXGetMscRateOML" << m_displayFrameRate << "Hz";
-            setUsSyncTime(m_usSyncTime);
+            setUsSyncIntervalTime(m_usSyncIntervalTime);
         }
     }
 #endif
 }
 
-void VSyncThread::postRender(QGLWidget* glw, int index) {
+void VSyncThread::swapGl(QGLWidget* glw, int index) {
     // No need for glw->makeCurrent() here.
-//    qDebug() << "postRender" << m_timer.elapsed();
+    //qDebug() << "swapGl" << m_timer.elapsed();
 #if defined(__APPLE__)
     glw->swapBuffers();
 #elif defined(__WINDOWS__)
@@ -429,7 +429,7 @@ void VSyncThread::postRender(QGLWidget* glw, int index) {
         //     This happens if you set the environment variable vsync_mode = 0
         // glXSwapBuffersMscOML must be called from GUI Thread
         int64_t ret = glXSwapBuffersMscOML(xinfo->display(), glw->winId(),
-                0, m_interval, 0);
+                0, m_vSyncPerRendering, 0);
         glXGetSyncValuesOML(xinfo->display(), glw->winId(),
                 &ust, &msc, &sbc);
  //       qDebug() << "glXGetSyncValuesOML 17" << ust << msc << sbc << ret;
@@ -475,13 +475,12 @@ void VSyncThread::waitUntilSwap(QGLWidget* glw) {
 }
 
 int VSyncThread::elapsed() {
-    return m_timer.elapsed() / 1000;
+    return (int)m_timer.elapsed() / 1000;
 }
 
-void VSyncThread::setUsSyncTime(int syncTime) {
-    m_usSyncTime = syncTime;
-    double frameRate = 60.0;
-    m_interval = round(m_displayFrameRate * m_usSyncTime / 1000);
+void VSyncThread::setUsSyncIntervalTime(int syncTime) {
+    m_usSyncIntervalTime = syncTime;
+    m_vSyncPerRendering = round(m_displayFrameRate * m_usSyncIntervalTime / 1000);
 }
 
 void VSyncThread::setVSyncType(int type) {
@@ -490,21 +489,23 @@ void VSyncThread::setVSyncType(int type) {
     }
     m_vSyncMode = (enum VSyncMode)type;
     m_rtErrorCnt = 0;
-    m_firstRun = true;
+    m_vSyncTypeChanged = true;
 }
 
 int VSyncThread::usToNextSync() {
-    int usRest = m_usWait - m_timer.elapsed() / 1000;
+    int usRest = m_usWaitToSwap - ((int)m_timer.elapsed() / 1000);
+    // int math is fine here, because we do not expect times > 4.2 s
     if (usRest < 0) {
-        usRest %= m_usSyncTime;
-        usRest += m_usSyncTime;
+        usRest %= m_usSyncIntervalTime;
+        usRest += m_usSyncIntervalTime;
     }
     return usRest;
 }
 
 int VSyncThread::usFromTimerToNextSync(PerformanceTimer* timer) {
-    int difference = m_timer.difference(timer) / 1000;
-    return difference + m_usWait;
+    int usDifference = (int)m_timer.difference(timer) / 1000;
+    // int math is fine here, because we do not expect times > 4.2 s
+    return usDifference + m_usWaitToSwap;
 }
 
 int VSyncThread::rtErrorCnt() {
@@ -516,12 +517,10 @@ void VSyncThread::setSwapWait(int sw) {
 }
 
 void VSyncThread::vsyncSlotFinished() {
-    m_sema.release();
+    m_semaVsyncSlot.release();
 }
 
 void VSyncThread::getAvailableVSyncTypes(QList<QPair<int, QString > >* pList) {
-    QPair<int, QString > pair;
-
     for (int i = (int)VSyncThread::ST_TIMER; i < (int)VSyncThread::ST_COUNT; i++) {
         //if (isAvailable(type))  // TODO
         {

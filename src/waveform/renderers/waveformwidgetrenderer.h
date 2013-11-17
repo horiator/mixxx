@@ -19,11 +19,11 @@ class VisualPlayPosition;
 class VSyncThread;
 
 class WaveformWidgetRenderer {
-public:
+  public:
     static const int s_waveformMinZoom;
     static const int s_waveformMaxZoom;
 
-public:
+  public:
     explicit WaveformWidgetRenderer(const char* group);
     virtual ~WaveformWidgetRenderer();
 
@@ -78,7 +78,7 @@ public:
 
     void setTrack(TrackPointer track);
 
-protected:
+  protected:
     const char* m_group;
     TrackPointer m_trackInfoObject;
     QList<WaveformRendererAbstract*> m_rendererStack;
@@ -88,8 +88,7 @@ protected:
 
     double m_firstDisplayedPosition;
     double m_lastDisplayedPosition;
-    double m_rendererTransformationOffset;
-    double m_rendererTransformationGain;
+    double m_trackPixelCount;
 
     double m_zoomFactor;
     double m_rateAdjust;
@@ -98,7 +97,7 @@ protected:
 
     //TODO: vRince create some class to manage control/value
     //ControlConnection
-    VisualPlayPosition* m_visualPlayPosition;
+    QSharedPointer<VisualPlayPosition> m_visualPlayPosition;
     double m_playPos;
     int m_playPosVSample;
     ControlObjectThread* m_pRateControlObject;

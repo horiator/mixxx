@@ -269,10 +269,8 @@ bool BpmControl::syncPhase(EngineBuffer* pOtherEngineBuffer) {
 
     // Get the current position of both decks
     double dThisPosition = getCurrentSample();
-    double dOtherLength = ControlObject::get(
-        ConfigKey(pOtherEngineBuffer->getGroup(), "track_samples"));
-    double dOtherEnginePlayPos =
-            VisualPlayPosition::getVisualPlayPosition(pOtherEngineBuffer->getGroup())->getEnginePlayPos();
+    double dOtherLength = pOtherEngineBuffer->getTrackSamples();
+    double dOtherEnginePlayPos = pOtherEngineBuffer->getVisualPlayPos();
     double dOtherPosition = dOtherLength * dOtherEnginePlayPos;
 
     double dThisPrevBeat = m_pBeats->findPrevBeat(dThisPosition);

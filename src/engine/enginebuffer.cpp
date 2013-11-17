@@ -939,6 +939,14 @@ void EngineBuffer::slotEjectTrack(double v) {
     }
 }
 
+double EngineBuffer::getVisualPlayPos() {
+    return m_visualPlayPos->getEnginePlayPos();
+}
+
+double EngineBuffer::getTrackSamples() {
+    return m_pTrackSamples->get();
+}
+
 /*
 void EngineBuffer::setReader(CachingReader* pReader) {
     disconnect(m_pReader, 0, this, 0);

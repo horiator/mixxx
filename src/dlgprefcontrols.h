@@ -91,7 +91,6 @@ class DlgPrefControls : public DlgPreferencePage, public Ui::DlgPrefControlsDlg 
     bool checkSkinResolution(QString skin);
 
     ConfigObject<ConfigValue>* m_pConfig;
-    int m_timer;
     ControlObject* m_pControlPositionDisplay;
     QList<ControlObjectThread*> m_cueControls;
     QList<ControlObjectThread*> m_rateControls;

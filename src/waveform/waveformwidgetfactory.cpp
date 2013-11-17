@@ -63,7 +63,7 @@ WaveformWidgetFactory::WaveformWidgetFactory() :
         m_openGLAvailable(false),
         m_openGLShaderAvailable(false),
         m_vsyncThread(NULL),
-        m_crameCnt(0),
+        m_frameCnt(0),
         m_actualFrameRate(0),
         m_minimumFrameRate(1000),
         m_maximumlFrameRate(0) {
@@ -269,7 +269,7 @@ void WaveformWidgetFactory::setFrameRate(int frameRate) {
     if (m_config) {
         m_config->set(ConfigKey("[Waveform]","FrameRate"), ConfigValue(m_frameRate));
     }
-    m_vsyncThread->setUsSyncTime(1000000/m_frameRate);
+    m_vsyncThread->setUsSyncIntervalTime(1000000 / m_frameRate);
 }
 
 
@@ -431,7 +431,7 @@ void WaveformWidgetFactory::notifyZoomChange(WWaveformViewer* viewer) {
     }
 }
 
-void WaveformWidgetFactory::refresh() {
+void WaveformWidgetFactory::render() {
     ScopedTimer t(QString("WaveformWidgetFactory::refresh() %1waveforms")
             .arg(m_waveformWidgetHolders.size()));    
 
@@ -494,25 +494,25 @@ void WaveformWidgetFactory::refresh() {
         //qDebug() << "emit" << m_vsyncThread->elapsed() - t1;
 
         // m_lastRenderDuration = startTime;
-        m_crameCnt += 1.0;
+        m_frameCnt += 1.0;
         int timeCnt = m_time.elapsed();
         if (timeCnt > 1000) {
             m_time.start();
-            m_crameCnt = m_crameCnt * 1000 / timeCnt; // latency correction
-            emit(waveformMeasured(m_crameCnt, m_vsyncThread->rtErrorCnt()));
-            m_crameCnt = 0.0;
+            m_frameCnt = m_frameCnt * 1000 / timeCnt; // latency correction
+            emit(waveformMeasured(m_frameCnt, m_vsyncThread->rtErrorCnt()));
+            m_frameCnt = 0.0;
         }
     }
     //qDebug() << "refresh end" << m_vsyncThread->elapsed();
 
     if (m_vSyncType == 3) { // ST_OML_SYNC_CONTROL
-        postRefresh();
+        swap();
     } else {
         m_vsyncThread->vsyncSlotFinished();
     }
 }
 
-void WaveformWidgetFactory::postRefresh() {
+void WaveformWidgetFactory::swap() {
     int swapTime0 = 0;
     int swapTime1 = 0;
 
@@ -524,7 +524,7 @@ void WaveformWidgetFactory::postRefresh() {
         // Like setting SwapbufferWait = enabled (default) in driver:
         // xorg radeon 1:6.14.99
         // xorg intel 2:2.9.1
-   //     qDebug() << "postRefresh start" << m_vsyncThread->elapsed();
+   //     qDebug() << "swap start" << m_vsyncThread->elapsed();
         for (int i = 0; i < m_waveformWidgetHolders.size(); i++) {
             QGLWidget* glw = dynamic_cast<QGLWidget*>(
                     m_waveformWidgetHolders[i].m_waveformWidget->getWidget());
@@ -534,17 +534,17 @@ void WaveformWidgetFactory::postRefresh() {
                     if (m_vSyncType == 2) { // ST_SGI_VIDEO_SYNC
                         m_vsyncThread->waitForVideoSync(glw);
                     }
-                    m_vsyncThread->postRender(glw, i);
+                    m_vsyncThread->swapGl(glw, i);
                     swapTime0 = m_vsyncThread->elapsed() - swapTime0;
                 } else if (i == 1) {
                     swapTime1 = m_vsyncThread->elapsed();
-                    m_vsyncThread->postRender(glw, i);
+                    m_vsyncThread->swapGl(glw, i);
                     swapTime1 = m_vsyncThread->elapsed() - swapTime1;
                 } else {
-                    m_vsyncThread->postRender(glw, i);
+                    m_vsyncThread->swapGl(glw, i);
                 }
             }
-  //          qDebug() << "postRefresh x" << m_vsyncThread->elapsed();
+  //          qDebug() << "swap x" << m_vsyncThread->elapsed();
         }
 
         if (m_vSyncType == 2) { // ST_SGI_VIDEO_SYNC
@@ -555,7 +555,7 @@ void WaveformWidgetFactory::postRefresh() {
             }
         }
     }
- //   qDebug() << "postRefresh end" << m_vsyncThread->elapsed();
+ //   qDebug() << "swap end" << m_vsyncThread->elapsed();
     m_vsyncThread->vsyncSlotFinished();
 }
 
@@ -732,17 +732,17 @@ int WaveformWidgetFactory::findIndexOf(WWaveformViewer* viewer) const {
 
 void WaveformWidgetFactory::startVSync(QWidget *parent) {
     if (m_vsyncThread) {
-        disconnect(m_vsyncThread, SIGNAL(vsync1()), this, SLOT(refresh()));
-        disconnect(m_vsyncThread, SIGNAL(vsync2()), this, SLOT(postRefresh()));
+        disconnect(m_vsyncThread, SIGNAL(vsyncRender()), this, SLOT(render()));
+        disconnect(m_vsyncThread, SIGNAL(vsyncSwap()), this, SLOT(swap()));
         delete m_vsyncThread;
     }
     m_vsyncThread = new VSyncThread(parent);
     m_vsyncThread->start();
 
-    connect(m_vsyncThread, SIGNAL(vsync1()),
-            this, SLOT(refresh()));
-    connect(m_vsyncThread, SIGNAL(vsync2()),
-            this, SLOT(postRefresh()));
+    connect(m_vsyncThread, SIGNAL(vsyncRender()),
+            this, SLOT(render()));
+    connect(m_vsyncThread, SIGNAL(vsyncSwap()),
+            this, SLOT(swap()));
 
 }
 

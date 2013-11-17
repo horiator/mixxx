@@ -111,8 +111,8 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
     friend class Singleton<WaveformWidgetFactory>;
 
   private slots:
-    void refresh();
-    void postRefresh();
+    void render();
+    void swap();
 
   private:
     WaveformWidgetType::Type autoChooseWidgetType() const;
@@ -148,7 +148,7 @@ class WaveformWidgetFactory : public QObject, public Singleton<WaveformWidgetFac
     //Debug
     QTime m_time;
     QTime m_delayTime;
-    float m_crameCnt;
+    float m_frameCnt;
     int m_lastRenderDuration;
     double m_actualFrameRate;
     double m_minimumFrameRate;

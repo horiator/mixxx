@@ -6,7 +6,14 @@
 #include <QSemaphore>
 #include <QPair>
 
-#include <qx11info_x11.h>
+#if defined(__APPLE__)
+
+#elif defined(__WINDOWS__)
+
+#else
+   #include <qx11info_x11.h>
+#endif
+
 #include "util/performancetimer.h"
 
 
@@ -42,7 +49,7 @@ class VSyncThread : public QThread {
     bool waitForVideoSync(QGLWidget* glw);
     int elapsed();
     int usToNextSync();
-    void setUsSyncTime(int usSyncTimer);
+    void setUsSyncIntervalTime(int usSyncTimer);
     void setVSyncType(int mode);
     int rtErrorCnt();
     void setSwapWait(int sw);
@@ -50,12 +57,12 @@ class VSyncThread : public QThread {
     void vsyncSlotFinished();
     void getAvailableVSyncTypes(QList<QPair<int, QString > >* list);
     void setupSync(QGLWidget* glw, int index);
-    void postRender(QGLWidget* glw, int index);
+    void swapGl(QGLWidget* glw, int index);
     void waitUntilSwap(QGLWidget* glw);
 
   signals:
-    void vsync1();
-    void vsync2();
+    void vsyncRender();
+    void vsyncSwap();
         
   private:
     bool doRendering;
@@ -92,17 +99,17 @@ class VSyncThread : public QThread {
 
 #endif
 
-    bool m_firstRun;
-    int m_usSyncTime;
-    int m_usWait;
+    bool m_vSyncTypeChanged;
+    int m_usSyncIntervalTime;
+    int m_usWaitToSwap;
     enum VSyncMode m_vSyncMode;
     bool m_syncOk;
     int m_rtErrorCnt;
     int m_swapWait;
     PerformanceTimer m_timer;
-    QSemaphore m_sema;
+    QSemaphore m_semaVsyncSlot;
     double m_displayFrameRate;
-    int m_interval;
+    int m_vSyncPerRendering;
 };
 
 
