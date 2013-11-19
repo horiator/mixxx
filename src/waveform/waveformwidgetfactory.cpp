@@ -246,7 +246,7 @@ bool WaveformWidgetFactory::setWaveformWidget(WWaveformViewer* viewer, const QDo
     // create new holder
     if (index == -1) {
         m_waveformWidgetHolders.push_back(WaveformWidgetHolder(waveformWidget, viewer, node));
-        index = m_waveformWidgetHolders.size()-1;
+        index = m_waveformWidgetHolders.size() - 1;
     } else { //update holder
         m_waveformWidgetHolders[index] = WaveformWidgetHolder(waveformWidget, viewer, node);
     }
@@ -451,23 +451,27 @@ void WaveformWidgetFactory::render() {
             // anti tearing driver settings
             // all render commands are delayed until the swap from the previous run is executed
             for (int i = 0; i < m_waveformWidgetHolders.size(); i++) {
-                if (i == 0) {
-                    /*
-                    if (m_vSyncType == 3) { // ST_OML_SYNC_CONTROL
-                        QGLWidget* glw = dynamic_cast<QGLWidget*>(
-                                m_waveformWidgetHolders[0].m_waveformWidget->getWidget());
-                        if (glw) {
-                            m_vsyncThread->waitUntilSwap(glw);
+                WaveformWidgetAbstract* pWaveformWidget = m_waveformWidgetHolders[i].m_waveformWidget;
+                if (pWaveformWidget->getWidth() > 0) {
+                    (void)pWaveformWidget->render();            
+                    if (i == 0) {
+                        /*
+                        if (m_vSyncType == 3) { // ST_OML_SYNC_CONTROL
+                            QGLWidget* glw = dynamic_cast<QGLWidget*>(
+                                    m_waveformWidgetHolders[0].m_waveformWidget->getWidget());
+                            if (glw) {
+                                m_vsyncThread->waitUntilSwap(glw);
+                            }
                         }
+                        */
+                        paintersSetupTime0 = pWaveformWidget->render();
+                    } else if (i == 1) {
+                        paintersSetupTime1 = pWaveformWidget->render();
+                    } else {
+                        pWaveformWidget->render();
                     }
-                    */
-                    paintersSetupTime0 = m_waveformWidgetHolders[0].m_waveformWidget->render();
-                } else if (i == 1) {
-                    paintersSetupTime1 = m_waveformWidgetHolders[1].m_waveformWidget->render();
-                } else {
-                    m_waveformWidgetHolders[i].m_waveformWidget->render();
-                }
-       //         qDebug() << "render" << i << m_vsyncThread->elapsed();
+                    //qDebug() << "render" << i << m_vsyncThread->elapsed();
+                }        
             }
 
             // if waveform 1 takes significant longer for render, assume a delay
@@ -526,25 +530,28 @@ void WaveformWidgetFactory::swap() {
         // xorg intel 2:2.9.1
    //     qDebug() << "swap start" << m_vsyncThread->elapsed();
         for (int i = 0; i < m_waveformWidgetHolders.size(); i++) {
-            QGLWidget* glw = dynamic_cast<QGLWidget*>(
-                    m_waveformWidgetHolders[i].m_waveformWidget->getWidget());
-            if (glw) {
-                if (i == 0) {
-                    swapTime0 = m_vsyncThread->elapsed();
-                    if (m_vSyncType == 2) { // ST_SGI_VIDEO_SYNC
-                        m_vsyncThread->waitForVideoSync(glw);
+            WaveformWidgetAbstract* pWaveformWidget = m_waveformWidgetHolders[i].m_waveformWidget;
+            if (pWaveformWidget->getWidth() > 0) {
+                QGLWidget* glw = dynamic_cast<QGLWidget*>(
+                        m_waveformWidgetHolders[i].m_waveformWidget->getWidget());
+                if (glw) {
+                    if (i == 0) {
+                        swapTime0 = m_vsyncThread->elapsed();
+                        if (m_vSyncType == 2) { // ST_SGI_VIDEO_SYNC
+                            m_vsyncThread->waitForVideoSync(glw);
+                        }
+                        m_vsyncThread->swapGl(glw, i);
+                        swapTime0 = m_vsyncThread->elapsed() - swapTime0;
+                    } else if (i == 1) {
+                        swapTime1 = m_vsyncThread->elapsed();
+                        m_vsyncThread->swapGl(glw, i);
+                        swapTime1 = m_vsyncThread->elapsed() - swapTime1;
+                    } else {
+                        m_vsyncThread->swapGl(glw, i);
                     }
-                    m_vsyncThread->swapGl(glw, i);
-                    swapTime0 = m_vsyncThread->elapsed() - swapTime0;
-                } else if (i == 1) {
-                    swapTime1 = m_vsyncThread->elapsed();
-                    m_vsyncThread->swapGl(glw, i);
-                    swapTime1 = m_vsyncThread->elapsed() - swapTime1;
-                } else {
-                    m_vsyncThread->swapGl(glw, i);
                 }
+                //qDebug() << "swap x" << m_vsyncThread->elapsed();
             }
-  //          qDebug() << "swap x" << m_vsyncThread->elapsed();
         }
 
         if (m_vSyncType == 2) { // ST_SGI_VIDEO_SYNC
@@ -555,7 +562,7 @@ void WaveformWidgetFactory::swap() {
             }
         }
     }
- //   qDebug() << "swap end" << m_vsyncThread->elapsed();
+    //qDebug() << "swap end" << m_vsyncThread->elapsed();
     m_vsyncThread->vsyncSlotFinished();
 }
 
