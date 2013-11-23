@@ -66,7 +66,7 @@ void DlgPrefPlaylist::slotExtraPlugins() {
 void DlgPrefPlaylist::slotUpdate() {
     // Library Path
     LineEditSongfiles->setText(m_pconfig->getValueString(
-                               ConfigKey("[Playlist]","Directory")));
+            ConfigKey("[Playlist]","Directory")));
     //Bundled songs stat tracking
     checkBox_library_scan->setChecked((bool)m_pconfig->getValueString(
             ConfigKey("[Library]","RescanOnStartup")).toInt());
@@ -76,6 +76,8 @@ void DlgPrefPlaylist::slotUpdate() {
             ConfigKey("[Library]","UseRelativePathOnExport")).toInt());
     checkBox_show_rhythmbox->setChecked((bool)m_pconfig->getValueString(
             ConfigKey("[Library]","ShowRhythmboxLibrary"),"1").toInt());
+    checkBox_show_banshee->setChecked((bool)m_pconfig->getValueString(
+            ConfigKey("[Library]","ShowBansheeLibrary"),"1").toInt());
     checkBox_show_itunes->setChecked((bool)m_pconfig->getValueString(
             ConfigKey("[Library]","ShowITunesLibrary"),"1").toInt());
     #ifdef __IPOD__

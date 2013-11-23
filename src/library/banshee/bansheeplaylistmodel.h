@@ -10,6 +10,7 @@
 #include "library/trackcollection.h"
 #include "library/dao/trackdao.h"
 #include "library/banshee/bansheedbconnection.h"
+#include "library/stardelegate.h"
 
 // BaseSqlTableModel is a custom-written SQL-backed table which aggressively
 // caches the contents of the table and supports lightweight updates.
@@ -24,9 +25,11 @@ class BansheePlaylistModel : public QAbstractTableModel , public virtual TrackMo
         DURATION,
         URI,
         ALBUM,
+        ALBUM_ARTIST,
         YEAR,
         RATING,
         GENRE,
+        GROUPING,
         TRACKNUMBER,
         DATEADDED,
         BPM,
@@ -54,7 +57,7 @@ class BansheePlaylistModel : public QAbstractTableModel , public virtual TrackMo
     virtual QString getTrackLocation(const QModelIndex& index) const;
     virtual int getTrackId(const QModelIndex& index) const;
     virtual const QLinkedList<int> getTrackRows(int trackId) const;
-    virtual void search(const QString& searchText);
+    virtual void search(const QString& searchText, const QString& extraFilter = QString());
     virtual const QString currentSearch();
     virtual bool isColumnInternal(int column);
     virtual bool isColumnHiddenByDefault(int column);
@@ -65,7 +68,7 @@ class BansheePlaylistModel : public QAbstractTableModel , public virtual TrackMo
 
     virtual Qt::ItemFlags flags(const QModelIndex &index) const;
 
-    QItemDelegate* delegateForColumn(const int i);
+    QAbstractItemDelegate* delegateForColumn(const int i, QObject* pParent);
     TrackModel::CapabilitiesFlags getCapabilities() const;
 
     virtual void sort(int column, Qt::SortOrder order);

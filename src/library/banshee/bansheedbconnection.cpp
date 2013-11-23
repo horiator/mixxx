@@ -78,20 +78,7 @@ QList<struct BansheeDbConnection::PlaylistEntry> BansheeDbConnection::getPlaylis
 
     QSqlQuery query(m_database);
     query.setForwardOnly(true); // Saves about 50% time
-/*
-    QString queryString = QString(
-        "CREATE TEMPORARY VIEW IF NOT EXISTS %1 AS "
-        "SELECT %2 FROM PlaylistTracks "
-        "INNER JOIN library ON library.id = PlaylistTracks.track_id "
-        "WHERE PlaylistTracks.playlist_id = %3 AND library.mixxx_deleted = 0")
-            .arg(escaper.escapeString(playlistTableName))
-            .arg(columns.join(","))
-            .arg(playlistId);
-    query.prepare(queryString);
-    if (!query.exec()) {
-        LOG_FAILED_QUERY(query);
-    }
-*/
+
     QString queryString;
 
     if (playlistId == 0) {
@@ -116,11 +103,14 @@ QList<struct BansheeDbConnection::PlaylistEntry> BansheeDbConnection::getPlaylis
             "CoreTracks.BitRate, "        // 15
             "CoreTracks.Comment, "        // 16
             "CoreTracks.PlayCount, "      // 17
-            "CoreTracks.Composer "        // 18
+            "CoreTracks.Composer, "       // 18
+            "CoreTracks.Grouping, "       // 19
+            "CoreAlbums.ArtistID, "       // 20
+            "AlbumArtists.Name "          // 21
             "FROM CoreTracks "
             "INNER JOIN CoreArtists ON CoreArtists.ArtistID = CoreTracks.ArtistID "
-            "INNER JOIN CoreAlbums ON CoreAlbums.AlbumID = CoreTracks.AlbumID "
-                );
+            "INNER JOIN CoreArtists AlbumArtists ON AlbumArtists.ArtistID = CoreAlbums.ArtistID "
+            "INNER JOIN CoreAlbums ON CoreAlbums.AlbumID = CoreTracks.AlbumID ");
      } else {
         // SELECT playlist from CorePlaylistEntries
         queryString = QString(
@@ -143,10 +133,14 @@ QList<struct BansheeDbConnection::PlaylistEntry> BansheeDbConnection::getPlaylis
             "CoreTracks.BitRate, "            // 15
             "CoreTracks.Comment, "            // 16
             "CoreTracks.PlayCount, "          // 17
-            "CoreTracks.Composer "            // 18
+            "CoreTracks.Composer, "           // 18
+            "CoreTracks.Grouping, "           // 19
+            "CoreAlbums.ArtistID, "           // 20
+            "AlbumArtists.Name "              // 21
             "FROM CorePlaylistEntries "
             "INNER JOIN CoreTracks ON CoreTracks.TrackID = CorePlaylistEntries.TrackID "
             "INNER JOIN CoreArtists ON CoreArtists.ArtistID = CoreTracks.ArtistID "
+            "INNER JOIN CoreArtists AlbumArtists ON AlbumArtists.ArtistID = CoreAlbums.ArtistID "
             "INNER JOIN CoreAlbums ON CoreAlbums.AlbumID = CoreTracks.AlbumID "
             "WHERE CorePlaylistEntries.PlaylistID = %1")
                 .arg(playlistId);
@@ -163,13 +157,15 @@ QList<struct BansheeDbConnection::PlaylistEntry> BansheeDbConnection::getPlaylis
             m_trackMap[entry.trackId].duration = query.value(4).toInt();
 
             int artistId = query.value(5).toInt();
-            m_trackMap[entry.trackId].artistId = artistId;
             m_artistMap[artistId].name = query.value(6).toString();
             m_trackMap[entry.trackId].year = query.value(7).toInt();
             int albumId = query.value(8).toInt();
             m_albumMap[albumId].title = query.value(9).toString();
+            int albumArtistId = query.value(20).toInt();
+            m_artistMap[albumArtistId].name = query.value(21).toString();
             m_trackMap[entry.trackId].rating = query.value(10).toInt();
             m_trackMap[entry.trackId].genre = query.value(11).toString();
+            m_trackMap[entry.trackId].grouping = query.value(19).toString();
             m_trackMap[entry.trackId].tracknumber = query.value(12).toInt();
             m_trackMap[entry.trackId].dateadded = query.value(13).toInt();
             m_trackMap[entry.trackId].bpm = query.value(14).toInt();
@@ -181,6 +177,7 @@ QList<struct BansheeDbConnection::PlaylistEntry> BansheeDbConnection::getPlaylis
             entry.pTrack = &m_trackMap[entry.trackId];
             entry.pArtist = &m_artistMap[artistId];
             entry.pAlbum = &m_albumMap[albumId];
+            entry.pAlbumArtist = &m_artistMap[albumArtistId];
             list.append(entry);
         }
     } else {
