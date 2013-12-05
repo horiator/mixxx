@@ -1,14 +1,10 @@
-#include "wspinny.h"
-
-#ifdef _MSC_VER
- #include <float.h>  // for _isnan() on VC++
- #define isnan(x) _isnan(x)  // VC++ uses _isnan() instead of isnan()
-#else
- #include <math.h>  // for isnan() everywhere else
-#endif
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 #include <QtDebug>
 #include <QApplication>
+#include <QUrl>
+#include <QMimeData>
 
 #include "mathstuff.h"
 #include "wimagestore.h"

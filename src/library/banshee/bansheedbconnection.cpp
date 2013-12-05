@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QSqlError>
+
 #include "library/queryutil.h"
 
 #include "bansheedbconnection.h"
@@ -29,6 +30,10 @@ bool BansheeDbConnection::open(const QString& databaseFile) {
         return false;
     } else {
         // TODO(DSC): Verify schema
+        // Banshee Schema file:
+        // https://git.gnome.org/browse/banshee/tree/src/Core/Banshee.Services/Banshee.Database/BansheeDbFormatMigrator.cs
+        // "Grouping" was introduced in schema 19 2008-08-19
+        // Tested from 39 to 45
         qDebug() << "Successful opened Banshee database";
         return true;
     }
@@ -185,12 +190,6 @@ QList<struct BansheeDbConnection::PlaylistEntry> BansheeDbConnection::getPlaylis
     }
 
     qDebug() << "BansheeDbConnection::getPlaylistEntries(), took " << time.elapsed() << "ms";
-    // Benchmark:
-    // 98 ms for select CorePlaylistEntries first Time
-    // 51 ms for select CorePlaylistEntries second Time
-    // 151 ms for select CorePlaylistEntries first Time with one join
-    // 46 ms for select CorePlaylistEntries second Time with one join
-
 
     return list;
 }
@@ -230,4 +229,3 @@ QString BansheeDbConnection::getDatabaseFile() {
 
     return QString();
 }
-

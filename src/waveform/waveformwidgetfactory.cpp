@@ -3,8 +3,8 @@
 #include <QTimer>
 #include <QWidget>
 #include <QtDebug>
-#include <QtOpenGL/QGLFormat>
-#include <QtOpenGL/QGLShaderProgram>
+#include <QGLFormat>
+#include <QGLShaderProgram>
 
 #include "waveform/waveformwidgetfactory.h"
 
@@ -22,8 +22,8 @@
 #include "waveform/widgets/waveformwidgetabstract.h"
 #include "widget/wwaveformviewer.h"
 #include "waveform/vsyncthread.h"
-#include "util/cmdlineargs.h"
 
+#include "util/cmdlineargs.h"
 #include "util/performancetimer.h"
 #include "util/timer.h"
 
@@ -432,8 +432,8 @@ void WaveformWidgetFactory::notifyZoomChange(WWaveformViewer* viewer) {
 }
 
 void WaveformWidgetFactory::render() {
-    ScopedTimer t(QString("WaveformWidgetFactory::refresh() %1waveforms")
-            .arg(m_waveformWidgetHolders.size()));    
+    ScopedTimer t(QString("WaveformWidgetFactory::render() %1waveforms")
+            .arg(m_waveformWidgetHolders.size()));
 
     int paintersSetupTime0 = 0;
     int paintersSetupTime1 = 0;
@@ -756,5 +756,3 @@ void WaveformWidgetFactory::startVSync(QWidget *parent) {
 void WaveformWidgetFactory::getAvailableVSyncTypes(QList<QPair<int, QString > >* pList) {
     m_vsyncThread->getAvailableVSyncTypes(pList);
 }
-
-

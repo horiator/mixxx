@@ -1,9 +1,7 @@
 #ifndef BANSHEEPLAYLISTMODEL_H
 #define BANSHEEPLAYLISTMODEL_H
 
-#include <QtCore>
 #include <QHash>
-#include <QtGui>
 #include <QtSql>
 
 #include "library/trackmodel.h"
@@ -12,8 +10,6 @@
 #include "library/banshee/bansheedbconnection.h"
 #include "library/stardelegate.h"
 
-// BaseSqlTableModel is a custom-written SQL-backed table which aggressively
-// caches the contents of the table and supports lightweight updates.
 class BansheePlaylistModel : public QAbstractTableModel , public virtual TrackModel
 {
     Q_OBJECT
@@ -61,10 +57,6 @@ class BansheePlaylistModel : public QAbstractTableModel , public virtual TrackMo
     virtual const QString currentSearch();
     virtual bool isColumnInternal(int column);
     virtual bool isColumnHiddenByDefault(int column);
-    virtual void removeTrack(const QModelIndex& index);
-    virtual void removeTracks(const QModelIndexList& indices);
-    virtual bool addTrack(const QModelIndex& index, QString location);
-    virtual void moveTrack(const QModelIndex& sourceIndex, const QModelIndex& destIndex);
 
     virtual Qt::ItemFlags flags(const QModelIndex &index) const;
 
@@ -89,9 +81,9 @@ class BansheePlaylistModel : public QAbstractTableModel , public virtual TrackMo
     virtual void setSort(int column, Qt::SortOrder order);
 
   protected:
-    /** Use this if you want a model that is read-only. */
+    // Use this if you want a model that is read-only.
     virtual Qt::ItemFlags readOnlyFlags(const QModelIndex &index) const;
-    /** Use this if you want a model that can be changed  */
+    // Use this if you want a model that can be changed
     virtual Qt::ItemFlags readWriteFlags(const QModelIndex &index) const;
 
     // Set the columns used for searching. Names must correspond to the column
@@ -112,11 +104,6 @@ class BansheePlaylistModel : public QAbstractTableModel , public virtual TrackMo
             QString lable,
             bool (*lessThen)(struct BansheeDbConnection::PlaylistEntry &s1, struct BansheeDbConnection::PlaylistEntry &s2),
             bool (*greaterThen)(struct BansheeDbConnection::PlaylistEntry &s1, struct BansheeDbConnection::PlaylistEntry &s2));
-
-
-//    Itdb_Track* getPTrackFromModelIndex(const QModelIndex& index) const;
-
-//    static bool findInUtf8Case(gchar* heystack, gchar* needles);
 
     QString m_tableName;
     QStringList m_columnNames;
@@ -149,4 +136,4 @@ class BansheePlaylistModel : public QAbstractTableModel , public virtual TrackMo
     int m_playlistId;
 };
 
-#endif /* BANSHEEPLAYLISTMODEL_H */
+#endif // BANSHEEPLAYLISTMODEL_H

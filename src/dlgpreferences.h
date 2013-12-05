@@ -20,7 +20,6 @@
 
 #include <QDialog>
 #include <QEvent>
-#include <QtGui>
 
 #include "ui_dlgpreferencesdlg.h"
 #include "configobject.h"
@@ -45,6 +44,7 @@ class DlgPrefReplayGain;
 class ControllerManager;
 class SkinLoader;
 class PlayerManager;
+class LibraryFeatures;
 class VinylControlManager;
 #ifdef __MODPLUG__
 class DlgPrefModplug;
@@ -55,7 +55,8 @@ class DlgPreferences : public QDialog, public Ui::DlgPreferencesDlg {
   public:
     DlgPreferences(MixxxApp* mixxx, SkinLoader* pSkinLoader, SoundManager* soundman,
                    PlayerManager* pPlayerManager, ControllerManager* controllers,
-                   VinylControlManager* pVCManager, ConfigObject<ConfigValue>* config);
+                   VinylControlManager* pVCManager, ConfigObject<ConfigValue>* pConfig,
+                   LibraryFeatures *pLibrary);
     virtual ~DlgPreferences();
 
     void addPageWidget(DlgPreferencePage* pWidget);
