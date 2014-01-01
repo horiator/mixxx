@@ -61,16 +61,15 @@ SoundSourceOggVorbis::~SoundSourceOggVorbis()
 
 int SoundSourceOggVorbis::open()
 {
-#ifdef __WINDOWS__
     QByteArray qBAFilename = m_qFilename.toLocal8Bit();
-    if(ov_fopen(qBAFilename.data(), &vf) < 0) {
+#ifdef __WINDOWS__
+    if(ov_fopen(qBAFilename.constData(), &vf) < 0) {
         qDebug() << "oggvorbis: Input does not appear to be an Ogg bitstream.";
         filelength = 0;
         return ERR;
     }
 #else
-    QByteArray qBAFilename = m_qFilename.toUtf8();
-    FILE *vorbisfile =  fopen(qBAFilename.data(), "r");
+    FILE *vorbisfile =  fopen(qBAFilename.constData(), "r");
 
     if (!vorbisfile) {
         qDebug() << "oggvorbis: cannot open" << m_qFilename;
