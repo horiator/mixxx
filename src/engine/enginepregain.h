@@ -25,23 +25,25 @@
 class ControlLogpotmeter;
 class ControlPotmeter;
 class ControlObject;
-class EnginePregain : public EngineObject
-{
-public:
-    EnginePregain( const char *group);
-    ~EnginePregain();
-    void process(const CSAMPLE *pIn, const CSAMPLE *pOut, const int iBufferSize);
 
+class EnginePregain : public EngineObject {
+  public:
+    EnginePregain(const char* group);
+    virtual ~EnginePregain();
 
-private:
+    void process(const CSAMPLE* pIn, CSAMPLE* pOut, const int iBufferSize);
+
+  private:
     float m_fPrevGain;
-    ControlLogpotmeter *potmeterPregain;
-    ControlObject *m_pTotalGain;
-    ControlObject *m_pControlReplayGain;
-    ControlObject *m_pPassthroughEnabled;
-    static ControlPotmeter *s_pReplayGainBoost;
-    static ControlObject *s_pEnableReplayGain;
-    float m_fReplayGainCorrection, m_fReplayGain, m_fOldReplayGainCorrection;
+    ControlLogpotmeter* potmeterPregain;
+    ControlObject* m_pTotalGain;
+    ControlObject* m_pControlReplayGain;
+    ControlObject* m_pPassthroughEnabled;
+    static ControlPotmeter* s_pReplayGainBoost;
+    static ControlObject* s_pEnableReplayGain;
+    float m_fReplayGainCorrection;
+    float m_fReplayGain; 
+    float m_fOldReplayGainCorrection;
     bool m_bSmoothFade;
     float m_fCurrentReplayGain;
     float m_fadeOffset;

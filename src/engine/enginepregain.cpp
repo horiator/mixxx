@@ -32,7 +32,7 @@ ControlObject* EnginePregain::s_pEnableReplayGain = NULL;
 /*----------------------------------------------------------------
    A pregaincontrol is ... a pregain.
    ----------------------------------------------------------------*/
-EnginePregain::EnginePregain(const char * group)
+EnginePregain::EnginePregain(const char* group)
 {
     potmeterPregain = new ControlLogpotmeter(ConfigKey(group, "pregain"), 4.);
     //Replay Gain things
@@ -61,10 +61,10 @@ EnginePregain::~EnginePregain()
     s_pReplayGainBoost = NULL;
 }
 
-void EnginePregain::process(const CSAMPLE* pIn, const CSAMPLE* pOut, const int iBufferSize) {
+void EnginePregain::process(const CSAMPLE* pIn, CSAMPLE* pOutput, const int iBufferSize) {
+
     float fEnableReplayGain = s_pEnableReplayGain->get();
     float fReplayGainBoost = s_pReplayGainBoost->get();
-    CSAMPLE* pOutput = (CSAMPLE*)pOut;
     float fGain = potmeterPregain->get();
     float fReplayGain = m_pControlReplayGain->get();
     float fPassing = m_pPassthroughEnabled->get();
@@ -77,8 +77,14 @@ void EnginePregain::process(const CSAMPLE* pIn, const CSAMPLE* pOut, const int i
     // Override replaygain value if passing through
     if (fPassing > 0) {
         fReplayGain = 1.0;
-    } else if ((fReplayGain * fEnableReplayGain) != 0.0) {
+    } else if ((fReplayGain * fEnableReplayGain) != 0) {
+        // Here is the point, when ReplayGain Analyser takes its action, suggested gain changes from 0 to a nonzero value
+        // We want to smoothly fade to this last.
+        // Anyway we have some the problem that code cannot block the full process for one second.
+        // So we need to alter gain each time ::process is called.
+        
         float replayGainCorrection = fReplayGain * pow(10, fReplayGainBoost / 20);
+        
         if (m_fReplayGainCorrection != replayGainCorrection) {
             // need to fade to new replay gain
             // Do not fade when its the initial setup from m_fCurrentReplayGain = 0.0f

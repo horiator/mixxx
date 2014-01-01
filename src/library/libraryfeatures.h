@@ -56,6 +56,12 @@ public:
 
     //static Library* buildDefaultLibrary();
 
+    enum RemovalType {
+        LeaveTracksUnchanged = 0,
+        HideTracks,
+        PurgeTracks
+    };
+
   public slots:
     void slotShowTrackModel(QAbstractItemModel* model);
     void slotSwitchToView(const QString& view);
@@ -66,9 +72,9 @@ public:
     void slotRefreshLibraryModels();
     void slotCreatePlaylist();
     void slotCreateCrate();
-    void slotRequestAddDir(QString);
-    void slotRequestRemoveDir(QString, bool);
-    void slotRequestRelocateDir(QString,QString);
+    void slotRequestAddDir(QString directory);
+    void slotRequestRemoveDir(QString directory, LibraryFeatures::RemovalType removalType);
+    void slotRequestRelocateDir(QString previousDirectory, QString newDirectory);
     void onSkinLoadFinished();
     void slotLoadCover(QString img);
 

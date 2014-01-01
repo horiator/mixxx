@@ -31,8 +31,9 @@
 #include "controlobject.h"
 #include "waveform/waveform.h"
 #include "track/beatfactory.h"
+#include "track/keyfactory.h"
+#include "track/keyutils.h"
 #include "util/compatibility.h"
-
 #include "mixxxutils.cpp"
 
 #ifdef __TAGREADER__
@@ -41,7 +42,6 @@
 
 TrackInfoObject::TrackInfoObject(const QString& file, bool parseHeader)
         : m_fileInfo(file),
-          m_dateAdded(QDateTime::currentDateTime()),
           m_qMutex(QMutex::Recursive),
           m_waveform(new Waveform()),
           m_waveformSummary(new Waveform()),
@@ -51,11 +51,10 @@ TrackInfoObject::TrackInfoObject(const QString& file, bool parseHeader)
 
 TrackInfoObject::TrackInfoObject(const QFileInfo& fileInfo, bool parseHeader)
         : m_fileInfo(fileInfo),
-          m_dateAdded(QDateTime::currentDateTime()),
           m_qMutex(QMutex::Recursive),
           m_waveform(new Waveform()),
           m_waveformSummary(new Waveform()),
-          m_analyserProgress(-1) {    
+          m_analyserProgress(-1) {
     initialize(parseHeader);
 }
 
@@ -66,7 +65,7 @@ TrackInfoObject::TrackInfoObject(const QDomNode &nodeHeader)
           m_analyserProgress(-1) {
     QString filename = XmlParse::selectNodeQString(nodeHeader, "Filename");
     QString location = XmlParse::selectNodeQString(nodeHeader, "Filepath") + "/" +  filename;    
-	m_fileInfo = QFileInfo(location);
+    m_fileInfo = QFileInfo(location);
 
     // We don't call initialize() here because it would end up calling parse()
     // on the file. Plus those initializations weren't done before, so it might
@@ -81,17 +80,9 @@ TrackInfoObject::TrackInfoObject(const QDomNode &nodeHeader)
     m_iSampleRate = XmlParse::selectNodeQString(nodeHeader, "SampleRate").toInt();
     m_iChannels = XmlParse::selectNodeQString(nodeHeader, "Channels").toInt();
     m_iBitrate = XmlParse::selectNodeQString(nodeHeader, "Bitrate").toInt();
-    //m_iLength = XmlParse::selectNodeQString(nodeHeader, "Length").toInt();
     m_iTimesPlayed = XmlParse::selectNodeQString(nodeHeader, "TimesPlayed").toInt();
     m_fReplayGain = XmlParse::selectNodeQString(nodeHeader, "replaygain").toFloat();
     m_bHeaderParsed = false;
-    /*
-    QString create_date = XmlParse::selectNodeQString(nodeHeader, "CreateDate");
-    if (create_date == "")
-        m_dCreateDate = m_fileInfo.created();
-    else
-        m_dCreateDate = QDateTime::fromString(create_date);
-    */
 
     // Mixxx <1.8 recorded track IDs in mixxxtrack.xml, but we are going to
     // ignore those. Tracks will get a new ID from the database.
@@ -100,11 +91,6 @@ TrackInfoObject::TrackInfoObject(const QDomNode &nodeHeader)
 
     m_fCuePoint = XmlParse::selectNodeQString(nodeHeader, "CuePoint").toFloat();
     m_bPlayed = false;
-
-    //m_pWave = XmlParse::selectNodeHexCharArray(nodeHeader, QString("WaveSummaryHex"));
-
-    m_bIsValid = true;
-
     m_bDirty = false;
     m_bLocationChanged = false;
 }
@@ -113,25 +99,24 @@ void TrackInfoObject::initialize(bool parseHeader) {
     m_bDirty = false;
     m_bLocationChanged = false;
 
-    //m_sArtist = "";
-    //m_sTitle = "";
-    //m_sType= "";
-    //m_sComment = "";
-    //m_sYear = "";
-    //m_sURL = "";
+    m_sArtist = "";
+    m_sTitle = "";
+    m_sType= "";
+    m_sComment = "";
+    m_sYear = "";
+    m_sURL = "";
     m_iDuration = 0;
     m_iBitrate = 0;
     m_iTimesPlayed = 0;
     m_bPlayed = false;
     m_fReplayGain = 0.;
-    //m_bIsValid = false;
     m_bHeaderParsed = false;
     m_iId = -1;
     m_iSampleRate = 0;
     m_iChannels = 0;
     m_fCuePoint = 0.0f;
+    m_dateAdded = QDateTime::currentDateTime();
     m_Rating = 0;
-    //m_key = "";
     m_bBpmLock = false;
     m_sGrouping = "";
     m_sAlbumArtist = "";
@@ -153,41 +138,37 @@ void TrackInfoObject::doSave() {
     emit(save(this));
 }
 
-bool TrackInfoObject::isValid() const {
-    QMutexLocker lock(&m_qMutex);
-    return m_bIsValid;
-}
-
 int TrackInfoObject::parse() {
-    QMutexLocker lock(&m_qMutex);
-
-    // Parse the using information stored in the sound file
+    // Parse the information stored in the sound file
     int result = SoundSourceProxy::ParseHeader(this);
 
     if (!m_bHeaderParsed) {
         // Add basic information derived from the filename:
         parseFilename();
     }
-
-    return result; // OK if Mixxx can handle this file
+    return result; // 0 = OK if Mixxx can handle this file
 }
 
 
 void TrackInfoObject::parseFilename() {
     QMutexLocker lock(&m_qMutex);
-    
     QString filename = m_fileInfo.fileName();
-    if (filename.indexOf('-') != -1) {
-        m_sArtist = filename.section('-',0,0).trimmed(); // Get the first part
-        m_sTitle = filename.section('-',1,1); // Get the second part
-        m_sTitle = m_sTitle.section('.',0,-2).trimmed(); // Remove the ending
+    // If the file name has the following form: "Artist - Title.type", extract
+    // Artist, Title and type fields
+    if (filename.count('-') == 1) {
+        m_sArtist = filename.section('-', 0, 0).trimmed(); // Get the first part
+        m_sTitle = filename.section('-', 1, 1); // Get the second part
+        m_sTitle = m_sTitle.section('.', 0, -2).trimmed(); // Remove the ending
+        if (m_sTitle.isEmpty()) {
+            m_sTitle = filename.section('.', 0, -2).trimmed();
+        }
     } else {
-        m_sTitle = filename.section('.',0,-2).trimmed(); // Remove the ending
+        m_sTitle = filename.section('.', 0, -2).trimmed(); // Remove the ending
     }
 
-    if (m_sTitle.isEmpty()) {
-        m_sTitle = filename.section('.',0,-2).trimmed();
-    }
+    // Replace underscores with spaces for Artist and Title
+    m_sArtist = m_sArtist.replace("_", " ");
+    m_sTitle = m_sTitle.replace("_", " ");
 
     // Add no comment
     m_sComment.clear();
@@ -207,9 +188,9 @@ QString TrackInfoObject::getDurationStr() const {
 
 void TrackInfoObject::setLocation(const QString& location) {
     QMutexLocker lock(&m_qMutex);
-    QFileInfo newFileInfo = QFileInfo(location);
+    QFileInfo newFileInfo(location);
     if (newFileInfo != m_fileInfo) {
-		m_fileInfo = newFileInfo; 
+        m_fileInfo = newFileInfo; 
         m_bLocationChanged = true;
         setDirty(true);
     }
@@ -228,12 +209,6 @@ QString TrackInfoObject::getDirectory() const {
 QString TrackInfoObject::getFilename() const {
     QMutexLocker lock(&m_qMutex);
     return m_fileInfo.fileName();
-}
-
-QDateTime TrackInfoObject::getCreateDate() const {
-    QMutexLocker lock(&m_qMutex);
-    QDateTime create_date = QDateTime(m_dCreateDate);
-    return create_date;
 }
 
 bool TrackInfoObject::exists() const {
@@ -746,6 +721,7 @@ Cue* TrackInfoObject::addCue() {
 void TrackInfoObject::removeCue(Cue* cue) {
     QMutexLocker lock(&m_qMutex);
     disconnect(cue, 0, this, 0);
+    // TODO(XXX): Delete the cue point.
     m_cuePoints.removeOne(cue);
     setDirty(true);
     lock.unlock();
@@ -823,17 +799,86 @@ void TrackInfoObject::setRating (int rating) {
     }
 }
 
-QString TrackInfoObject::getKey() const {
+void TrackInfoObject::setKeys(Keys keys) {
     QMutexLocker lock(&m_qMutex);
-    return m_key;
+    setDirty(true);
+    m_keys = keys;
+    // Might be INVALID. We don't care.
+    mixxx::track::io::key::ChromaticKey newKey = m_keys.getGlobalKey();
+    lock.unlock();
+    emit(keyUpdated(KeyUtils::keyToNumericValue(newKey)));
+    emit(keysUpdated());
 }
 
-void TrackInfoObject::setKey(const QString& key) {
+const Keys& TrackInfoObject::getKeys() const {
     QMutexLocker lock(&m_qMutex);
-    if (key != m_key) {
-        m_key = key;
+    return m_keys;
+}
+
+mixxx::track::io::key::ChromaticKey TrackInfoObject::getKey() const {
+    QMutexLocker lock(&m_qMutex);
+    if (!m_keys.isValid()) {
+        return mixxx::track::io::key::INVALID;
+    }
+    return m_keys.getGlobalKey();
+}
+
+void TrackInfoObject::setKey(mixxx::track::io::key::ChromaticKey key,
+                             mixxx::track::io::key::Source source) {
+    QMutexLocker lock(&m_qMutex);
+    bool dirty = false;
+    if (key == mixxx::track::io::key::INVALID) {
+        m_keys = Keys();
+        dirty = true;
+    } else if (m_keys.getGlobalKey() != key) {
+        m_keys = KeyFactory::makeBasicKeys(key, source);
+    }
+
+    if (dirty) {
         setDirty(true);
     }
+
+    // Might be INVALID. We don't care.
+    mixxx::track::io::key::ChromaticKey newKey = m_keys.getGlobalKey();
+    lock.unlock();
+    emit(keyUpdated(KeyUtils::keyToNumericValue(newKey)));
+    emit(keysUpdated());
+}
+
+void TrackInfoObject::setKeyText(QString key,
+                                 mixxx::track::io::key::Source source) {
+    QMutexLocker lock(&m_qMutex);
+
+    Keys newKeys = KeyFactory::makeBasicKeysFromText(key, source);
+
+    // We treat this as dirtying if it is parsed to a different key or if we
+    // fail to parse the key, if the text value is different from the current
+    // text value.
+    bool dirty = newKeys.getGlobalKey() != m_keys.getGlobalKey() ||
+            (newKeys.getGlobalKey() == mixxx::track::io::key::INVALID &&
+             newKeys.getGlobalKeyText() != m_keys.getGlobalKeyText());
+    if (dirty) {
+        m_keys = newKeys;
+        setDirty(true);
+        // Might be INVALID. We don't care.
+        mixxx::track::io::key::ChromaticKey newKey = m_keys.getGlobalKey();
+        lock.unlock();
+        emit(keyUpdated(KeyUtils::keyToNumericValue(newKey)));
+        emit(keysUpdated());
+    }
+}
+
+QString TrackInfoObject::getKeyText() const {
+    QMutexLocker lock(&m_qMutex);
+
+    mixxx::track::io::key::ChromaticKey key = m_keys.getGlobalKey();
+    if (key != mixxx::track::io::key::INVALID) {
+        return KeyUtils::keyToString(key);
+    }
+
+    // Fall back on text global name.
+    QString keyText = m_keys.getGlobalKeyText();
+    return keyText;
 }
 
 

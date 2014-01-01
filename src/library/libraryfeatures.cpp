@@ -49,6 +49,7 @@ LibraryFeatures::LibraryFeatures(QObject* parent, ConfigObject<ConfigValue>* pCo
         m_pTrackCollection(new TrackCollection(pConfig)),
         m_pLibraryControl(new LibraryControl),
         m_pRecordingManager(pRecordingManager) {
+    qRegisterMetaType<LibraryFeatures::RemovalType>("Library::RemovalType");
 
     // TODO(rryan) -- turn this construction / adding of features into a static
     // method or something -- CreateDefaultLibrary
@@ -75,12 +76,12 @@ LibraryFeatures::LibraryFeatures(QObject* parent, ConfigObject<ConfigValue>* pCo
     if (RhythmboxFeature::isSupported() &&
         pConfig->getValueString(ConfigKey("[Library]","ShowRhythmboxLibrary"),"1").toInt()) {
         addFeature(new RhythmboxFeature(this, m_pTrackCollection));
-	}
+    }
     if (pConfig->getValueString(ConfigKey("[Library]","ShowBansheeLibrary"),"1").toInt()) {
         BansheeFeature::prepareDbPath(pConfig);
         if (BansheeFeature::isSupported()) {
             addFeature(new BansheeFeature(this, m_pTrackCollection, pConfig));
-		}
+        }
     }
 #ifdef __CLEMENTINE__
     if (pConfig->getValueString(ConfigKey("[Library]","ShowClementineLibrary"),"1").toInt()) {
@@ -261,10 +262,22 @@ void LibraryFeatures::slotRequestAddDir(QString dir) {
     }
 }
 
-void LibraryFeatures::slotRequestRemoveDir(QString dir, bool removeMetadata) {
-    // Mark all tracks in this directory as deleted (but don't purge them in
-    // case the user re-adds them manually).
-    m_pTrackCollection->getTrackDAO().markTracksAsMixxxDeleted(dir);
+void LibraryFeatures::slotRequestRemoveDir(QString dir, RemovalType removalType) {
+    switch (removalType) {
+        case LibraryFeatures::HideTracks:
+            // Mark all tracks in this directory as deleted but DON'T purge them
+            // in case the user re-adds them manually.
+            m_pTrackCollection->getTrackDAO().markTracksAsMixxxDeleted(dir);
+            break;
+        case LibraryFeatures::PurgeTracks:
+            // The user requested that we purge all metadata.
+            m_pTrackCollection->getTrackDAO().purgeTracks(dir);
+            break;
+        case LibraryFeatures::LeaveTracksUnchanged:
+        default:
+            break;
+
+    }
 
     // Remove the directory from the directory list.
     m_pTrackCollection->getDirectoryDAO().removeDirectory(dir);

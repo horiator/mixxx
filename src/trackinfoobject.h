@@ -30,6 +30,8 @@
 
 #include "defs.h"
 #include "track/beats.h"
+#include "track/keys.h"
+#include "proto/keys.pb.h"
 #include "library/dao/cue.h"
 #ifdef __TAGREADER__
 // #include "core/tagreaderclient.h"
@@ -98,7 +100,7 @@ public:
     Q_PROPERTY(QString comment READ getComment WRITE setComment)
     Q_PROPERTY(double bpm READ getBpm WRITE setBpm)
     Q_PROPERTY(QString bpmFormatted READ getBpmStr STORED false)
-    Q_PROPERTY(QString key READ getKey WRITE setKey)
+    Q_PROPERTY(QString key READ getKeyText WRITE setKeyText)
     Q_PROPERTY(int duration READ getDuration WRITE setDuration)
     Q_PROPERTY(QString durationFormatted READ getDurationStr STORED false)
 
@@ -135,27 +137,27 @@ public:
     void setHeaderParsed(bool parsed = true);
     // Returns the user comment 
     QString getComment() const;
-    // Sets the user commnet 
+    // Sets the user commnet
     void setComment(const QString&);
-    // Returns the file type 
+    // Returns the file type
     QString getType() const;
-    // Sets the type of the string 
+    // Sets the type of the string
     void setType(const QString&);
-    // Returns the bitrate 
+    // Returns the bitrate
     int getBitrate() const;
-    // Returns the bitrate as a string 
+    // Returns the bitrate as a string
     QString getBitrateStr() const;
-    // Sets the bitrate 
+    // Sets the bitrate
     void setBitrate(int);
     // Set sample rate
     void setSampleRate(int iSampleRate);
-    // Get sample rate 
+    // Get sample rate
     int getSampleRate() const;
-    // Set number of channels 
+    // Set number of channels
     void setChannels(int iChannels);
-    // Get number of channels 
+    // Get number of channels
     int getChannels() const;
-    // Output a formatted string with all the info 
+    // Output a formatted string with all the info
     QString getInfo() const;
 
     QDateTime getDateAdded() const;
@@ -164,15 +166,15 @@ public:
     // Getter/Setter methods for metadata 
     // Return title 
     QString getTitle() const;
-    // Set title 
+    // Set title
     void setTitle(const QString&);
-    // Return artist 
+    // Return artist
     QString getArtist() const;
-    // Set artist 
+    // Set artist
     void setArtist(const QString&);
     // Return album 
     QString getAlbum() const;
-    // Set album 
+    // Set album
     void setAlbum(const QString&);
     // Return album artist
     QString getAlbumArtist() const;
@@ -180,15 +182,15 @@ public:
     void setAlbumArtist(const QString&);
     // Return Year
     QString getYear() const;
-    // Set year 
+    // Set year
     void setYear(const QString&);
     // Return genre 
     QString getGenre() const;
-    // Set genre 
+    // Set genre
     void setGenre(const QString&);
-    // Return composer 
+    // Return composer
     QString getComposer() const;
-    // Set composer 
+    // Set composer
     void setComposer(const QString&);
     // Return grouping
     QString getGrouping() const;
@@ -196,36 +198,31 @@ public:
     void setGrouping(const QString&);
     // Return Track Number
     QString getTrackNumber() const;
-    // Set Track Number 
+    // Set Track Number
     void setTrackNumber(const QString&);
-    // Return number of times the track has been played 
+    // Return number of times the track has been played
     int getTimesPlayed() const;
-    // Set number of times the track has been played 
+    // Set number of times the track has been played
     void setTimesPlayed(int t);
-    // Increment times played with one 
+    // Increment times played with one
     void incTimesPlayed();
     // Returns true if track has been played this instance
     bool getPlayed() const;
-    // Set played status and increment or decrement playcount. 
+    // Set played status and increment or decrement playcount.
     void setPlayedAndUpdatePlaycount(bool);
-    // Set played status without affecting the playcount 
+    // Set played status without affecting the playcount
     void setPlayed(bool bPlayed);
 
     int getId() const;
 
-    // Returns rating 
+    // Returns rating
     int getRating() const;
-    // Sets rating 
+    // Sets rating
     void setRating(int);
 
-    // Returns KEY_CODE 
-    QString getKey() const;
-    // Set KEY_CODE 
-    void setKey(const QString&);
-
-    // Get URL for track 
+    // Get URL for track
     QString getURL();
-    // Set URL for track 
+    // Set URL for track
     void setURL(const QString& url);
 
     Waveform* getWaveform();
@@ -240,7 +237,7 @@ public:
 
     /** Save the cue point (in samples... I think) */
     void setCuePoint(float cue);
-    // Get saved the cue point 
+    // Get saved the cue point
     float getCuePoint();
 
     // Calls for managing the track's cue points
@@ -258,7 +255,7 @@ public:
     // Returns true if the track location has changed
     bool locationChanged();
 
-    // Set the track's full file path 
+    // Set the track's full file path
     void setLocation(const QString& location);
 
     // Get the track's Beats list
@@ -267,6 +264,15 @@ public:
     // Set the track's Beats
     void setBeats(BeatsPointer beats);
 
+    void setKeys(Keys keys);
+    const Keys& getKeys() const;
+    double getNumericKey() const;
+    mixxx::track::io::key::ChromaticKey getKey() const;
+    QString getKeyText() const;
+    void setKey(mixxx::track::io::key::ChromaticKey key,
+                mixxx::track::io::key::Source source);
+    void setKeyText(QString key,
+                    mixxx::track::io::key::Source source=mixxx::track::io::key::USER);
 
 #ifdef __TAGREADER__
     virtual void InitFromProtobuf(const pb::tagreader::SongMetadata& pb);
@@ -282,6 +288,8 @@ public:
     void analyserProgress(int progress);
     void bpmUpdated(double bpm);
     void beatsUpdated();
+    void keyUpdated(double key);
+    void keysUpdated();
     void ReplayGainUpdated(double replaygain);
     void cuesUpdated();
     void changed(TrackInfoObject* pTrack);
@@ -317,7 +325,7 @@ public:
     bool m_bLocationChanged;
 
     // The file
-	QFileInfo m_fileInfo; 
+    QFileInfo m_fileInfo;
 
     // Metadata 
     // Album
@@ -349,30 +357,30 @@ public:
     int m_iDuration;
     // Sample rate
     int m_iSampleRate;
-    // Number of channels 
+    // Number of channels
     int m_iChannels;
-    //Track rating 
+    // Track rating
     int m_Rating;
     // Bitrate, number of kilobits per second of audio in the track
     int m_iBitrate;
-    // Number of times the track has been played 
+    // Number of times the track has been played
     int m_iTimesPlayed;
-    // Replay Gain volume 
+    // Replay Gain volume
     float m_fReplayGain;
     // Has this track been played this sessions? 
     bool m_bPlayed;
-    // True if header was parsed 
+    // True if header was parsed
     bool m_bHeaderParsed;
-    // Id. Unique ID of track 
+    // Id. Unique ID of track
     int m_iId;
-    // Cue point in samples or something 
+    // Cue point in samples or something
     float m_fCuePoint;
-    // Date. creation date of file 
+    // Date. creation date of file
     QDateTime m_dCreateDate;
     // Date the track was added to the library
     QDateTime m_dateAdded;
 
-    QString m_key;
+    Keys m_keys;
 
     // BPM lock
     bool m_bBpmLock;

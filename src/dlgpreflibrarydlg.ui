@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DlgPrefPlaylistDlg</class>
- <widget class="QWidget" name="DlgPrefPlaylistDlg">
+ <class>DlgPrefLibraryDlg</class>
+ <widget class="QWidget" name="DlgPrefLibraryDlg">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>546</width>
-    <height>688</height>
+    <height>615</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Library Preferences</string>
+   <string notr="true">Library Preferences</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -35,7 +35,7 @@
          <font/>
         </property>
         <property name="text">
-         <string>Music Directory:</string>
+         <string>Music Directories:</string>
         </property>
         <property name="wordWrap">
          <bool>false</bool>
@@ -50,6 +50,9 @@
         <property name="font">
          <font/>
         </property>
+        <property name="toolTip">
+         <string>If removed, Mixxx will no longer watch this directory and its subdirectories for new tracks.</string>
+        </property>
         <property name="text">
          <string>Remove</string>
         </property>
@@ -57,6 +60,9 @@
       </item>
       <item row="1" column="0" rowspan="3">
        <widget class="QListView" name="dirList">
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
+        </property>
         <property name="iconSize">
          <size>
           <width>16</width>
@@ -73,6 +79,9 @@
         <property name="font">
          <font/>
         </property>
+        <property name="toolTip">
+         <string>Add a directory where your music is stored. Mixxx will watch this directory and its subdirectories for new tracks.</string>
+        </property>
         <property name="text">
          <string>Add</string>
         </property>
@@ -80,8 +89,11 @@
       </item>
       <item row="2" column="1">
        <widget class="QPushButton" name="PushButtonRelocateDir">
+        <property name="toolTip">
+         <string>If an existing music directory is moved, Mixxx doesn't know where to find the audio files in it. Choose Relink to select the music directory in its new location. &lt;br/&gt; This will re-establish the links to the audio files in the Mixxx library.</string>
+        </property>
         <property name="text">
-         <string>Relocate</string>
+         <string extracomment="This will re-establish the links to the audio files in the Mixxx database if you move an music directory to a new location.">Relink</string>
         </property>
        </widget>
       </item>
@@ -193,7 +205,7 @@
       <item row="8" column="0">
        <widget class="QLabel" name="label_10">
         <property name="text">
-         <string>You will need to restart Mixxx for these settings to take effect</string>
+         <string>You will need to restart Mixxx for these settings to take effect.</string>
         </property>
        </widget>
       </item>
@@ -250,7 +262,7 @@
       <item row="6" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>All other libraries are shown write protected</string>
+         <string>All external libraries shown are write protected.</string>
         </property>
        </widget>
       </item>
@@ -290,7 +302,6 @@
   <tabstop>PushButtonRemoveDir</tabstop>
   <tabstop>pushButton</tabstop>
   <tabstop>pushButtonExtraPlugins</tabstop>
-  <tabstop>checkBoxPromoStats</tabstop>
   <tabstop>checkBox_library_scan</tabstop>
   <tabstop>checkbox_ID3_sync</tabstop>
   <tabstop>checkBox_use_relative_path</tabstop>
