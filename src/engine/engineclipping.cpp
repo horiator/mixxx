@@ -59,4 +59,3 @@ void EngineClipping::process(const CSAMPLE* pIn, CSAMPLE* pOutput, const int iBu
 bool EngineClipping::hasClipped() {
     return clipped;
 }
-

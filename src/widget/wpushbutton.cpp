@@ -55,40 +55,41 @@ WPushButton::WPushButton(QWidget* pParent, ControlPushButton::ButtonMode leftBut
 WPushButton::~WPushButton() {
 }
 
-void WPushButton::setup(QDomNode node) {
+void WPushButton::setup(QDomNode node, const SkinContext& context) {
     // Number of states
-    int iNumStates = selectNodeInt(node, "NumberStates");
+    int iNumStates = context.selectInt(node, "NumberStates");
     setStates(iNumStates);
 
     // Set background pixmap if available
-    if (!selectNode(node, "BackPath").isNull()) {
-        setPixmapBackground(getPath(selectNodeQString(node, "BackPath")));
+    if (context.hasNode(node, "BackPath")) {
+        setPixmapBackground(context.getSkinPath(context.selectString(node, "BackPath")));
     }
 
     // Load pixmaps for associated states
-    QDomNode state = selectNode(node, "State");
+    QDomNode state = context.selectNode(node, "State");
     while (!state.isNull()) {
         if (state.isElement() && state.nodeName() == "State") {
-            int iState = selectNodeInt(state, "Number");
-            setPixmap(iState, true,
-                      getPath(selectNodeQString(state, "Pressed")));
-            m_text[iState] = selectNodeQString(state, "Text");
-            setPixmap(iState, false,
-                      getPath(selectNodeQString(state, "Unpressed")));
+            int iState = context.selectInt(state, "Number");
+            if (context.hasNode(state, "Pressed")) {
+                setPixmap(iState, true,
+                          context.getSkinPath(context.selectString(state, "Pressed")));
+            }
+            if (context.hasNode(state, "Unpressed")) {
+                setPixmap(iState, false,
+                          context.getSkinPath(context.selectString(state, "Unpressed")));
+            }
+            m_text[iState] = context.selectString(state, "Text");
         }
         state = state.nextSibling();
     }
 
-    m_bLeftClickForcePush = selectNodeQString(node, "LeftClickIsPushButton")
-            .contains("true", Qt::CaseInsensitive);
+    m_bLeftClickForcePush = context.selectBool(node, "LeftClickIsPushButton");
+    m_bRightClickForcePush = context.selectBool(node, "RightClickIsPushButton");
 
-    m_bRightClickForcePush = selectNodeQString(node, "RightClickIsPushButton")
-            .contains("true", Qt::CaseInsensitive);
-
-    QDomNode con = selectNode(node, "Connection");
+    QDomNode con = context.selectNode(node, "Connection");
     while (!con.isNull()) {
         // Get ConfigKey
-        QString key = selectNodeQString(con, "ConfigKey");
+        QString key = context.selectString(con, "ConfigKey");
 
         ConfigKey configKey;
         configKey.group = key.left(key.indexOf(","));
@@ -96,10 +97,10 @@ void WPushButton::setup(QDomNode node) {
 
         bool isLeftButton = false;
         bool isRightButton = false;
-        if (!selectNode(con, "ButtonState").isNull()) {
-            if (selectNodeQString(con, "ButtonState").contains("LeftButton", Qt::CaseInsensitive)) {
+        if (context.hasNode(con, "ButtonState")) {
+            if (context.selectString(con, "ButtonState").contains("LeftButton", Qt::CaseInsensitive)) {
                 isLeftButton = true;
-            } else if (selectNodeQString(con, "ButtonState").contains("RightButton", Qt::CaseInsensitive)) {
+            } else if (context.selectString(con, "ButtonState").contains("RightButton", Qt::CaseInsensitive)) {
                 isRightButton = true;
             }
         }
@@ -185,6 +186,7 @@ void WPushButton::setValue(double v) {
 }
 
 void WPushButton::paintEvent(QPaintEvent* e) {
+    Q_UNUSED(e);
     QStyleOption option;
     option.initFrom(this);
     QStylePainter p(this);

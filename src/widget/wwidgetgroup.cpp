@@ -1,19 +1,24 @@
 #include "widget/wwidgetgroup.h"
 
 #include <QLayout>
+#include <QMap>
 #include <QStylePainter>
 
 #include "widget/wwidget.h"
 #include "widget/wpixmapstore.h"
-#include "xmlparse.h"
 
 WWidgetGroup::WWidgetGroup(QWidget* pParent)
-        : QGroupBox(pParent),
+        : QFrame(pParent),
           m_pPixmapBack(NULL) {
     setObjectName("WidgetGroup");
 }
 
 WWidgetGroup::~WWidgetGroup() {
+}
+
+int WWidgetGroup::layoutSpacing() const {
+    QLayout* pLayout = layout();
+    return pLayout ? pLayout->spacing() : 0;
 }
 
 void WWidgetGroup::setLayoutSpacing(int spacing) {
@@ -26,6 +31,14 @@ void WWidgetGroup::setLayoutSpacing(int spacing) {
     if (pLayout) {
         pLayout->setSpacing(spacing);
     }
+}
+
+QRect WWidgetGroup::layoutContentsMargins() const {
+    QLayout* pLayout = layout();
+    QMargins margins = pLayout ? pLayout->contentsMargins() :
+            contentsMargins();
+    return QRect(margins.left(), margins.top(),
+                 margins.right(), margins.bottom());
 }
 
 void WWidgetGroup::setLayoutContentsMargins(QRect rectMargins) {
@@ -48,6 +61,11 @@ void WWidgetGroup::setLayoutContentsMargins(QRect rectMargins) {
     }
 }
 
+Qt::Alignment WWidgetGroup::layoutAlignment() const {
+    QLayout* pLayout = layout();
+    return pLayout ? pLayout->alignment() : Qt::Alignment();
+}
+
 void WWidgetGroup::setLayoutAlignment(int alignment) {
     //qDebug() << "WWidgetGroup::setLayoutAlignment" << alignment;
 
@@ -57,17 +75,17 @@ void WWidgetGroup::setLayoutAlignment(int alignment) {
     }
 }
 
-void WWidgetGroup::setup(QDomNode node) {
+void WWidgetGroup::setup(QDomNode node, const SkinContext& context) {
     setContentsMargins(0, 0, 0, 0);
 
     // Set background pixmap if available
-    if (!WWidget::selectNode(node, "BackPath").isNull()) {
-        setPixmapBackground(WWidget::getPath(WWidget::selectNodeQString(node, "BackPath")));
+    if (context.hasNode(node, "BackPath")) {
+        setPixmapBackground(context.getSkinPath(context.selectString(node, "BackPath")));
     }
 
     QLayout* pLayout = NULL;
-    if (!XmlParse::selectNode(node, "Layout").isNull()) {
-        QString layout = XmlParse::selectNodeQString(node, "Layout");
+    if (context.hasNode(node, "Layout")) {
+        QString layout = context.selectString(node, "Layout");
         if (layout == "vertical") {
             pLayout = new QVBoxLayout();
             pLayout->setSpacing(0);
@@ -78,6 +96,23 @@ void WWidgetGroup::setup(QDomNode node) {
             pLayout->setSpacing(0);
             pLayout->setContentsMargins(0, 0, 0, 0);
             pLayout->setAlignment(Qt::AlignCenter);
+        }
+    }
+
+    if (pLayout && context.hasNode(node, "SizeConstraint")) {
+        QMap<QString, QLayout::SizeConstraint> constraints;
+        constraints["SetDefaultConstraint"] = QLayout::SetDefaultConstraint;
+        constraints["SetFixedSize"] = QLayout::SetFixedSize;
+        constraints["SetMinimumSize"] = QLayout::SetMinimumSize;
+        constraints["SetMaximumSize"] = QLayout::SetMaximumSize;
+        constraints["SetMinAndMaxSize"] = QLayout::SetMinAndMaxSize;
+        constraints["SetNoConstraint"] = QLayout::SetNoConstraint;
+
+        QString sizeConstraintStr = context.selectString(node, "SizeConstraint");
+        if (constraints.contains(sizeConstraintStr)) {
+            pLayout->setSizeConstraint(constraints[sizeConstraintStr]);
+        } else {
+            qDebug() << "Could not parse SizeConstraint:" << sizeConstraintStr;
         }
     }
 
@@ -102,7 +137,7 @@ void WWidgetGroup::addWidget(QWidget* pChild) {
 }
 
 void WWidgetGroup::paintEvent(QPaintEvent* pe) {
-    QGroupBox::paintEvent(pe);
+    QFrame::paintEvent(pe);
 
     if (m_pPixmapBack) {
         QStylePainter p(this);
@@ -112,5 +147,5 @@ void WWidgetGroup::paintEvent(QPaintEvent* pe) {
 
 void WWidgetGroup::resizeEvent(QResizeEvent* re) {
     // Paint things styled by style sheet
-    QGroupBox::resizeEvent(re);
+    QFrame::resizeEvent(re);
 }

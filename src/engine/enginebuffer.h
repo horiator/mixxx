@@ -90,6 +90,13 @@ const int ENGINE_RAMP_UP = 1;
 
 //const int kiRampLength = 3;
 
+enum SeekRequest {
+    NO_SEEK,
+    SEEK_STANDARD,
+    SEEK_EXACT,
+    SEEK_PHASE
+};
+
 class EngineBuffer : public EngineObject {
      Q_OBJECT
   public:
@@ -112,15 +119,17 @@ class EngineBuffer : public EngineObject {
     // Sets pointer to other engine buffer/channel
     void setEngineMaster(EngineMaster*);
 
-    void queueNewPlaypos(double newpos);
+    void queueNewPlaypos(double newpos, bool exact);
+    void requestSyncPhase();
 
     // Reset buffer playpos and set file playpos. This must only be called
     // while holding the pause mutex
     void setNewPlaypos(double playpos);
 
+    // The process methods all run in the audio callback.
     void process(const CSAMPLE* pIn, CSAMPLE* pOut, const int iBufferSize);
-
     void processSlip(int iBufferSize);
+    void processSeek();
 
     const char* getGroup();
     bool isTrackLoaded();
@@ -147,6 +156,7 @@ class EngineBuffer : public EngineObject {
     void slotControlEnd(double);
     void slotControlSeek(double);
     void slotControlSeekAbs(double);
+    void slotControlSeekExact(double);
     void slotControlSlip(double);
 
     // Request that the EngineBuffer load a track. Since the process is
@@ -179,7 +189,7 @@ class EngineBuffer : public EngineObject {
 
     double fractionalPlayposFromAbsolute(double absolutePlaypos);
 
-    void processSeek();
+    void doSeek(double change, bool exact);
 
     // Lock for modifying local engine variables that are not thread safe, such
     // as m_engineControls and m_hintList
@@ -211,8 +221,6 @@ class EngineBuffer : public EngineObject {
 
     // The current sample to play in the file.
     double m_filepos_play;
-    // The current sample to play in the file. */
-    double m_filepos_seek;
 
     // The previous callback's speed. Used to check if the scaler parameters
     // need updating.
@@ -297,7 +305,7 @@ class EngineBuffer : public EngineObject {
     // Indicates that dependency injection has taken place.
     bool m_bScalerOverride;
 
-    QAtomicInt m_bSeekQueued;
+    QAtomicInt m_iSeekQueued;
     // TODO(XXX) make a macro or something.
 #if defined(__GNUC__)
     double m_dQueuedPosition __attribute__ ((aligned(sizeof(double))));

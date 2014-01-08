@@ -12,25 +12,25 @@ WKnobComposed::WKnobComposed(QWidget* pParent)
 WKnobComposed::~WKnobComposed() {
 }
 
-void WKnobComposed::setup(QDomNode node) {
+void WKnobComposed::setup(QDomNode node, const SkinContext& context) {
     clear();
 
     // Set background pixmap if available
-    if (!selectNode(node, "BackPath").isNull()) {
-        setPixmapBackground(getPath(selectNodeQString(node, "BackPath")));
+    if (context.hasNode(node, "BackPath")) {
+        setPixmapBackground(context.getSkinPath(context.selectString(node, "BackPath")));
     }
 
     // Set background pixmap if available
-    if (!selectNode(node, "Knob").isNull()) {
-        setPixmapKnob(getPath(selectNodeQString(node, "Knob")));
+    if (context.hasNode(node, "Knob")) {
+        setPixmapKnob(context.getSkinPath(context.selectString(node, "Knob")));
     }
 
-    if (!selectNode(node, "MinAngle").isNull()) {
-        m_dMinAngle = selectNodeDouble(node, "MinAngle");
+    if (context.hasNode(node, "MinAngle")) {
+        m_dMinAngle = context.selectDouble(node, "MinAngle");
     }
 
-    if (!selectNode(node, "MaxAngle").isNull()) {
-        m_dMaxAngle = selectNodeDouble(node, "MaxAngle");
+    if (context.hasNode(node, "MaxAngle")) {
+        m_dMaxAngle = context.selectDouble(node, "MaxAngle");
     }
 }
 
@@ -60,6 +60,8 @@ void WKnobComposed::paintEvent(QPaintEvent* e) {
     QStyleOption option;
     option.initFrom(this);
     QStylePainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setRenderHint(QPainter::SmoothPixmapTransform);
     p.drawPrimitive(QStyle::PE_Widget, option);
 
     if (m_pPixmapBack) {
@@ -69,8 +71,8 @@ void WKnobComposed::paintEvent(QPaintEvent* e) {
     if (!m_pKnob.isNull() && !m_pKnob->isNull()) {
         p.translate(width() / 2.0, height() / 2.0);
 
-        // Value is now in the range [0, 1].
-        double value = getValue() / 127.0;
+        // Value is in the range [0, 1].
+        double value = getValue();
 
         double angle = m_dMinAngle + (m_dMaxAngle - m_dMinAngle) * value;
         p.rotate(angle);

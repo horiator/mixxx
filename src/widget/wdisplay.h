@@ -25,6 +25,7 @@
 
 #include "widget/wwidget.h"
 #include "widget/wpixmapstore.h"
+#include "skin/skincontext.h"
 
 class WDisplay : public WWidget {
    Q_OBJECT
@@ -32,7 +33,7 @@ class WDisplay : public WWidget {
     WDisplay(QWidget *parent=NULL);
     virtual ~WDisplay();
 
-    void setup(QDomNode node);
+    void setup(QDomNode node, const SkinContext& context);
 
   protected:
     void paintEvent(QPaintEvent*);
@@ -42,7 +43,6 @@ class WDisplay : public WWidget {
     }
 
   private:
-
     void setPixmap(QVector<PaintablePointer>* pPixmaps, int iPos,
                    const QString& filename);
 
@@ -50,7 +50,7 @@ class WDisplay : public WWidget {
 
     void setPositions(int iNoPos);
 
-    virtual int getActivePixmapIndex() const;
+    int getActivePixmapIndex() const;
 
     // Free existing pixmaps.
     void resetPositions();
