@@ -3279,6 +3279,10 @@
 							<ButtonState>RightButton</ButtonState>
 							<ConnectValueToWidget>false</ConnectValueToWidget>
 						</Connection>
+						<Connection>
+							<ConfigKey>[Channel1],play_indicator</ConfigKey>
+							<ConnectValueFromWidget>false</ConnectValueFromWidget>
+						</Connection>
 					</PushButton>
 					<PushButton>
 						<TooltipId>play_cue_set</TooltipId>
@@ -3307,6 +3311,10 @@
 							<ButtonState>RightButton</ButtonState>
 							<ConnectValueToWidget>false</ConnectValueToWidget>
 						</Connection>
+						<Connection>
+							<ConfigKey>[Channel2],play_indicator</ConfigKey>
+							<ConnectValueFromWidget>false</ConnectValueFromWidget>
+						</Connection>
 					</PushButton>
 
 					<!--
@@ -3317,11 +3325,17 @@
 					<PushButton>
 						<TooltipId>cue_default_cue_gotoandstop</TooltipId>
 						<Style></Style>
-						<NumberStates>1</NumberStates>
+						<NumberStates>2</NumberStates>
+						<LeftClickIsPushButton>true</LeftClickIsPushButton>
 						<State>
 							<Number>0</Number>
-							<Pressed>btn_cue1_overdown.png</Pressed>
+							<Pressed>btn_cue1_down.png</Pressed>
 							<Unpressed>btn_cue1.png</Unpressed>
+						</State>
+						<State>
+							<Number>1</Number>
+							<Pressed>btn_cue1_overdown.png</Pressed>
+							<Unpressed>btn_cue1_over.png</Unpressed>
 						</State>
 						<Pos>7,311</Pos>
 						<Connection>
@@ -3334,15 +3348,25 @@
 							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 							<ButtonState>RightButton</ButtonState>
 						</Connection>
+						<Connection>
+							<ConfigKey>[Channel1],cue_indicator</ConfigKey>
+							<ButtonState>Indicator</ButtonState>
+						</Connection>
 					</PushButton>
 					<PushButton>
 						<TooltipId>cue_default_cue_gotoandstop</TooltipId>
 						<Style></Style>
-						<NumberStates>1</NumberStates>
+						<NumberStates>2</NumberStates>
+						<LeftClickIsPushButton>true</LeftClickIsPushButton>
 						<State>
 							<Number>0</Number>
-							<Pressed>btn_cue2_overdown.png</Pressed>
+							<Pressed>btn_cue2_down.png</Pressed>
 							<Unpressed>btn_cue2.png</Unpressed>
+						</State>
+						<State>
+							<Number>1</Number>
+							<Pressed>btn_cue2_overdown.png</Pressed>
+							<Unpressed>btn_cue2_over.png</Unpressed>
 						</State>
 						<Pos>324,311</Pos>
 						<Connection>
@@ -3354,6 +3378,10 @@
 							<ConfigKey>[Channel2],cue_gotoandstop</ConfigKey>
 							<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 							<ButtonState>RightButton</ButtonState>
+						</Connection>
+						<Connection>
+							<ConfigKey>[Channel2],cue_indicator</ConfigKey>
+							<ButtonState>Indicator</ButtonState>
 						</Connection>
 					</PushButton>
 
