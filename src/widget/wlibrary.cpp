@@ -10,6 +10,7 @@
 
 WLibrary::WLibrary(QWidget* parent)
         : QStackedWidget(parent),
+          WBaseWidget(this),
           m_mutex(QMutex::Recursive) {
 }
 
@@ -53,4 +54,11 @@ void WLibrary::search(const QString& name) {
 
 AbstractLibraryView* WLibrary::getActiveView() const {
     return dynamic_cast<AbstractLibraryView*>(currentWidget());
+}
+
+bool WLibrary::event(QEvent* pEvent) {
+    if (pEvent->type() == QEvent::ToolTip) {
+        updateTooltip();
+    }
+    return QStackedWidget::event(pEvent);
 }

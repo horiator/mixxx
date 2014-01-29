@@ -45,7 +45,6 @@ void WStatusLight::setNoPos(int iNoPos) {
         iNoPos = 2;
     }
     m_pixmaps.resize(iNoPos);
-    m_value = 0.;
 }
 
 void WStatusLight::setup(QDomNode node, const SkinContext& context) {
@@ -86,7 +85,7 @@ void WStatusLight::setPixmap(int iState, const QString& filename) {
     }
 }
 
-void WStatusLight::setValue(double v) {
+void WStatusLight::onConnectedControlValueChanged(double v) {
     int val = static_cast<int>(v);
     if (m_iPos == val) {
         return;

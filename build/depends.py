@@ -206,24 +206,31 @@ class Qt(Dependence):
                 return d
         return None
 
-    def satisfy(self):
-        pass
-
-    def configure(self, build, conf):
+    @staticmethod
+    def enabled_modules(build):
         qt5 = Qt.qt5_enabled(build)
-        # Emit various Qt defines
-        build.env.Append(CPPDEFINES=['QT_SHARED',
-                                     'QT_TABLET_SUPPORT'])
         qt_modules = [
             'QtCore', 'QtGui', 'QtOpenGL', 'QtXml', 'QtSvg',
             'QtSql', 'QtScript', 'QtXmlPatterns', 'QtNetwork',
             'QtTest'
         ]
+        if qt5:
+            qt_modules.extend(['QtWidgets', 'QtConcurrent'])
+        return qt_modules
 
+    def satisfy(self):
+        pass
+
+    def configure(self, build, conf):
+        qt_modules = Qt.enabled_modules(build)
+
+        qt5 = Qt.qt5_enabled(build)
+        # Emit various Qt defines
+        build.env.Append(CPPDEFINES=['QT_SHARED',
+                                     'QT_TABLET_SUPPORT'])
         if qt5:
             # Enable qt4 support.
             build.env.Append(CPPDEFINES='QT_DISABLE_DEPRECATED_BEFORE')
-            qt_modules.extend(['QtWidgets', 'QtConcurrent'])
 
         # Enable Qt include paths
         if build.platform_is_linux:
@@ -505,14 +512,12 @@ class MixxxCore(Feature):
                    "control/controlbehavior.cpp",
                    "controlobjectslave.cpp",
                    "controlobjectthread.cpp",
-                   "controlobjectthreadwidget.cpp",
-                   "controlobjectthreadmain.cpp",
-                   "controlevent.cpp",
                    "controllogpotmeter.cpp",
                    "controlobject.cpp",
                    "controlpotmeter.cpp",
                    "controllinpotmeter.cpp",
                    "controlpushbutton.cpp",
+                   "controlindicator.cpp",
                    "controlttrotary.cpp",
 
                    "preferences/dlgpreferencepage.cpp",
@@ -614,6 +619,8 @@ class MixxxCore(Feature):
                    "soundsource.cpp",
 
                    "sharedglcontext.cpp",
+                   "widget/controlwidgetconnection.cpp",
+                   "widget/wbasewidget.cpp",
                    "widget/wwidget.cpp",
                    "widget/wwidgetgroup.cpp",
                    "widget/wwidgetstack.cpp",
@@ -642,6 +649,8 @@ class MixxxCore(Feature):
                    "widget/wtrackproperty.cpp",
                    "widget/wtime.cpp",
                    "widget/wkey.cpp",
+                   "widget/wcombobox.cpp",
+                   "widget/wsplitter.cpp",
 
                    "mathstuff.cpp",
 
@@ -665,6 +674,7 @@ class MixxxCore(Feature):
                    "library/basesqltablemodel.cpp",
                    "library/basetrackcache.cpp",
                    "library/librarytablemodel.cpp",
+                   "library/searchquery.cpp",
                    "library/searchqueryparser.cpp",
                    "library/analysislibrarytablemodel.cpp",
                    "library/missingtablemodel.cpp",
@@ -749,6 +759,7 @@ class MixxxCore(Feature):
                    "waveform/waveformfactory.cpp",
                    "waveform/waveformwidgetfactory.cpp",
                    "waveform/vsyncthread.cpp",
+                   "waveform/guitick.cpp",
                    "waveform/renderers/waveformwidgetrenderer.cpp",
                    "waveform/renderers/waveformrendererabstract.cpp",
                    "waveform/renderers/waveformrenderbackground.cpp",
@@ -792,7 +803,6 @@ class MixxxCore(Feature):
                    "skin/skinloader.cpp",
                    "skin/legacyskinparser.cpp",
                    "skin/colorschemeparser.cpp",
-                   "skin/propertybinder.cpp",
                    "skin/tooltips.cpp",
                    "skin/skincontext.cpp",
 
@@ -831,6 +841,7 @@ class MixxxCore(Feature):
                    "util/sleepableqthread.cpp",
                    "util/statsmanager.cpp",
                    "util/stat.cpp",
+                   "util/time.cpp",
                    "util/timer.cpp",
                    "util/performancetimer.cpp",
                    "util/version.cpp",
@@ -890,9 +901,9 @@ class MixxxCore(Feature):
             if build.toolchain_is_msvs:
                 build.env.Append(LINKFLAGS="/MANIFEST")
         elif build.platform_is_osx:
-            #Need extra room for code signing (App Store)
-            build.env.Append(LINKFLAGS="-headerpad=ffff")
-            build.env.Append(LINKFLAGS="-headerpad_max_install_names")
+            # Need extra room for code signing (App Store)
+            build.env.Append(LINKFLAGS="-Wl,-headerpad,ffff")
+            build.env.Append(LINKFLAGS="-Wl,-headerpad_max_install_names")
 
         return sources
 
@@ -910,11 +921,6 @@ class MixxxCore(Feature):
             build.env.Append(CCFLAGS='-Wall')
             build.env.Append(CCFLAGS='-Wextra')
             build.env.Append(CCFLAGS='-g')
-
-            # Check that g++ is present (yeah, SCONS is a bit dumb here)
-            # returns a non zeros return code if g++ is found
-            if os.system("which g++ > /dev/null"):
-                raise Exception("Did not find g++.")
         elif build.toolchain_is_msvs:
             # Validate the specified winlib directory exists
             mixxx_lib_path = SCons.ARGUMENTS.get(
@@ -1002,21 +1008,15 @@ class MixxxCore(Feature):
                 build.platform_is_bsd:
             mixxx_files = [
                 ('SETTINGS_PATH', '.mixxx/'),
-                ('BPMSCHEME_FILE', 'mixxxbpmscheme.xml'),
-                ('SETTINGS_FILE', 'mixxx.cfg'),
-                ('TRACK_FILE', 'mixxxtrack.xml')]
+                ('SETTINGS_FILE', 'mixxx.cfg')]
         elif build.platform_is_osx:
             mixxx_files = [
                 ('SETTINGS_PATH', 'Library/Application Support/Mixxx/'),
-                ('BPMSCHEME_FILE', 'mixxxbpmscheme.xml'),
-                ('SETTINGS_FILE', 'mixxx.cfg'),
-                ('TRACK_FILE', 'mixxxtrack.xml')]
+                ('SETTINGS_FILE', 'mixxx.cfg')]
         elif build.platform_is_windows:
             mixxx_files = [
                 ('SETTINGS_PATH', 'Local Settings/Application Data/Mixxx/'),
-                ('BPMSCHEME_FILE', 'mixxxbpmscheme.xml'),
-                ('SETTINGS_FILE', 'mixxx.cfg'),
-                ('TRACK_FILE', 'mixxxtrack.xml')]
+                ('SETTINGS_FILE', 'mixxx.cfg')]
         # Escape the filenames so they don't end up getting screwed up in the
         # shell.
         mixxx_files = [(k, r'\"%s\"' % v) for k, v in mixxx_files]

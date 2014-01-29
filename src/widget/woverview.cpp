@@ -21,7 +21,7 @@
 #include <QMimeData>
 
 #include "controlobject.h"
-#include "controlobjectthreadmain.h"
+#include "controlobjectthread.h"
 #include "woverview.h"
 #include "wskincolor.h"
 #include "trackinfoobject.h"
@@ -120,14 +120,14 @@ void WOverview::setup(QDomNode node, const SkinContext& context) {
     //qDebug() << "WOverview : m_markRanges" << m_markRanges.size();
 }
 
-void WOverview::setValue(double dValue) {
+void WOverview::onConnectedControlValueChanged(double dValue) {
     if (!m_bDrag)
     {
         // Calculate handle position
         int iPos = valueToPosition(dValue);
         if (iPos != m_iPos) {
             m_iPos = iPos;
-            //qDebug() << "WOverview::setValue" << dValue << ">>" << m_iPos;
+            //qDebug() << "WOverview::onConnectedControlValueChanged" << dValue << ">>" << m_iPos;
             update();
         }
     }
@@ -252,9 +252,9 @@ void WOverview::mouseReleaseEvent(QMouseEvent* e) {
     //qDebug() << "WOverview::mouseReleaseEvent" << e->pos() << m_iPos << ">>" << dValue;
 
     if (e->button() == Qt::RightButton) {
-        emit(valueChangedRightUp(dValue));
+        setControlParameterRightUp(dValue);
     } else {
-        emit(valueChangedLeftUp(dValue));
+        setControlParameterLeftUp(dValue);
     }
     m_bDrag = false;
 }

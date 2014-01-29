@@ -57,7 +57,7 @@
 #include "skin/skinloader.h"
 #include "library/libraryfeatures.h"
 
-DlgPreferences::DlgPreferences(MixxxApp * mixxx, SkinLoader* pSkinLoader,
+DlgPreferences::DlgPreferences(MixxxMainWindow * mixxx, SkinLoader* pSkinLoader,
                                SoundManager * soundman, PlayerManager* pPlayerManager,
                                ControllerManager * controllers, VinylControlManager *pVCManager,
                                ConfigObject<ConfigValue>* pConfig, LibraryFeatures *pLibrary)

@@ -65,7 +65,7 @@ class TrackInfoObject : public QObject
 {
     Q_OBJECT
 public:
-    // Initialize a new track with the filename. 
+    // Initialize a new track with the filename.
     TrackInfoObject(const QString& file="", bool parseHeader=true);
     // Initialize track with a QFileInfo class
     TrackInfoObject(const QFileInfo& fileInfo, bool parseHeader=true);
@@ -73,13 +73,15 @@ public:
     TrackInfoObject(const QDomNode &);
     virtual ~TrackInfoObject();
 
-    int parse();
+    // Parse file metadata. If no file metadata is present, attempts to extract
+    // artist and title information from the filename.
+    void parse();
 
-    // Returns the duration in seconds 
+    // Returns the duration in seconds
     int getDuration() const;
-    // Set duration in seconds 
+    // Set duration in seconds
     void setDuration(int);
-    // Returns the duration as a string: H:MM:SS 
+    // Returns the duration as a string: H:MM:SS
     QString getDurationStr() const;
 
     // Accessors for various stats of the file on disk. These are auto-populated
@@ -119,11 +121,11 @@ public:
     float getReplayGain() const;
     // Set ReplayGain
     void setReplayGain(float);
-    // Returns BPM 
+    // Returns BPM
     double getBpm() const;
-    // Set BPM 
+    // Set BPM
     void setBpm(double);
-    // Returns BPM as a string 
+    // Returns BPM as a string
     QString getBpmStr() const;
     // A track with a locked BPM will not be re-analyzed by the beats or bpm
     // analyzer.
@@ -131,7 +133,7 @@ public:
     bool hasBpmLock() const;
     bool getHeaderParsed() const;
     void setHeaderParsed(bool parsed = true);
-    // Returns the user comment 
+    // Returns the user comment
     QString getComment() const;
     // Sets the user commnet
     void setComment(const QString&);
@@ -159,8 +161,8 @@ public:
     QDateTime getDateAdded() const;
     void setDateAdded(const QDateTime& dateAdded);
 
-    // Getter/Setter methods for metadata 
-    // Return title 
+    // Getter/Setter methods for metadata
+    // Return title
     QString getTitle() const;
     // Set title
     void setTitle(const QString&);
@@ -168,7 +170,7 @@ public:
     QString getArtist() const;
     // Set artist
     void setArtist(const QString&);
-    // Return album 
+    // Return album
     QString getAlbum() const;
     // Set album
     void setAlbum(const QString&);
@@ -180,7 +182,7 @@ public:
     QString getYear() const;
     // Set year
     void setYear(const QString&);
-    // Return genre 
+    // Return genre
     QString getGenre() const;
     // Set genre
     void setGenre(const QString&);
@@ -323,10 +325,10 @@ public:
     // The file
     QFileInfo m_fileInfo;
 
-    // Metadata 
+    // Metadata
     // Album
     QString m_sAlbum;
-    // Artist 
+    // Artist
     QString m_sArtist;
     // Album Artist
     QString m_sAlbumArtist;
@@ -363,7 +365,7 @@ public:
     int m_iTimesPlayed;
     // Replay Gain volume
     float m_fReplayGain;
-    // Has this track been played this sessions? 
+    // Has this track been played this sessions?
     bool m_bPlayed;
     // True if header was parsed
     bool m_bHeaderParsed;
@@ -382,7 +384,7 @@ public:
     // The list of cue points for the track
     QList<Cue*> m_cuePoints;
 
-    // Mutex protecting access to object 
+    // Mutex protecting access to object
     mutable QMutex m_qMutex;
 
     // Storage for the track's beats
