@@ -42,6 +42,7 @@ class GuiTick;
 
 class DlgPreferences;
 class SoundManager;
+class ControlPushButton;
 
 #include "configobject.h"
 #include "util/cmdlineargs.h"
@@ -134,6 +135,7 @@ class MixxxMainWindow : public QMainWindow {
     // Event filter to block certain events (eg. tooltips if tooltips are disabled)
     virtual bool eventFilter(QObject *obj, QEvent *event);
     virtual void closeEvent(QCloseEvent *event);
+    virtual bool event(QEvent* e);
 
   private:
     void logBuildDetails();
@@ -249,6 +251,7 @@ class MixxxMainWindow : public QMainWindow {
 
     const CmdlineArgs& m_cmdLineArgs;
 
+    ControlPushButton* m_pTouchShift;
     QList<ControlObjectThread*> m_pVinylControlEnabled;
     ControlObjectThread* m_pNumDecks;
     int m_iNumConfiguredDecks;
