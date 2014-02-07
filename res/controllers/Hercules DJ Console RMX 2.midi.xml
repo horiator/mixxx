@@ -177,7 +177,7 @@
      <status>0x90</status>
      <midino>0x23</midino>
      <group>[Channel1]</group>
-     <key>beatsync</key>
+     <key>sync_enabled</key>
      <description></description>
      <options>
       <normal/>
@@ -187,7 +187,7 @@
      <status>0x90</status>
      <midino>0x34</midino>
      <group>[Channel2]</group>
-     <key>beatsync</key>
+     <key>sync_enabled</key>
      <description></description>
      <options>
       <normal/>
@@ -1179,7 +1179,7 @@
             </output>
             <output>
                 <group>[Channel1]</group>
-                <key>beatsync</key>
+                <key>sync_enabled</key>
                 <description></description>
                 <minimum>0.5</minimum>
                 <maximum>1</maximum>
@@ -1256,7 +1256,7 @@
             </output>
             <output>
                 <group>[Channel2]</group>
-                <key>beatsync</key>
+                <key>sync_enabled</key>
                 <description></description>
                 <minimum>0.5</minimum>
                 <maximum>1</maximum>
