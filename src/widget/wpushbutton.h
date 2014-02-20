@@ -50,8 +50,6 @@ class WPushButton : public WWidget {
 
     void setup(QDomNode node, const SkinContext& context);
 
-    virtual QString getDefaultBaseTooltip() const;
-
     // Sets the number of states associated with this button, and removes
     // associated pixmaps.
     void setStates(int iStatesW);

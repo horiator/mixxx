@@ -173,10 +173,6 @@ void WPushButton::setup(QDomNode node, const SkinContext& context) {
     }
 }
 
-virtual QString getDefaultBaseTooltip() const {
-    return QString();
-};
-
 void WPushButton::setStates(int iStates) {
     m_bPressed = false;
     m_iNoStates = iStates;
