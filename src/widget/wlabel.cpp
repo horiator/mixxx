@@ -71,7 +71,7 @@ bool WLabel::event(QEvent* pEvent) {
     return QLabel::event(pEvent);
 }
 
-void WLabel::fillDebugTooltip(QStringList* debug) {
+void WLabel::fillDebugTooltip(QStringList* debug) const {
     WBaseWidget::fillDebugTooltip(debug);
     *debug << QString("Text: \"%1\"").arg(text());
 }

@@ -50,7 +50,7 @@ class WWidgetGroup : public QFrame, public WBaseWidget {
     virtual void paintEvent(QPaintEvent* pe);
     virtual void resizeEvent(QResizeEvent* re);
     bool event(QEvent* pEvent);
-    void fillDebugTooltip(QStringList* debug);
+    virtual void fillDebugTooltip(QStringList* debug) const;
 
   private:
     // Associated background pixmap
