@@ -1546,6 +1546,7 @@ void LegacySkinParser::setupConnections(QDomNode node, WBaseWidget* pWidget) {
                 directionOption |= ControlParameterWidgetConnection::DIR_DEFAULT;
             }
 
+            bool emitOptionSet = false;
             int emitOption =
                     ControlParameterWidgetConnection::EMIT_ON_PRESS;
             if(m_pContext->hasNodeSelectBool(
@@ -1555,6 +1556,7 @@ void LegacySkinParser::setupConnections(QDomNode node, WBaseWidget* pWidget) {
                 } else {
                     emitOption = ControlParameterWidgetConnection::EMIT_ON_RELEASE;
                 }
+                emitOptionSet = true;
             } else if(m_pContext->hasNodeSelectBool(
                     con, "EmitOnPressAndRelease", &nodeValue)) {
                 if (nodeValue) {
@@ -1562,7 +1564,20 @@ void LegacySkinParser::setupConnections(QDomNode node, WBaseWidget* pWidget) {
                 } else {
                     qWarning() << "LegacySkinParser::setupConnections(): EmitOnPressAndRelease must not set false";
                 }
-            } else {
+                emitOptionSet = true;
+            }
+
+            if(m_pContext->hasNodeSelectBool(
+                    con, "EmitOnMove", &nodeValue)) {
+                if (nodeValue) {
+                    emitOption |= ControlParameterWidgetConnection::EMIT_ON_MOVE;
+                } else {
+                    emitOption &= ~ControlParameterWidgetConnection::EMIT_ON_MOVE;
+                }
+                emitOptionSet = true;
+            }
+
+            if (!emitOptionSet) {
                 // default:
                 // no emit option is set
                 // Allow to change the emitOption from Widget

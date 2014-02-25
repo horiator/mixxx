@@ -50,22 +50,25 @@ class ControlParameterWidgetConnection : public ControlWidgetConnection {
         EMIT_ON_PRESS             = 0x01,
         EMIT_ON_RELEASE           = 0x02,
         EMIT_ON_PRESS_AND_RELEASE = 0x03,
-        EMIT_DEFAULT              = 0x04
+        EMIT_ON_MOVE              = 0x08,
+        EMIT_DEFAULT              = 0x80,
     };
 
     static QString emitOptionToString(EmitOption option) {
-        switch (option & EMIT_ON_PRESS_AND_RELEASE) {
-            case EMIT_NEVER:
-                return "NEVER";
-            case EMIT_ON_PRESS:
-                return "PRESS";
-            case EMIT_ON_RELEASE:
-                return "RELEASE";
-            case EMIT_ON_PRESS_AND_RELEASE:
-                return "PRESS_AND_RELEASE";
-            default:
-                return "UNKNOWN";
+        QStringList strOption;
+        if (option & EMIT_ON_PRESS) {
+            strOption << "PRESS";
         }
+        if (option & EMIT_ON_MOVE) {
+            strOption << "MOVE";
+        }
+        if (option & EMIT_ON_RELEASE) {
+            strOption << "RELEASE";
+        }
+        if (strOption.isEmpty()) {
+            return "NEVER";
+        }
+        return strOption.join("_AND_");
     }
 
     enum DirectionOption {
