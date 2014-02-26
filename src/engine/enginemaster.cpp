@@ -305,8 +305,12 @@ void EngineMaster::process(const int iBufferSize) {
     int iSampleRate = static_cast<int>(m_pMasterSampleRate->get());
     // Update internal master sync.
     m_pMasterSync->onCallbackStart(iSampleRate, iBufferSize);
+    {
+        ScopedTimer timer("m_pEngineEffectsManager->onCallbackStart()");
     if (m_pEngineEffectsManager) {
         m_pEngineEffectsManager->onCallbackStart();
+    }
+
     }
 
     // Bitvector of enabled channels

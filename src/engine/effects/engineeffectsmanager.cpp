@@ -2,6 +2,7 @@
 
 #include "engine/effects/engineeffectchain.h"
 #include "engine/effects/engineeffect.h"
+#include "util/timer.h"
 
 EngineEffectsManager::EngineEffectsManager(EffectsResponsePipe* pResponsePipe)
         : m_pResponsePipe(pResponsePipe) {
@@ -87,9 +88,12 @@ void EngineEffectsManager::onCallbackStart() {
     }
 }
 
+static QList<int> list;
+
 void EngineEffectsManager::process(const QString& group,
                                    const CSAMPLE* pInput, CSAMPLE* pOutput,
                                    const unsigned int numSamples) {
+    ScopedTimer timer("EngineEffectsManager::process()");
     foreach (EngineEffectChain* pChain, m_chains) {
         pChain->process(group, pInput, pOutput, numSamples);
     }
