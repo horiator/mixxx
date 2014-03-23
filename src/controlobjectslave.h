@@ -6,8 +6,7 @@
 #include <QString>
 
 #include "configobject.h"
-
-class ControlDoublePrivate;
+#include "control/control.h"
 
 // This class is the successor of ControlObjectThread. It should be used for new
 // code. It is better named and may save some CPU time because it is connected
@@ -47,6 +46,14 @@ class ControlObjectSlave : public QObject {
 
     // Returns the parameterized value of the object. Thread safe, non-blocking.
     virtual double getParameterForValue(double value) const;
+
+    const QString description() const {
+        return m_pControl ?  m_pControl->description() : QString();
+    }
+
+    QString name() const {
+        return m_pControl ?  m_pControl->name() : QString();
+    }
 
   public slots:
     // Set the control to a new value. Non-blocking.
