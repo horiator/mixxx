@@ -3,7 +3,7 @@
 #include "effects/native/nativebackend.h"
 #include "effects/native/flangereffect.h"
 #include "effects/native/bitcrushereffect.h"
-#include "effects/native/butterworth8eqeffect.h"
+#include "effects/native/linkwitzriley8eqeffect.h"
 #include "effects/native/bessel8lvmixeqeffect.h"
 #include "effects/native/bessel4lvmixeqeffect.h"
 #include "effects/native/graphiceqeffect.h"
@@ -24,7 +24,7 @@ NativeBackend::NativeBackend(QObject* pParent)
 #endif
     registerEffect<EchoEffect>();
     registerEffect<GoaSlicerEffect>();
-    registerEffect<Butterworth8EQEffect>();
+    registerEffect<LinkwitzRiley8EQEffect>();
     registerEffect<Bessel4LVMixEQEffect>();
     registerEffect<Bessel8LVMixEQEffect>();
     registerEffect<GraphicEQEffect>();

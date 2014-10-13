@@ -20,10 +20,10 @@ EffectManifest BitCrusherEffect::getManifest() {
     depth->setName(QObject::tr("Bit Depth"));
     depth->setDescription("TODO");
     depth->setControlHint(EffectManifestParameter::CONTROL_KNOB_LOGARITHMIC);
-    depth->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     depth->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     depth->setUnitsHint(EffectManifestParameter::UNITS_UNKNOWN);
-    depth->setLinkHint(EffectManifestParameter::LINK_INVERSE);
+    depth->setDefaultLinkType(EffectManifestParameter::LINK_LINKED);
+    depth->setNeutralPointOnScale(1.0);
     depth->setDefault(16);
     // for values -1 0 +1
     // we do not allow a 1 bit version because this causes a distortion because of the missing sign bit
@@ -35,10 +35,10 @@ EffectManifest BitCrusherEffect::getManifest() {
     frequency->setName(QObject::tr("Downsampling"));
     frequency->setDescription("TODO");
     frequency->setControlHint(EffectManifestParameter::CONTROL_KNOB_LOGARITHMIC);
-    frequency->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     frequency->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     frequency->setUnitsHint(EffectManifestParameter::UNITS_SAMPLERATE);
-    frequency->setLinkHint(EffectManifestParameter::LINK_INVERSE);
+    frequency->setDefaultLinkType(EffectManifestParameter::LINK_LINKED);
+    frequency->setNeutralPointOnScale(1.0);
     frequency->setDefault(1.0);
     frequency->setMinimum(0.02);
     frequency->setMaximum(1.0);
@@ -69,10 +69,10 @@ void BitCrusherEffect::processGroup(const QString& group,
     // TODO(rryan) this is broken. it needs to take into account the sample
     // rate.
     const CSAMPLE downsample = m_pDownsampleParameter ?
-            m_pDownsampleParameter->value().toDouble() : 0.0;
+            m_pDownsampleParameter->value() : 0.0;
 
     CSAMPLE bit_depth = m_pBitDepthParameter ?
-            m_pBitDepthParameter->value().toDouble() : 16;
+            m_pBitDepthParameter->value() : 16;
 
     // divided by two because we use float math which includes the sing bit anyway
     const CSAMPLE scale = pow(2.0f, bit_depth) / 2;

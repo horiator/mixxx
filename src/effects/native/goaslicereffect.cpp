@@ -19,10 +19,9 @@ EffectManifest GoaSlicerEffect::getManifest() {
     length->setName(QObject::tr("Length"));
     length->setDescription("TODO");
     length->setControlHint(EffectManifestParameter::CONTROL_KNOB_LINEAR);
-    length->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     length->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     length->setUnitsHint(EffectManifestParameter::UNITS_UNKNOWN);
-    length->setLinkHint(EffectManifestParameter::LINK_LINKED);
+    length->setDefaultLinkType(EffectManifestParameter::LINK_LINKED);
     length->setDefault(0.25);
     length->setMinimum(0.0);
     length->setMaximum(1.0);
@@ -32,7 +31,6 @@ EffectManifest GoaSlicerEffect::getManifest() {
     slope->setName(QObject::tr("Slope"));
     slope->setDescription("TODO");
     slope->setControlHint(EffectManifestParameter::CONTROL_KNOB_LINEAR);
-    slope->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     slope->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     slope->setUnitsHint(EffectManifestParameter::UNITS_UNKNOWN);
     slope->setDefault(0.25);
@@ -45,7 +43,6 @@ EffectManifest GoaSlicerEffect::getManifest() {
     period->setName(QObject::tr("Period"));
     period->setDescription("TODO");
     period->setControlHint(EffectManifestParameter::CONTROL_KNOB_LINEAR);
-    period->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     period->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     period->setUnitsHint(EffectManifestParameter::UNITS_UNKNOWN);
     period->setDefault(0.25);
@@ -75,12 +72,9 @@ void GoaSlicerEffect::processGroup(const QString& group,
                                 const unsigned int sampleRate,
                                 const GroupFeatureState& groupFeatures) {
     Q_UNUSED(group);
-    unsigned int length = (int)(m_pLengthParameter ?
-        m_pLengthParameter->value().toFloat() * 8192.0 : 0.0);
-    unsigned int slope = (int)(m_pSlopeParameter ?
-        m_pSlopeParameter->value().toFloat() * 1024.0 : 256.0);
-    unsigned int period = m_pPeriodParameter ?
-        m_pPeriodParameter->value().toFloat(): 0.25;
+    unsigned int length = m_pLengthParameter->value() * 8192.0;
+    unsigned int slope = m_pSlopeParameter->value() * 1024.0;
+    unsigned int period = m_pPeriodParameter->value();
     
     unsigned int tick_periods[] = {2,4,8,16};
     int ticks_per_beat = tick_periods[(period * (sizeof(tick_periods)/sizeof(unsigned int)))-1];

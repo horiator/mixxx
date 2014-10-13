@@ -24,28 +24,35 @@ class EffectParameterSlot : public EffectParameterSlotBase {
     EffectParameterSlot(const unsigned int iRackNumber,
                         const unsigned int iChainNumber,
                         const unsigned int iSlotNumber,
-                        const unsigned int iParameterNumber);
+                        const unsigned int iParameterSlotNumber);
     virtual ~EffectParameterSlot();
 
-    static QString formatItemPrefix(const unsigned int iParameterNumber) {
-        return QString("parameter%1").arg(iParameterNumber + 1);
+    static QString formatItemPrefix(const unsigned int iParameterSlotNumber) {
+        return QString("parameter%1").arg(iParameterSlotNumber + 1);
     }
 
     // Load the parameter of the given effect into this EffectParameterSlot
     void loadEffect(EffectPointer pEffect);
 
-    EffectManifestParameter::LinkType getLinkType() const;
     double getValueParameter() const;
 
     void onChainParameterChanged(double parameter);
 
+    // Syncs the Super button with the parameter, that the following
+    // super button change will be passed to the effect parameter
+    // used during test
+    void syncSofttakeover();
+
   private slots:
     // Solely for handling control changes
-    void slotParameterValueChanged(QVariant value);
+    void slotParameterValueChanged(double value);
+    void slotValueChanged(double v);
+    void slotLinkTypeChanging(double v);
+    void slotLinkInverseChanged(double v);
 
   private:
     QString debugString() const {
-        return QString("EffectParameterSlot(%1,%2)").arg(m_group).arg(m_iParameterNumber);
+        return QString("EffectParameterSlot(%1,%2)").arg(m_group).arg(m_iParameterSlotNumber);
     }
 
     // Clear the currently loaded effect
@@ -55,6 +62,8 @@ class EffectParameterSlot : public EffectParameterSlotBase {
 
     // Control exposed to the rest of Mixxx
     ControlEffectKnob* m_pControlValue;
+    ControlPushButton* m_pControlLinkType;
+    ControlPushButton* m_pControlLinkInverse;
 
     DISALLOW_COPY_AND_ASSIGN(EffectParameterSlot);
 };

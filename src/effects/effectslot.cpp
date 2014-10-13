@@ -18,23 +18,23 @@ EffectSlot::EffectSlot(const unsigned int iRackNumber,
                                     m_iEffectNumber)) {
     m_pControlLoaded = new ControlObject(ConfigKey(m_group, "loaded"));
     m_pControlLoaded->connectValueChangeRequest(
-        this, SLOT(slotLoaded(double)), Qt::AutoConnection);
+        this, SLOT(slotLoaded(double)));
 
     m_pControlNumParameters = new ControlObject(ConfigKey(m_group, "num_parameters"));
     m_pControlNumParameters->connectValueChangeRequest(
-        this, SLOT(slotNumParameters(double)), Qt::AutoConnection);
+        this, SLOT(slotNumParameters(double)));
 
     m_pControlNumParameterSlots = new ControlObject(ConfigKey(m_group, "num_parameterslots"));
     m_pControlNumParameterSlots->connectValueChangeRequest(
-        this, SLOT(slotNumParameterSlots(double)), Qt::AutoConnection);
+        this, SLOT(slotNumParameterSlots(double)));
 
     m_pControlNumButtonParameters = new ControlObject(ConfigKey(m_group, "num_button_parameters"));
     m_pControlNumButtonParameters->connectValueChangeRequest(
-        this, SLOT(slotNumParameters(double)), Qt::AutoConnection);
+        this, SLOT(slotNumParameters(double)));
 
     m_pControlNumButtonParameterSlots = new ControlObject(ConfigKey(m_group, "num_button_parameterslots"));
     m_pControlNumButtonParameterSlots->connectValueChangeRequest(
-        this, SLOT(slotNumParameterSlots(double)), Qt::AutoConnection);
+        this, SLOT(slotNumParameterSlots(double)));
 
     m_pControlEnabled = new ControlPushButton(ConfigKey(m_group, "enabled"));
     m_pControlEnabled->setButtonMode(ControlPushButton::POWERWINDOW);
@@ -176,7 +176,7 @@ void EffectSlot::loadEffect(EffectPointer pEffect) {
     if (pEffect) {
         m_pEffect = pEffect;
         m_pControlLoaded->setAndConfirm(1.0);
-        m_pControlNumParameters->setAndConfirm(m_pEffect->numParameters());
+        m_pControlNumParameters->setAndConfirm(m_pEffect->numKnobParameters());
         m_pControlNumButtonParameters->setAndConfirm(m_pEffect->numButtonParameters());
 
         // Enabled is a persistent property of the effect slot, not of the
@@ -186,7 +186,7 @@ void EffectSlot::loadEffect(EffectPointer pEffect) {
         connect(m_pEffect.data(), SIGNAL(enabledChanged(bool)),
                 this, SLOT(slotEffectEnabledChanged(bool)));
 
-        while (static_cast<unsigned int>(m_parameters.size()) < m_pEffect->numParameters()) {
+        while (static_cast<unsigned int>(m_parameters.size()) < m_pEffect->numKnobParameters()) {
             addEffectParameterSlot();
         }
 
@@ -196,19 +196,6 @@ void EffectSlot::loadEffect(EffectPointer pEffect) {
 
         foreach (EffectParameterSlotPointer pParameter, m_parameters) {
             pParameter->loadEffect(m_pEffect);
-        }
-
-        // find first linked parameter
-        foreach (EffectParameterSlotPointer pParameter, m_parameters) {
-            EffectManifestParameter::LinkType linkType = pParameter->getLinkType();
-            if (linkType != EffectManifestParameter::LINK_NONE) {
-                if (linkType == EffectManifestParameter::LINK_INVERSE) {
-                    m_pCoSuper->set(1 - pParameter->getValueParameter());
-                } else {
-                    m_pCoSuper->set(pParameter->getValueParameter());
-                }
-                break;
-            }
         }
 
         foreach (EffectButtonParameterSlotPointer pParameter, m_buttonParameters) {
@@ -271,8 +258,10 @@ void EffectSlot::onChainParameterChanged(double parameter) {
     for (int i = 0; i < m_parameters.size(); ++i) {
         m_parameters[i]->onChainParameterChanged(parameter);
     }
+}
 
-    for (int i = 0; i < m_buttonParameters.size(); ++i) {
-        m_buttonParameters[i]->onChainParameterChanged(parameter);
+void EffectSlot::syncSofttakeover() {
+    for (int i = 0; i < m_parameters.size(); ++i) {
+        m_parameters[i]->syncSofttakeover();
     }
 }
