@@ -59,8 +59,7 @@ SoundSourceOggVorbis::~SoundSourceOggVorbis()
     }
 }
 
-int SoundSourceOggVorbis::open()
-{
+Result SoundSourceOggVorbis::open() {
     QByteArray qBAFilename = m_qFilename.toLocal8Bit();
 #ifdef __WINDOWS__
     if(ov_fopen(qBAFilename.constData(), &vf) < 0) {
@@ -227,7 +226,7 @@ unsigned SoundSourceOggVorbis::read(volatile unsigned long size, const SAMPLE * 
 /*
    Parse the the file to get metadata
  */
-int SoundSourceOggVorbis::parseHeader() {
+Result SoundSourceOggVorbis::parseHeader() {
     setType("ogg");
     QByteArray qBAFilename = m_qFilename.toLocal8Bit();
     TagLib::Ogg::Vorbis::File f(qBAFilename.constData());
@@ -243,6 +242,12 @@ int SoundSourceOggVorbis::parseHeader() {
     }
 
     return result ? OK : ERR;
+}
+
+QImage SoundSourceOggVorbis::parseCoverArt() {
+    setType("ogg");
+    TagLib::Ogg::Vorbis::File f(m_qFilename.toLocal8Bit().constData());
+    return getCoverInXiphComment(f.tag());
 }
 
 /*

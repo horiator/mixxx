@@ -42,20 +42,13 @@ bool EngineEffectRack::processEffectsRequest(const EffectsRequest& message,
 }
 
 void EngineEffectRack::process(const QString& group,
-                               const CSAMPLE* pInput, CSAMPLE* pOutput,
-                               const unsigned int numSamples) {
-    bool anyProcessed = false;
+                               CSAMPLE* pInOut,
+                               const unsigned int numSamples,
+                               const unsigned int sampleRate,
+                               const GroupFeatureState& groupFeatures) {
     foreach (EngineEffectChain* pChain, m_chains) {
         if (pChain != NULL) {
-            pChain->process(group, pInput, pOutput, numSamples);
-            anyProcessed = true;
-        }
-    }
-    if (!anyProcessed && pInput != pOutput) {
-        SampleUtil::copyWithGain(pOutput, pInput, 1.0, numSamples);
-        if (kEffectDebugOutput) {
-            qDebug() << "WARNING: EngineEffectRack took the slow path!"
-                     << "If you want to do this talk to rryan.";
+            pChain->process(group, pInOut, numSamples, sampleRate, groupFeatures);
         }
     }
 }

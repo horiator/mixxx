@@ -17,7 +17,7 @@ EffectRack::EffectRack(EffectsManager* pEffectsManager,
     connect(&m_controlClearRack, SIGNAL(valueChanged(double)),
             this, SLOT(slotClearRack(double)));
     m_controlNumEffectChainSlots.connectValueChangeRequest(
-            this, SLOT(slotNumEffectChainSlots(double)), Qt::AutoConnection);
+            this, SLOT(slotNumEffectChainSlots(double)));
     addToEngine();
 }
 
@@ -72,8 +72,9 @@ void EffectRack::registerGroup(const QString& group) {
 
 void EffectRack::slotNumEffectChainSlots(double v) {
     // Ignore sets to num_effectchain_slots
-    qDebug() << debugString() << "slotNumEffectChainSlots" << v;
-    qDebug() << "WARNING: num_effectchain_slots is a read-only control.";
+    Q_UNUSED(v);
+    //qDebug() << debugString() << "slotNumEffectChainSlots" << v;
+    qWarning() << "WARNING: num_effectchain_slots is a read-only control.";
 }
 
 void EffectRack::slotClearRack(double v) {
@@ -136,7 +137,7 @@ EffectChainSlotPointer EffectRack::addEffectChainSlot() {
 
 EffectChainSlotPointer EffectRack::getEffectChainSlot(int i) {
     if (i < 0 || i >= m_effectChainSlots.size()) {
-        qDebug() << "WARNING: Invalid index for getEffectChainSlot";
+        qWarning() << "WARNING: Invalid index for getEffectChainSlot";
         return EffectChainSlotPointer();
     }
     return m_effectChainSlots[i];
@@ -149,7 +150,7 @@ void EffectRack::loadNextChain(const unsigned int iChainSlotNumber,
     }
 
     EffectChainPointer pNextChain = m_pEffectChainManager->getNextEffectChain(
-        pLoadedChain);
+            pLoadedChain);
 
     pNextChain = EffectChain::clone(pNextChain);
     m_effectChainSlots[iChainSlotNumber]->loadEffectChain(pNextChain);

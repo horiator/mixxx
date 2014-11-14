@@ -1,4 +1,4 @@
-// Ported from SWH Plate Reverb 1423.
+// Ported from CAPS Reverb.
 // This effect is GPL code.
 
 #ifndef REVERBEFFECT_H
@@ -6,8 +6,9 @@
 
 #include <QMap>
 
-#include "defs.h"
 #include "util.h"
+#include "util/types.h"
+#include "util/defs.h"
 #include "effects/effectprocessor.h"
 #include "effects/native/reverb/Reverb.h"
 #include "engine/effects/engineeffect.h"
@@ -25,7 +26,7 @@ struct ReverbGroupState {
     }
 
     ~ReverbGroupState() {
-        delete crossfade_buffer;
+        SampleUtil::free(crossfade_buffer);
     }
 
     MixxxPlateX2 reverb;
@@ -46,7 +47,10 @@ class ReverbEffect : public GroupEffectProcessor<ReverbGroupState> {
     void processGroup(const QString& group,
                       ReverbGroupState* pState,
                       const CSAMPLE* pInput, CSAMPLE* pOutput,
-                      const unsigned int numSamples);
+                      const unsigned int numSamples,
+                      const unsigned int sampleRate,
+                      const EffectProcessor::EnableState enableState,
+                      const GroupFeatureState& groupFeatures);
 
   private:
     QString debugString() const {

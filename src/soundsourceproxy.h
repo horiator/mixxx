@@ -43,11 +43,15 @@ public:
     SoundSourceProxy(TrackPointer pTrack);
     ~SoundSourceProxy();
     static void loadPlugins();
-    int open();
+    Result open();
     long seek(long);
     unsigned read(unsigned long size, const SAMPLE*);
     long unsigned length();
-    int parseHeader();
+    Result parseHeader();
+
+    // Returns the first cover art image embedded within the file (if any).
+    QImage parseCoverArt();
+
     unsigned int getSampleRate();
     /** Returns filename */
     QString getFilename();

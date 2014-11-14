@@ -236,7 +236,7 @@ bool AnalyserQueue::doAnalysis(TrackPointer tio, SoundSourceProxy* pSoundSource)
         //QThread::usleep(10);
 
         //has something new entered the queue?
-        if (deref(m_aiCheckPriorities)) {
+        if (load_atomic(m_aiCheckPriorities)) {
             m_aiCheckPriorities = false;
             if (isLoadedTrackWaiting(tio)) {
                 qDebug() << "Interrupting analysis to give preference to a loaded track.";
@@ -291,16 +291,22 @@ void AnalyserQueue::run() {
         // Could happen if the track was queued but then deleted.
         // Or if dequeueNextBlocking is unblocked by exit == true
         if (!nextTrack) {
+            m_qm.lock();
+            m_queue_size = m_tioq.size();
+            m_qm.unlock();
+            if (m_queue_size == 0) {
+                emit(queueEmpty()); // emit asynchrony for no deadlock
+            }
             continue;
         }
 
         Trace trace("AnalyserQueue analyzing track");
 
         // Get the audio
-        SoundSourceProxy* pSoundSource = new SoundSourceProxy(nextTrack);
-        pSoundSource->open(); //Open the file for reading
-        int iNumSamples = pSoundSource->length();
-        int iSampleRate = pSoundSource->getSampleRate();
+        SoundSourceProxy soundSource(nextTrack);
+        soundSource.open(); //Open the file for reading
+        int iNumSamples = soundSource.length();
+        int iSampleRate = soundSource.getSampleRate();
 
         if (iNumSamples == 0 || iSampleRate == 0) {
             qDebug() << "Skipping invalid file:" << nextTrack->getLocation();
@@ -322,7 +328,7 @@ void AnalyserQueue::run() {
 
         if (processTrack) {
             emitUpdateProgress(nextTrack, 0);
-            bool completed = doAnalysis(nextTrack, pSoundSource);
+            bool completed = doAnalysis(nextTrack, &soundSource);
             if (!completed) {
                 //This track was cancelled
                 QListIterator<Analyser*> itf(m_aq);
@@ -346,8 +352,6 @@ void AnalyserQueue::run() {
             emitUpdateProgress(nextTrack, 1000); // 100%
             qDebug() << "Skipping track analysis because no analyzer initialized.";
         }
-
-        delete pSoundSource;
 
         m_qm.lock();
         m_queue_size = m_tioq.size();

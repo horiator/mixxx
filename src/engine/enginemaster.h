@@ -68,6 +68,19 @@ class EngineMaster : public QObject, public AudioSource {
         return QString("[Headphone]");
     }
 
+    const QString getBusLeftGroup() const {
+        return QString("[BusLeft]");
+    }
+
+    const QString getBusCenterGroup() const {
+        return QString("[BusCenter]");
+    }
+
+    const QString getBusRightGroup() const {
+        return QString("[BusRight]");
+    }
+
+
     // WARNING: These methods are called by the main thread. They should only
     // touch the volatile bool connected indicators (see below). However, when
     // these methods are called the callback is guaranteed to be inactive
@@ -193,6 +206,7 @@ class EngineMaster : public QObject, public AudioSource {
     EngineEffectsManager* m_pEngineEffectsManager;
     bool m_bRampingGain;
     QList<ChannelInfo*> m_channels;
+    QList<ChannelInfo*> m_activeChannels;
     QList<CSAMPLE> m_channelMasterGainCache;
     QList<CSAMPLE> m_channelHeadphoneGainCache;
 
@@ -208,10 +222,10 @@ class EngineMaster : public QObject, public AudioSource {
     ControlObject* m_pMasterSampleRate;
     ControlObject* m_pMasterLatency;
     ControlObject* m_pMasterAudioBufferSize;
-    ControlObject* m_pMasterUnderflowCount;
+    ControlObject* m_pAudioLatencyOverloadCount;
     ControlPotmeter* m_pMasterRate;
-    EngineClipping* m_pClipping;
-    EngineClipping* m_pHeadClipping;
+    ControlPotmeter* m_pAudioLatencyUsage;
+    ControlPotmeter* m_pAudioLatencyOverload;
     EngineTalkoverDucking* m_pTalkoverDucking;
     EngineDelay* m_pMasterDelay;
     EngineDelay* m_pHeadDelay;
@@ -222,11 +236,12 @@ class EngineMaster : public QObject, public AudioSource {
     ControlPotmeter* m_pCrossfader;
     ControlPotmeter* m_pHeadMix;
     ControlPotmeter* m_pBalance;
-    ControlPotmeter* m_pXFaderMode;
+    ControlPushButton* m_pXFaderMode;
     ControlPotmeter* m_pXFaderCurve;
     ControlPotmeter* m_pXFaderCalibration;
-    ControlPotmeter* m_pXFaderReverse;
+    ControlPushButton* m_pXFaderReverse;
     ControlPushButton* m_pHeadSplitEnabled;
+    ControlObject* m_pKeylockEngine;
 
     ConstantGainCalculator m_headphoneGain;
     OrientationVolumeGainCalculator m_masterGain;
@@ -234,8 +249,13 @@ class EngineMaster : public QObject, public AudioSource {
     CSAMPLE m_headphoneMasterGainOld;
     CSAMPLE m_headphoneVolumeOld;
 
-    volatile bool m_bMasterOutputConnected;
-    volatile bool m_bHeadphoneOutputConnected;
+    // Produce the Master Mixxx, not Required if connected to left
+    // and right Bus and no recording and broadcast active
+    ControlObject* m_pMasterEnabled;
+    // Mix two Mono channels. This is useful for outdoor gigs
+    ControlObject* m_pMasterMonoMixdown;
+    ControlObject* m_pHeadphoneEnabled;
+
     volatile bool m_bBusOutputConnected[3];
 };
 

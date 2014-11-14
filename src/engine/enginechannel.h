@@ -25,7 +25,6 @@ class ControlObject;
 class EngineBuffer;
 class EnginePregain;
 class EngineFilterBlock;
-class EngineClipping;
 class EngineVuMeter;
 class EngineVinylSoundEmu;
 class ControlPushButton;
@@ -39,7 +38,7 @@ class EngineChannel : public EngineObject {
         RIGHT,
     };
 
-    EngineChannel(const char* pGroup, ChannelOrientation defaultOrientation = CENTER);
+    EngineChannel(QString pGroup, ChannelOrientation defaultOrientation = CENTER);
     virtual ~EngineChannel();
 
     virtual ChannelOrientation getOrientation() const;
@@ -53,7 +52,8 @@ class EngineChannel : public EngineObject {
     void setTalkover(bool enabled);
     virtual bool isTalkover() const;
 
-    virtual void process(const CSAMPLE* pIn, CSAMPLE* pOut, const int iBufferSize) = 0;
+    virtual void process(CSAMPLE* pOut, const int iBufferSize) = 0;
+    virtual void postProcess(const int iBuffersize) = 0;
 
     // TODO(XXX) This hack needs to be removed.
     virtual EngineBuffer* getEngineBuffer() {

@@ -3,8 +3,9 @@
 
 #include <QMap>
 
-#include "defs.h"
 #include "util.h"
+#include "util/defs.h"
+#include "util/types.h"
 #include "engine/effects/engineeffect.h"
 #include "engine/effects/engineeffectparameter.h"
 #include "effects/effectprocessor.h"
@@ -35,7 +36,10 @@ class FlangerEffect : public GroupEffectProcessor<FlangerGroupState> {
     void processGroup(const QString& group,
                       FlangerGroupState* pState,
                       const CSAMPLE* pInput, CSAMPLE* pOutput,
-                      const unsigned int numSamples);
+                      const unsigned int numSamples,
+                      const unsigned int sampleRate,
+                      const EffectProcessor::EnableState enableState,
+                      const GroupFeatureState& groupFeatures);
 
   private:
     QString debugString() const {

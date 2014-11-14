@@ -11,7 +11,7 @@
 class VinylControlControl : public EngineControl {
     Q_OBJECT
   public:
-    VinylControlControl(const char* pGroup, ConfigObject<ConfigValue>* pConfig);
+    VinylControlControl(QString group, ConfigObject<ConfigValue>* pConfig);
     virtual ~VinylControlControl();
 
     void trackLoaded(TrackPointer pTrack);
@@ -26,6 +26,7 @@ class VinylControlControl : public EngineControl {
     void slotControlVinylSeek(double value);
 
   private:
+    ControlObject* m_pControlVinylRate;
     ControlObject* m_pControlVinylSeek;
     ControlObject* m_pControlVinylSpeedType;
     ControlObject* m_pControlVinylStatus;

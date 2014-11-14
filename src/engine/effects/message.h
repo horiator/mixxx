@@ -8,7 +8,7 @@
 #include "util/fifo.h"
 #include "effects/effectchain.h"
 
-const bool kEffectDebugOutput = true;
+const bool kEffectDebugOutput = false;
 
 class EngineEffectRack;
 class EngineEffectChain;
@@ -124,10 +124,10 @@ struct EffectsRequest {
     QString group;
 
     // Used by SET_EFFECT_PARAMETER.
-    QVariant minimum;
-    QVariant maximum;
-    QVariant default_value;
-    QVariant value;
+    double minimum;
+    double maximum;
+    double default_value;
+    double value;
 };
 
 struct EffectsResponse {

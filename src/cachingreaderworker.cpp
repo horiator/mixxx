@@ -1,7 +1,3 @@
-
-#include <math.h>
-#include <limits.h>
-
 #include <QtDebug>
 #include <QFileInfo>
 
@@ -14,6 +10,7 @@
 #include "sampleutil.h"
 #include "util/compatibility.h"
 #include "util/event.h"
+#include "util/math.h"
 
 // There's a little math to this, but not much: 48khz stereo audio is 384kb/sec
 // if using float samples. We want the chunk size to be a power of 2 so it's
@@ -29,11 +26,11 @@ const int CachingReaderWorker::kChunkLength = CHUNK_LENGTH;
 const int CachingReaderWorker::kSamplesPerChunk = CHUNK_LENGTH / sizeof(CSAMPLE);
 
 
-CachingReaderWorker::CachingReaderWorker(const char* group,
+CachingReaderWorker::CachingReaderWorker(QString group,
         FIFO<ChunkReadRequest>* pChunkReadRequestFIFO,
         FIFO<ReaderStatusUpdate>* pReaderStatusFIFO)
-        : m_pGroup(group),
-          m_tag(QString("CachingReaderWorker %1").arg(m_pGroup)),
+        : m_group(group),
+          m_tag(QString("CachingReaderWorker %1").arg(m_group)),
           m_pChunkReadRequestFIFO(pChunkReadRequestFIFO),
           m_pReaderStatusFIFO(pReaderStatusFIFO),
           m_pCurrentSoundSource(NULL),
@@ -107,12 +104,15 @@ void CachingReaderWorker::newTrack(TrackPointer pTrack) {
 }
 
 void CachingReaderWorker::run() {
+    unsigned static id = 0; //the id of this thread, for debugging purposes
+    QThread::currentThread()->setObjectName(QString("CachingReaderWorker %1").arg(++id));
+
     TrackPointer pLoadTrack;
     ChunkReadRequest request;
     ReaderStatusUpdate status;
 
     Event::start(m_tag);
-    while (!deref(m_stop)) {
+    while (!load_atomic(m_stop)) {
         if (m_newTrack) {
             m_newTrackMutex.lock();
             pLoadTrack = m_newTrack;
@@ -132,7 +132,7 @@ void CachingReaderWorker::run() {
 }
 
 void CachingReaderWorker::loadTrack(TrackPointer pTrack) {
-    //qDebug() << m_pGroup << "CachingReaderWorker::loadTrack() lock acquired for load.";
+    //qDebug() << m_group << "CachingReaderWorker::loadTrack() lock acquired for load.";
 
     // Emit that a new track is loading, stops the current track
     emit(trackLoading());
@@ -152,7 +152,7 @@ void CachingReaderWorker::loadTrack(TrackPointer pTrack) {
 
     if (filename.isEmpty() || !pTrack->exists()) {
         // Must unlock before emitting to avoid deadlock
-        qDebug() << m_pGroup << "CachingReaderWorker::loadTrack() load failed for\""
+        qDebug() << m_group << "CachingReaderWorker::loadTrack() load failed for\""
                  << filename << "\", unlocked reader lock";
         status.status = TRACK_NOT_LOADED;
         m_pReaderStatusFIFO->writeBlocking(&status, 1);
@@ -169,7 +169,7 @@ void CachingReaderWorker::loadTrack(TrackPointer pTrack) {
 
     if (!openSucceeded || m_iTrackNumSamples == 0 || trackSampleRate == 0) {
         // Must unlock before emitting to avoid deadlock
-        qDebug() << m_pGroup << "CachingReaderWorker::loadTrack() load failed for\""
+        qDebug() << m_group << "CachingReaderWorker::loadTrack() load failed for\""
                  << filename << "\", file invalid, unlocked reader lock";
         status.status = TRACK_NOT_LOADED;
         m_pReaderStatusFIFO->writeBlocking(&status, 1);

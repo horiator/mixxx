@@ -13,6 +13,7 @@ EngineEffectsManager::EngineEffectsManager(EffectsResponsePipe* pResponsePipe)
 }
 
 EngineEffectsManager::~EngineEffectsManager() {
+    qDeleteAll(m_effects);
 }
 
 void EngineEffectsManager::onCallbackStart() {
@@ -131,10 +132,12 @@ void EngineEffectsManager::onCallbackStart() {
 }
 
 void EngineEffectsManager::process(const QString& group,
-                                   const CSAMPLE* pInput, CSAMPLE* pOutput,
-                                   const unsigned int numSamples) {
+                                   CSAMPLE* pInOut,
+                                   const unsigned int numSamples,
+                                   const unsigned int sampleRate,
+                                   const GroupFeatureState& groupFeatures) {
     foreach (EngineEffectRack* pRack, m_racks) {
-        pRack->process(group, pInput, pOutput, numSamples);
+        pRack->process(group, pInOut, numSamples, sampleRate, groupFeatures);
     }
 }
 

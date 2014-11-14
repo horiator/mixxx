@@ -21,13 +21,14 @@
 
 #include <QtDebug>
 #include <limits.h>
-#include <math.h>
 
 #include "vinylcontrol/vinylcontrolxwax.h"
 #include "util/timer.h"
 #include "controlobjectthread.h"
 #include "controlobject.h"
 #include "sampleutil.h"
+#include "util/math.h"
+#include "util/defs.h"
 
 /****** TODO *******
    Stuff to maybe implement here
@@ -145,7 +146,7 @@ VinylControlXwax::VinylControlXwax(ConfigObject<ConfigValue>* pConfig, QString g
     // do this once across the VinylControlXwax instances.
     s_xwaxLUTMutex.lock();
 
-    timecoder_init(&timecoder, tc_def, speed, iSampleRate, /* photo */ false);
+    timecoder_init(&timecoder, tc_def, speed, iSampleRate, /* phono */ false);
     timecoder_monitor_init(&timecoder, MIXXX_VINYL_SCOPE_SIZE);
     //Note that timecoder_init will not double-malloc the LUTs, and after this we are guaranteed
     //that the LUT has been generated unless we ran out of memory.

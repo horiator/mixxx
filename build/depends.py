@@ -9,10 +9,7 @@ import SCons.Script as SCons
 class PortAudio(Dependence):
 
     def configure(self, build, conf):
-        libs = ['portaudio']
-        if build.msvcdebug:
-            libs = ['portaudiod', 'portaudio-debug']
-        if not conf.CheckLib(libs):
+        if not conf.CheckLib('portaudio'):
             raise Exception(
                 'Did not find libportaudio.a, portaudio.lib, or the PortAudio-v19 development header files.')
 
@@ -32,8 +29,6 @@ class PortMIDI(Dependence):
         # Check for PortTime
         libs = ['porttime', 'libporttime']
         headers = ['porttime.h']
-        if build.msvcdebug:
-            libs = ['porttimed', 'porttime-debug']
 
         # Depending on the library configuration PortTime might be statically
         # linked with PortMidi. We treat either presence of the lib or the
@@ -48,11 +43,11 @@ class PortMIDI(Dependence):
             # We have this special branch here because on Windows we might want
             # to link PortMidi statically which we don't want to do on other
             # platforms.
-            if build.msvcdebug:
-                libs = ['portmidi_sd', 'portmidi_s-debug',
-                        'portmidid', 'portmidi-debug']
-            else:
-                libs = ['portmidi_s', 'portmidi', 'libportmidi']
+            # TODO(rryan): Remove this? Don't want to break anyone but the
+            # static/dynamic choice should be made by the whether the .a is an
+            # import library for a shared library or a static library.
+            libs.append('portmidi_s')
+
         if not conf.CheckLib(libs) or not conf.CheckHeader(headers):
             raise Exception("Did not find PortMidi or its development headers.")
 
@@ -107,36 +102,16 @@ class OggVorbis(Dependence):
 #                raise Exception('Did not find vorbisfile_static.lib or the libvorbisfile development headers.')
 #        else:
         libs = ['libvorbisfile', 'vorbisfile']
-        if build.platform_is_windows:
-            if build.msvcdebug:
-                libs = ['libvorbisfile_static-debug',
-                        'vorbisfile_static-debug', 'vorbisfile-debug', 'libvorbisfile-debug']
-            else:
-                libs = ['libvorbisfile', 'vorbisfile',
-                        'libvorbisfile_static', 'vorbisfile_static']
         if not conf.CheckLib(libs):
             Exception('Did not find libvorbisfile.a, libvorbisfile.lib, '
                       'or the libvorbisfile development headers.')
 
         libs = ['libvorbis', 'vorbis']
-        if build.platform_is_windows:
-            if build.msvcdebug:
-                libs = ['libvorbis_static-debug',
-                        'vorbis_static-debug', 'libvorbis-debug', 'vorbis-debug']
-            else:
-                libs = ['libvorbis', 'vorbis',
-                        'libvorbis_static', 'vorbis_static']
         if not conf.CheckLib(libs):
             raise Exception(
                 'Did not find libvorbis.a, libvorbis.lib, or the libvorbis development headers.')
 
         libs = ['libogg', 'ogg']
-        if build.platform_is_windows:
-            if build.msvcdebug:
-                libs = ['libogg_static-debug',
-                        'ogg_static-debug', 'ogg-debug', 'libogg-debug']
-            else:
-                libs = ['libogg', 'ogg', 'libogg_static', 'ogg_static']
         if not conf.CheckLib(libs):
             raise Exception(
                 'Did not find libogg.a, libogg.lib, or the libogg development headers')
@@ -152,7 +127,6 @@ class OggVorbis(Dependence):
 
     def sources(self, build):
         return ['soundsourceoggvorbis.cpp']
-
 
 class SndFile(Dependence):
 
@@ -173,12 +147,6 @@ class FLAC(Dependence):
         if not conf.CheckHeader('FLAC/stream_decoder.h'):
             raise Exception('Did not find libFLAC development headers')
         libs = ['libFLAC', 'FLAC']
-        if build.platform_is_windows:
-            if build.msvcdebug:
-                libs = ['libFLAC-debug', 'FLAC-debug',
-                        'libFLAC_static-debug', 'FLAC_static-debug']
-            else:
-                libs = ['libFLAC', 'FLAC', 'libFLAC_static', 'FLAC_static']
         if not conf.CheckLib(libs):
             raise Exception('Did not find libFLAC development libraries')
 
@@ -245,6 +213,10 @@ class Qt(Dependence):
         if qt5:
             # Enable qt4 support.
             build.env.Append(CPPDEFINES='QT_DISABLE_DEPRECATED_BEFORE')
+
+        # Set qt_sqlite_plugin flag if we should package the Qt SQLite plugin.
+        build.flags['qt_sqlite_plugin'] = util.get_flags(
+            build.env, 'qt_sqlite_plugin', 0)
 
         # Enable Qt include paths
         if build.platform_is_linux:
@@ -325,9 +297,11 @@ class Qt(Dependence):
             # This automatically converts QtCore to QtCore[45][d] where
             # appropriate.
             if qt5:
-                build.env.EnableQt5Modules(qt_modules, debug=build.msvcdebug)
+                build.env.EnableQt5Modules(qt_modules,
+                                           debug=build.build_is_debug)
             else:
-                build.env.EnableQt4Modules(qt_modules, debug=build.msvcdebug)
+                build.env.EnableQt4Modules(qt_modules,
+                                           debug=build.build_is_debug)
 
             # if build.static_dependencies:
                 # # Pulled from qt-4.8.2-source\mkspecs\win32-msvc2010\qmake.conf
@@ -366,14 +340,10 @@ class Qt(Dependence):
                 build.env.Append(LINKFLAGS="-Wl,-rpath," + framework_path)
                 build.env.Append(LINKFLAGS="-L" + framework_path)
 
-        # QtSQLite DLL
-        if build.platform_is_windows:
-            build.flags['sqlitedll'] = util.get_flags(
-                build.env, 'sqlitedll', 1)
 
 class TestHeaders(Dependence):
     def configure(self, build, conf):
-        build.env.Append(CPPPATH="#lib/gtest-1.5.0/include")
+        build.env.Append(CPPPATH="#lib/gtest-1.7.0/include")
 
 class FidLib(Dependence):
 
@@ -472,8 +442,6 @@ class RubberBand(Dependence):
 class TagLib(Dependence):
     def configure(self, build, conf):
         libs = ['tag']
-        if build.msvcdebug:
-            libs = ['tag-debug']
         if not conf.CheckLib(libs):
             raise Exception(
                 "Could not find libtag or its development headers.")
@@ -505,9 +473,9 @@ class Chromaprint(Dependence):
 class ProtoBuf(Dependence):
     def configure(self, build, conf):
         libs = ['libprotobuf-lite', 'protobuf-lite', 'libprotobuf', 'protobuf']
-        if build.msvcdebug:
-            libs = ['libprotobuf-lite-debug',
-                    'protobuf-lite-debug', 'libprotobuf-debug', 'protobuf-debug']
+        if build.platform_is_windows:
+            if not build.static_dependencies:
+                build.env.Append(CPPDEFINES='PROTOBUF_USE_DLLS')
         if not conf.CheckLib(libs):
             raise Exception(
                 "Could not find libprotobuf or its development headers.")
@@ -527,12 +495,15 @@ class MixxxCore(Feature):
                    "configobject.cpp",
                    "control/control.cpp",
                    "control/controlbehavior.cpp",
+                   "control/controlmodel.cpp",
+                   "controlobject.cpp",
                    "controlobjectslave.cpp",
                    "controlobjectthread.cpp",
-                   "controllogpotmeter.cpp",
-                   "controlobject.cpp",
+                   "controlaudiotaperpot.cpp",
                    "controlpotmeter.cpp",
                    "controllinpotmeter.cpp",
+                   "controllogpotmeter.cpp",
+                   "controleffectknob.cpp",
                    "controlpushbutton.cpp",
                    "controlindicator.cpp",
                    "controlttrotary.cpp",
@@ -542,11 +513,12 @@ class MixxxCore(Feature):
                    "dlgprefsound.cpp",
                    "dlgprefsounditem.cpp",
                    "controllers/dlgprefcontroller.cpp",
-                   "controllers/dlgprefmappablecontroller.cpp",
                    "controllers/dlgcontrollerlearning.cpp",
                    "controllers/dlgprefcontrollers.cpp",
                    "dlgpreflibrary.cpp",
                    "dlgprefcontrols.cpp",
+                   "dlgprefwaveform.cpp",
+                   "dlgprefautodj.cpp",
                    "dlgprefkey.cpp",
                    "dlgprefreplaygain.cpp",
                    "dlgprefnovinyl.cpp",
@@ -559,6 +531,8 @@ class MixxxCore(Feature):
                    "dlgautodj.cpp",
                    "dlghidden.cpp",
                    "dlgmissing.cpp",
+                   "dlgdevelopertools.cpp",
+                   "dlgcoverartfullsize.cpp",
 
                    "effects/effectmanifest.cpp",
                    "effects/effectmanifestparameter.cpp",
@@ -570,7 +544,9 @@ class MixxxCore(Feature):
                    "effects/effectrack.cpp",
                    "effects/effectchainslot.cpp",
                    "effects/effectslot.cpp",
+                   "effects/effectparameterslotbase.cpp",
                    "effects/effectparameterslot.cpp",
+                   "effects/effectbuttonparameterslot.cpp",
 
                    "effects/effectsmanager.cpp",
                    "effects/effectchainmanager.cpp",
@@ -578,8 +554,13 @@ class MixxxCore(Feature):
 
                    "effects/native/nativebackend.cpp",
                    "effects/native/bitcrushereffect.cpp",
+                   "effects/native/linkwitzriley8eqeffect.cpp",
+                   "effects/native/bessel4lvmixeqeffect.cpp",
+                   "effects/native/bessel8lvmixeqeffect.cpp",
+                   "effects/native/graphiceqeffect.cpp",
                    "effects/native/flangereffect.cpp",
                    "effects/native/filtereffect.cpp",
+                   "effects/native/moogladder4filtereffect.cpp",
                    "effects/native/reverbeffect.cpp",
                    "effects/native/echoeffect.cpp",
                    "effects/native/reverb/Reverb.cc",
@@ -600,9 +581,15 @@ class MixxxCore(Feature):
                    "engine/enginebufferscale.cpp",
                    "engine/enginebufferscaledummy.cpp",
                    "engine/enginebufferscalelinear.cpp",
-                   "engine/engineclipping.cpp",
                    "engine/enginefilterblock.cpp",
-                   "engine/enginefilteriir.cpp",
+                   "engine/enginefilterbiquad1.cpp",
+                   "engine/enginefiltermoogladder4.cpp",
+                   "engine/enginefilterbessel4.cpp",
+                   "engine/enginefilterbessel8.cpp",
+                   "engine/enginefilterbutterworth4.cpp",
+                   "engine/enginefilterbutterworth8.cpp",
+                   "engine/enginefilterlinkwitzriley4.cpp",
+                   "engine/enginefilterlinkwitzriley8.cpp",
                    "engine/enginefilter.cpp",
                    "engine/engineobject.cpp",
                    "engine/enginepregain.cpp",
@@ -613,7 +600,6 @@ class MixxxCore(Feature):
                    "engine/enginevinylsoundemu.cpp",
                    "engine/enginesidechaincompressor.cpp",
                    "engine/sidechain/enginesidechain.cpp",
-                   "engine/enginefilterbutterworth8.cpp",
                    "engine/enginexfader.cpp",
                    "engine/enginemicrophone.cpp",
                    "engine/enginedeck.cpp",
@@ -646,11 +632,22 @@ class MixxxCore(Feature):
                    "controllers/controllermanager.cpp",
                    "controllers/controllerpresetfilehandler.cpp",
                    "controllers/controllerpresetinfo.cpp",
+                   "controllers/controlpickermenu.cpp",
+                   "controllers/controllermappingtablemodel.cpp",
+                   "controllers/controllerinputmappingtablemodel.cpp",
+                   "controllers/controlleroutputmappingtablemodel.cpp",
+                   "controllers/delegates/controldelegate.cpp",
+                   "controllers/delegates/midichanneldelegate.cpp",
+                   "controllers/delegates/midiopcodedelegate.cpp",
+                   "controllers/delegates/midibytedelegate.cpp",
+                   "controllers/delegates/midioptionsdelegate.cpp",
+                   "controllers/learningutils.cpp",
+                   "controllers/midi/midimessage.cpp",
+                   "controllers/midi/midiutils.cpp",
                    "controllers/midi/midicontroller.cpp",
                    "controllers/midi/midicontrollerpresetfilehandler.cpp",
                    "controllers/midi/midienumerator.cpp",
                    "controllers/midi/midioutputhandler.cpp",
-                   "controllers/mixxxcontrol.cpp",
                    "controllers/qtscript-bytearray/bytearrayclass.cpp",
                    "controllers/qtscript-bytearray/bytearrayprototype.cpp",
                    "controllers/softtakeover.cpp",
@@ -669,9 +666,11 @@ class MixxxCore(Feature):
                    "widget/wwidget.cpp",
                    "widget/wwidgetgroup.cpp",
                    "widget/wwidgetstack.cpp",
+                   "widget/wsizeawarestack.cpp",
                    "widget/wlabel.cpp",
                    "widget/wtracktext.cpp",
                    "widget/wnumber.cpp",
+                   "widget/wnumberdb.cpp",
                    "widget/wnumberpos.cpp",
                    "widget/wnumberrate.cpp",
                    "widget/wknob.cpp",
@@ -679,11 +678,13 @@ class MixxxCore(Feature):
                    "widget/wdisplay.cpp",
                    "widget/wvumeter.cpp",
                    "widget/wpushbutton.cpp",
+                   "widget/weffectpushbutton.cpp",
                    "widget/wslidercomposed.cpp",
                    "widget/wstatuslight.cpp",
                    "widget/woverview.cpp",
                    "widget/woverviewlmh.cpp",
                    "widget/woverviewhsv.cpp",
+                   "widget/woverviewrgb.cpp",
                    "widget/wspinny.cpp",
                    "widget/wskincolor.cpp",
                    "widget/wsearchlineedit.cpp",
@@ -691,15 +692,19 @@ class MixxxCore(Feature):
                    "widget/wimagestore.cpp",
                    "widget/hexspinbox.cpp",
                    "widget/wtrackproperty.cpp",
+                   "widget/wstarrating.cpp",
                    "widget/weffectchain.cpp",
                    "widget/weffect.cpp",
                    "widget/weffectparameter.cpp",
+                   "widget/weffectbuttonparameter.cpp",
+                   "widget/weffectparameterbase.cpp",
                    "widget/wtime.cpp",
                    "widget/wkey.cpp",
                    "widget/wcombobox.cpp",
                    "widget/wsplitter.cpp",
-
-                   "mathstuff.cpp",
+                   "widget/wcoverart.cpp",
+                   "widget/wcoverartlabel.cpp",
+                   "widget/wcoverartmenu.cpp",
 
                    "network.cpp",
                    "musicbrainz/tagfetcher.cpp",
@@ -728,6 +733,8 @@ class MixxxCore(Feature):
                    "library/missingtablemodel.cpp",
                    "library/hiddentablemodel.cpp",
                    "library/proxytrackmodel.cpp",
+                   "library/coverart.cpp",
+                   "library/coverartcache.cpp",
 
                    "library/playlisttablemodel.cpp",
                    "library/libraryfeature.cpp",
@@ -788,6 +795,7 @@ class MixxxCore(Feature):
                    "library/bpmdelegate.cpp",
                    "library/bpmeditor.cpp",
                    "library/previewbuttondelegate.cpp",
+                   "library/coverartdelegate.cpp",
                    "audiotagger.cpp",
 
                    "library/treeitemmodel.cpp",
@@ -819,12 +827,14 @@ class MixxxCore(Feature):
 
                    "waveform/renderers/waveformrendererfilteredsignal.cpp",
                    "waveform/renderers/waveformrendererhsv.cpp",
+                   "waveform/renderers/waveformrendererrgb.cpp",
                    "waveform/renderers/qtwaveformrendererfilteredsignal.cpp",
                    "waveform/renderers/qtwaveformrenderersimplesignal.cpp",
                    "waveform/renderers/glwaveformrendererfilteredsignal.cpp",
                    "waveform/renderers/glwaveformrenderersimplesignal.cpp",
                    "waveform/renderers/glslwaveformrenderersignal.cpp",
                    "waveform/renderers/glvsynctestrenderer.cpp",
+                   "waveform/renderers/glwaveformrendererrgb.cpp",
 
                    "waveform/renderers/waveformsignalcolors.cpp",
 
@@ -837,6 +847,7 @@ class MixxxCore(Feature):
                    "waveform/widgets/emptywaveformwidget.cpp",
                    "waveform/widgets/softwarewaveformwidget.cpp",
                    "waveform/widgets/hsvwaveformwidget.cpp",
+                   "waveform/widgets/rgbwaveformwidget.cpp",
                    "waveform/widgets/qtwaveformwidget.cpp",
                    "waveform/widgets/qtsimplewaveformwidget.cpp",
                    "waveform/widgets/glwaveformwidget.cpp",
@@ -844,6 +855,8 @@ class MixxxCore(Feature):
                    "waveform/widgets/glvsynctestwidget.cpp",
 
                    "waveform/widgets/glslwaveformwidget.cpp",
+
+                   "waveform/widgets/glrgbwaveformwidget.cpp",
 
                    "skin/imginvert.cpp",
                    "skin/imgloader.cpp",
@@ -889,6 +902,7 @@ class MixxxCore(Feature):
                    "util/sleepableqthread.cpp",
                    "util/statsmanager.cpp",
                    "util/stat.cpp",
+                   "util/statmodel.cpp",
                    "util/time.cpp",
                    "util/timer.cpp",
                    "util/performancetimer.cpp",
@@ -899,6 +913,8 @@ class MixxxCore(Feature):
                    "util/sandbox.cpp",
                    "util/file.cpp",
                    "util/mac.cpp",
+                   "util/task.cpp",
+                   "util/experiment.cpp",
 
                    '#res/mixxx.qrc'
                    ]
@@ -920,15 +936,18 @@ class MixxxCore(Feature):
         ui_files = [
             'controllers/dlgcontrollerlearning.ui',
             'controllers/dlgprefcontrollerdlg.ui',
-            'controllers/dlgprefmappablecontrollerdlg.ui',
             'controllers/dlgprefcontrollersdlg.ui',
             'dlgaboutdlg.ui',
             'dlganalysis.ui',
             'dlgautodj.ui',
+            'dlgcoverartfullsize.ui',
+            'dlgdevelopertoolsdlg.ui',
             'dlghidden.ui',
             'dlgmissing.ui',
             'dlgprefbeatsdlg.ui',
             'dlgprefcontrolsdlg.ui',
+            'dlgprefwaveformdlg.ui',
+            'dlgprefautodjdlg.ui',
             'dlgprefcrossfaderdlg.ui',
             'dlgprefkeydlg.ui',
             'dlgprefeqdlg.ui',
@@ -969,10 +988,10 @@ class MixxxCore(Feature):
 
         if build.toolchain_is_gnu:
             # Default GNU Options
-            # TODO(XXX) always generate debugging info?
             build.env.Append(CCFLAGS='-pipe')
             build.env.Append(CCFLAGS='-Wall')
             build.env.Append(CCFLAGS='-Wextra')
+            # TODO(XXX) always generate debugging info?
             build.env.Append(CCFLAGS='-g')
         elif build.toolchain_is_msvs:
             # Validate the specified winlib directory exists
@@ -983,28 +1002,66 @@ class MixxxCore(Feature):
                 raise Exception("Winlib path does not exist! Please specify your winlib directory"
                                 "path by running 'scons winlib=[path]'")
                 Script.Exit(1)
-            # mixxx_lib_path = '#/../../mixxx-win%slib-msvc100-release' %
-            # build.bitwidth
 
             # Set include and library paths to work with this
-            build.env.Append(CPPPATH=mixxx_lib_path)
-            build.env.Append(LIBPATH=mixxx_lib_path)
+            build.env.Append(CPPPATH=[mixxx_lib_path,
+                                      os.path.join(mixxx_lib_path, 'include')])
+            build.env.Append(LIBPATH=[mixxx_lib_path, os.path.join(mixxx_lib_path, 'lib')])
+
+            # Find executables (e.g. protoc) in the winlib path
+            build.env.AppendENVPath('PATH', mixxx_lib_path)
+            build.env.AppendENVPath('PATH', os.path.join(mixxx_lib_path, 'bin'))
+
+            # Valid values of /MACHINE are: {ARM|EBC|X64|X86}
+            # http://msdn.microsoft.com/en-us/library/5wy54dk2.aspx
+            if build.architecture_is_x86:
+                if build.machine_is_64bit:
+                    build.env.Append(LINKFLAGS='/MACHINE:X64')
+                else:
+                    build.env.Append(LINKFLAGS='/MACHINE:X86')
+            elif build.architecture_is_arm:
+                build.env.Append(LINKFLAGS='/MACHINE:ARM')
+            else:
+                raise Exception('Invalid machine type for Windows build.')
 
             # Ugh, MSVC-only hack :( see
             # http://www.qtforum.org/article/17883/problem-using-qstring-
             # fromstdwstring.html
             build.env.Append(CXXFLAGS='/Zc:wchar_t-')
 
-            # Still needed?
-            build.env.Append(CPPPATH=[
-                "$VCINSTALLDIR/include/atl",
-                "C:/Program Files/Microsoft Platform SDK/Include/atl"])
+            # Build with multiple processes. TODO(XXX) make this configurable.
+            # http://msdn.microsoft.com/en-us/library/bb385193.aspx
+            build.env.Append(CCFLAGS='/MP')
+
+            # Generate debugging information for compilation units and
+            # executables linked regardless of whether we are creating a debug
+            # build. Having PDB files for our releases is helpful for debugging.
+            build.env.Append(LINKFLAGS='/DEBUG')
+            build.env.Append(CCFLAGS='/Zi')
+
+            if build.build_is_debug:
+                # Important: We always build Mixxx with the Multi-Threaded DLL
+                # runtime because Mixxx loads DLLs at runtime. Since this is a
+                # debug build, use the debug version of the MD runtime.
+                build.env.Append(CCFLAGS='/MDd')
+                # Enable the Mixxx debug console (see main.cpp).
+                build.env.Append(CPPDEFINES='DEBUGCONSOLE')
+            else:
+                # Important: We always build Mixxx with the Multi-Threaded DLL
+                # runtime because Mixxx loads DLLs at runtime.
+                build.env.Append(CCFLAGS='/MD')
 
         if build.platform_is_windows:
             build.env.Append(CPPDEFINES='__WINDOWS__')
+            # Restrict ATL to XP-compatible SDK functions.
+            # TODO(rryan): Remove once we ditch XP support.
+            build.env.Append(CPPDEFINES='_ATL_XP_TARGETING')
             build.env.Append(
                 CPPDEFINES='_ATL_MIN_CRT')  # Helps prevent duplicate symbols
             # Need this on Windows until we have UTF16 support in Mixxx
+            # use stl min max defines
+            # http://connect.microsoft.com/VisualStudio/feedback/details/553420/std-cpp-max-and-std-cpp-min-not-available-in-visual-c-2010
+            build.env.Append(CPPDEFINES='NOMINMAX')
             build.env.Append(CPPDEFINES='UNICODE')
             build.env.Append(
                 CPPDEFINES='WIN%s' % build.bitwidth)  # WIN32 or WIN64
@@ -1070,6 +1127,7 @@ class MixxxCore(Feature):
             mixxx_files = [
                 ('SETTINGS_PATH', 'Local Settings/Application Data/Mixxx/'),
                 ('SETTINGS_FILE', 'mixxx.cfg')]
+
         # Escape the filenames so they don't end up getting screwed up in the
         # shell.
         mixxx_files = [(k, r'\"%s\"' % v) for k, v in mixxx_files]
@@ -1079,10 +1137,12 @@ class MixxxCore(Feature):
         # RESOURCE_PATH that covers Win and OSX too:
         if build.platform_is_linux or build.platform_is_bsd:
             prefix = SCons.ARGUMENTS.get('prefix', '/usr/local')
-            share_path = os.path.join(prefix, 'share/mixxx')
+            share_path = os.path.join (prefix, build.env.get(
+                'SHAREDIR', default='share'), 'mixxx')
             build.env.Append(
                 CPPDEFINES=('UNIX_SHARE_PATH', r'\"%s\"' % share_path))
-            lib_path = os.path.join(prefix, 'lib/mixxx')
+            lib_path = os.path.join(prefix, build.env.get(
+                'LIBDIR', default='lib'), 'mixxx')
             build.env.Append(
                 CPPDEFINES=('UNIX_LIB_PATH', r'\"%s\"' % lib_path))
 
@@ -1096,15 +1156,19 @@ class MixxxCore(Feature):
         after the Configure checks run."""
         if build.platform_is_windows:
             if build.toolchain_is_msvs:
-                if not build.static_dependencies or build.msvcdebug:
+                if not build.static_dependencies or build.build_is_debug:
                     build.env.Append(LINKFLAGS=['/nodefaultlib:LIBCMT.lib',
                                                 '/nodefaultlib:LIBCMTd.lib'])
 
                 build.env.Append(LINKFLAGS='/entry:mainCRTStartup')
-                # Makes the program not launch a shell first
-                build.env.Append(LINKFLAGS='/subsystem:windows')
+                # Makes the program not launch a shell first.
+                # Minimum platform version 5.01 for XP x86 and 5.02 for XP x64.
+                if build.machine_is_64bit:
+                    build.env.Append(LINKFLAGS='/subsystem:windows,5.02')
+                else:
+                    build.env.Append(LINKFLAGS='/subsystem:windows,5.01')
+                # Force MSVS to generate a manifest (MSVC2010)
                 build.env.Append(LINKFLAGS='/manifest')
-                                 #Force MSVS to generate a manifest (MSVC2010)
             elif build.toolchain_is_gnu:
                 # Makes the program not launch a shell first
                 build.env.Append(LINKFLAGS='--subsystem,windows')

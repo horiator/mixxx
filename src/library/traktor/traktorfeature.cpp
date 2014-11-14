@@ -146,10 +146,11 @@ void TraktorFeature::activate() {
         m_future_watcher.setFuture(m_future);
         m_title = tr("(loading) Traktor");
         //calls a slot in the sidebar model such that 'iTunes (isLoading)' is displayed.
-        emit (featureIsLoading(this));
+        emit (featureIsLoading(this, true));
     }
 
     emit(showTrackModel(m_pTraktorTableModel));
+    emit(enableCoverArtDisplay(false));
 }
 
 void TraktorFeature::activateChild(const QModelIndex& index) {
@@ -163,6 +164,7 @@ void TraktorFeature::activateChild(const QModelIndex& index) {
         qDebug() << "Activate Traktor Playlist: " << item->dataPath().toString();
         m_pTraktorPlaylistModel->setPlaylist(item->dataPath().toString());
         emit(showTrackModel(m_pTraktorPlaylistModel));
+        emit(enableCoverArtDisplay(false));
     }
 }
 
@@ -375,8 +377,6 @@ TreeItem* TraktorFeature::parsePlaylists(QXmlStreamReader &xml) {
     TreeItem *rootItem = new TreeItem();
     TreeItem * parent = rootItem;
 
-    bool inPlaylistTag = false;
-
     QSqlQuery query_insert_to_playlists(m_database);
     query_insert_to_playlists.prepare("INSERT INTO traktor_playlists (name) "
                   "VALUES (:name)");
@@ -405,8 +405,7 @@ TreeItem* TraktorFeature::parsePlaylists(QXmlStreamReader &xml) {
                     TreeItem * item = new TreeItem(name,current_path, this, parent);
                     parent->appendChild(item);
                     parent = item;
-               }
-               if (type == "PLAYLIST") {
+               } else if (type == "PLAYLIST") {
                     current_path += delimiter;
                     current_path += name;
                     //qDebug() << "Playlist: " +current_path << " has parent " << parent->data().toString();
@@ -419,8 +418,6 @@ TreeItem* TraktorFeature::parsePlaylists(QXmlStreamReader &xml) {
                                          query_insert_to_playlists,
                                          query_insert_to_playlist_tracks);
                 }
-            }
-            if (xml.name() == "ENTRY" && inPlaylistTag) {
             }
         }
 
@@ -435,9 +432,6 @@ TreeItem* TraktorFeature::parsePlaylists(QXmlStreamReader &xml) {
                 int path_length = current_path.size();
 
                 current_path.remove(lastSlash, path_length - lastSlash);
-            }
-            if (xml.name() == "PLAYLIST") {
-                inPlaylistTag = false;
             }
             //We leave the infinte loop, if twe have the closing "PLAYLIST" tag
             if (xml.name() == "PLAYLISTS") {

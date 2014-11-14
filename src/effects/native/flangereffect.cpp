@@ -1,8 +1,9 @@
+// THIS HAS TO BE THE FIRST INCLUDE!!! --kain88 (April 2013)
+// http://stackoverflow.com/a/6563891
+#include "util/math.h"
 #include <QtDebug>
 
 #include "effects/native/flangereffect.h"
-
-#include "mathstuff.h"
 
 const unsigned int kMaxDelay = 5000;
 const unsigned int kLfoAmplitude = 240;
@@ -27,7 +28,6 @@ EffectManifest FlangerEffect::getManifest() {
     depth->setName(QObject::tr("Depth"));
     depth->setDescription("TODO");
     depth->setControlHint(EffectManifestParameter::CONTROL_KNOB_LINEAR);
-    depth->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     depth->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     depth->setUnitsHint(EffectManifestParameter::UNITS_UNKNOWN);
     depth->setDefault(0.0);
@@ -39,7 +39,6 @@ EffectManifest FlangerEffect::getManifest() {
     delay->setName(QObject::tr("Delay"));
     delay->setDescription("TODO");
     delay->setControlHint(EffectManifestParameter::CONTROL_KNOB_LINEAR);
-    delay->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     delay->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     delay->setUnitsHint(EffectManifestParameter::UNITS_UNKNOWN);
     delay->setDefault(50.0);
@@ -51,7 +50,6 @@ EffectManifest FlangerEffect::getManifest() {
     period->setName(QObject::tr("Period"));
     period->setDescription("TODO");
     period->setControlHint(EffectManifestParameter::CONTROL_KNOB_LINEAR);
-    period->setValueHint(EffectManifestParameter::VALUE_FLOAT);
     period->setSemanticHint(EffectManifestParameter::SEMANTIC_UNKNOWN);
     period->setUnitsHint(EffectManifestParameter::UNITS_UNKNOWN);
     period->setDefault(50000.0);
@@ -70,18 +68,21 @@ FlangerEffect::FlangerEffect(EngineEffect* pEffect,
 }
 
 FlangerEffect::~FlangerEffect() {
-    qDebug() << debugString() << "destroyed";
+    //qDebug() << debugString() << "destroyed";
 }
 
 void FlangerEffect::processGroup(const QString& group,
                                  FlangerGroupState* pState,
                                  const CSAMPLE* pInput, CSAMPLE* pOutput,
-                                 const unsigned int numSamples) {
+                                 const unsigned int numSamples,
+                                 const unsigned int sampleRate,
+                                 const EffectProcessor::EnableState enableState,
+                                 const GroupFeatureState& groupFeatures) {
     Q_UNUSED(group);
-    CSAMPLE lfoPeriod = m_pPeriodParameter ?
-            m_pPeriodParameter->value().toDouble() : 0.0f;
-    CSAMPLE lfoDepth = m_pDepthParameter ?
-            m_pDepthParameter->value().toDouble() : 0.0f;
+    Q_UNUSED(groupFeatures);
+    Q_UNUSED(sampleRate);
+    CSAMPLE lfoPeriod = m_pPeriodParameter->value();
+    CSAMPLE lfoDepth = m_pDepthParameter->value();
     // Unused in EngineFlanger
     // CSAMPLE lfoDelay = m_pDelayParameter ?
     //         m_pDelayParameter->value().toDouble() : 0.0f;
@@ -107,7 +108,7 @@ void FlangerEffect::processGroup(const QString& group,
         }
 
         CSAMPLE periodFraction = CSAMPLE(pState->time) / lfoPeriod;
-        CSAMPLE delay = kAverageDelayLength + kLfoAmplitude * sin(two_pi * periodFraction);
+        CSAMPLE delay = kAverageDelayLength + kLfoAmplitude * sin(M_PI * 2.0f * periodFraction);
 
         int framePrev = (pState->delayPos - int(delay) + kMaxDelay - 1) % kMaxDelay;
         int frameNext = (pState->delayPos - int(delay) + kMaxDelay    ) % kMaxDelay;

@@ -30,6 +30,7 @@ TEST_F(EffectChainSlotTest, ChainSlotMirrorsLoadedChain) {
 
     EffectRackPointer pRack = m_pEffectsManager->addEffectRack();
     EffectChainSlotPointer pSlot = pRack->addEffectChainSlot();
+    pSlot->clear();
 
     QString group = EffectChainSlot::formatGroupString(iRackNumber,
                                                        iChainNumber);
@@ -41,23 +42,16 @@ TEST_F(EffectChainSlotTest, ChainSlotMirrorsLoadedChain) {
     pChain->setEnabled(false);
     EXPECT_DOUBLE_EQ(0.0, ControlObject::get(ConfigKey(group, "enabled")));
 
-    // Enabled is read-only. Sets to it should not do anything.
-    ControlObject::set(ConfigKey(group, "enabled"), 1);
-    EXPECT_FALSE(pChain->enabled());
+    ControlObject::set(ConfigKey(group, "enabled"), 1.0);
+    EXPECT_TRUE(pChain->enabled());
+
+    // Loaded is read-only. Sets to it should not do anything.
+    ControlObject::set(ConfigKey(group, "loaded"), 0);
+    EXPECT_TRUE(ControlObject::get(ConfigKey(group, "loaded")) > 0.0);
 
     // numEffects is read-only. Sets to it should not do anything.
     ControlObject::set(ConfigKey(group, "num_effects"), 1);
-    EXPECT_EQ(0, pChain->numEffects());
-
-    ControlObject::set(ConfigKey(group, "parameter"), 0.5);
-    EXPECT_DOUBLE_EQ(0.5, pChain->parameter());
-
-    pChain->setParameter(1.0);
-    EXPECT_DOUBLE_EQ(pChain->parameter(),
-                     ControlObject::get(ConfigKey(group, "parameter")));
-
-    ControlObject::set(ConfigKey(group, "parameter"), 0.5);
-    EXPECT_DOUBLE_EQ(0.5, pChain->parameter());
+    EXPECT_EQ(0U, pChain->numEffects());
 
     pChain->setMix(1.0);
     EXPECT_DOUBLE_EQ(pChain->mix(),
@@ -81,6 +75,19 @@ TEST_F(EffectChainSlotTest, ChainSlotMirrorsLoadedChain) {
     EXPECT_FALSE(pChain->enabledForGroup("[Master]"));
 }
 
+TEST_F(EffectChainSlotTest, ChainSlotMirrorsLoadedChain_StartsWithChainLoaded) {
+    EffectChainPointer pChain(new EffectChain(m_pEffectsManager.data(),
+                                              "org.mixxx.test.chain1"));
+    int iRackNumber = 0;
+    int iChainNumber = 0;
+
+    EffectRackPointer pRack = m_pEffectsManager->addEffectRack();
+    EffectChainSlotPointer pSlot = pRack->addEffectChainSlot();
+    QString group = EffectChainSlot::formatGroupString(iRackNumber,
+                                                       iChainNumber);
+    EXPECT_DOUBLE_EQ(1.0, ControlObject::get(ConfigKey(group, "loaded")));
+}
+
 TEST_F(EffectChainSlotTest, ChainSlotMirrorsLoadedChain_Clear) {
     EffectChainPointer pChain(new EffectChain(m_pEffectsManager.data(),
                                               "org.mixxx.test.chain1"));
@@ -91,11 +98,14 @@ TEST_F(EffectChainSlotTest, ChainSlotMirrorsLoadedChain_Clear) {
     EffectRackPointer pRack = m_pEffectsManager->addEffectRack();
     EffectChainSlotPointer pSlot = pRack->addEffectChainSlot();
 
+    // Clear the default chain.
+    pSlot->clear();
+
     QString group = EffectChainSlot::formatGroupString(iRackNumber,
                                                        iChainNumber);
-    EXPECT_FALSE(pChain->enabled());
+    EXPECT_DOUBLE_EQ(0.0, ControlObject::get(ConfigKey(group, "loaded")));
     pSlot->loadEffectChain(pChain);
-    EXPECT_TRUE(pChain->enabled());
+    EXPECT_DOUBLE_EQ(1.0, ControlObject::get(ConfigKey(group, "loaded")));
     ControlObject::set(ConfigKey(group, "clear"), 1.0);
-    EXPECT_FALSE(pChain->enabled());
+    EXPECT_DOUBLE_EQ(0.0, ControlObject::get(ConfigKey(group, "loaded")));
 }

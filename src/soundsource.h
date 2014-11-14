@@ -18,6 +18,7 @@
 #ifndef SOUNDSOURCE_H
 #define SOUNDSOURCE_H
 
+#include <QImage>
 #include <QString>
 
 #include <taglib/tfile.h>
@@ -26,15 +27,17 @@
 #include <taglib/xiphcomment.h>
 #include <taglib/mp4tag.h>
 
-#include "defs.h"
+#include "util/types.h"
+#include "util/defs.h"
 
-#define MIXXX_SOUNDSOURCE_API_VERSION 5
+#define MIXXX_SOUNDSOURCE_API_VERSION 6
 /** @note SoundSource API Version history:
            1 - Mixxx 1.8.0 Beta 2
            2 - Mixxx 1.9.0 Pre (added key code)
            3 - Mixxx 1.10.0 Pre (added freeing function for extensions)
            4 - Mixxx 1.11.0 Pre (added composer field to SoundSource)
            5 - Mixxx 1.12.0 Pre (added album artist and grouping fields to SoundSource)
+           6 - Mixxx 1.13.0 (added cover art suppport)
   */
 
 /** Getter function to be declared by all SoundSource plugins */
@@ -58,12 +61,16 @@ class SoundSource
 public:
     SoundSource(QString qFilename);
     virtual ~SoundSource();
-    virtual int open() = 0;
+    virtual Result open() = 0;
     virtual long seek(long) = 0;
     virtual unsigned read(unsigned long size, const SAMPLE*) = 0;
     virtual long unsigned length() = 0;
     static float str2bpm( QString sBpm );
-    virtual int parseHeader() = 0;
+    virtual Result parseHeader() = 0;
+
+    // Returns the first cover art image embedded within the file (if any).
+    virtual QImage parseCoverArt() = 0;
+
     //static QList<QString> supportedFileExtensions(); //CRAP can't do this!
     /** Return a list of cue points stored in the file */
     virtual QList<long> *getCuePoints();
@@ -108,8 +115,8 @@ public:
     virtual void setBitrate(int);
     virtual void setSampleRate(unsigned int);
     virtual void setChannels(int);
-protected:
 
+protected:
     // Automatically collects generic data from a TagLib File: title, artist,
     // album, comment, genre, year, tracknumber, duration, bitrate, samplerate,
     // and channels.
@@ -120,6 +127,17 @@ protected:
     bool processMP4Tag(TagLib::MP4::Tag* mp4);
     void processBpmString(QString tagName, QString sBpm);
     void parseReplayGainString(QString sReplayGain);
+
+    // In order to avoid processing images when it's not
+    // needed (TIO building), we must process it separately.
+    QImage getCoverInID3v2Tag(TagLib::ID3v2::Tag* id3v2);
+    QImage getCoverInAPETag(TagLib::APE::Tag* ape);
+    QImage getCoverInXiphComment(TagLib::Ogg::XiphComment* xiph);
+    QImage getCoverInMP4Tag(TagLib::MP4::Tag* mp4);
+
+    // Taglib strings can be NULL and using it could cause some segfaults,
+    // so in this case it will return a QString()
+    QString toQString(TagLib::String tstring) const;
 
     /** File name */
     QString m_qFilename;

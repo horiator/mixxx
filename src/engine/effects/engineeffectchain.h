@@ -5,9 +5,10 @@
 #include <QList>
 #include <QSet>
 
-#include "defs.h"
 #include "util.h"
+#include "util/types.h"
 #include "engine/effects/message.h"
+#include "engine/effects/groupfeaturestate.h"
 #include "effects/effectchain.h"
 
 class EngineEffect;
@@ -22,15 +23,13 @@ class EngineEffectChain : public EffectsRequestHandler {
         EffectsResponsePipe* pResponsePipe);
 
     void process(const QString& group,
-                 const CSAMPLE* pInput, CSAMPLE* pOutput,
-                 const unsigned int numSamples);
+                 CSAMPLE* pInOut,
+                 const unsigned int numSamples,
+                 const unsigned int sampleRate,
+                 const GroupFeatureState& groupFeatures);
 
     const QString& id() const {
         return m_id;
-    }
-
-    bool enabled() const {
-        return m_bEnabled;
     }
 
     bool enabledForGroup(const QString& group) const;
@@ -47,19 +46,18 @@ class EngineEffectChain : public EffectsRequestHandler {
     bool disableForGroup(const QString& group);
 
     QString m_id;
-    bool m_bEnabled;
+    EffectProcessor::EnableState m_enableState;
     EffectChain::InsertionType m_insertionType;
     CSAMPLE m_dMix;
     QList<EngineEffect*> m_effects;
     CSAMPLE* m_pBuffer;
     struct GroupStatus {
-        GroupStatus() : enabled(false),
-                        old_gain(0),
-                        ramp_out(false) {
+        GroupStatus()
+                : old_gain(0),
+                  enable_state(EffectProcessor::DISABLED) {
         }
-        bool enabled;
         CSAMPLE old_gain;
-        bool ramp_out;
+        EffectProcessor::EnableState enable_state;
     };
     QMap<QString, GroupStatus> m_groupStatus;
 

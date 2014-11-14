@@ -46,19 +46,24 @@ TEST_F(EffectSlotTest, ControlsReflectSlotState) {
     manifest.setId("org.mixxx.test.effect");
     manifest.setName("Test Effect");
     manifest.addParameter();
-    registerTestEffect(manifest);
+    registerTestEffect(manifest, false);
 
     // Check the controls reflect the state of their loaded effect.
     EffectPointer pEffect = m_pEffectsManager->instantiateEffect(manifest.id());
-    EXPECT_DOUBLE_EQ(0, ControlObject::get(ConfigKey(group, "enabled")));
+
+    // Enabled defaults to true in both effects and the slot.
+    pEffect->setEnabled(false);
+    EXPECT_DOUBLE_EQ(1.0, ControlObject::get(ConfigKey(group, "enabled")));
     EXPECT_DOUBLE_EQ(0, ControlObject::get(ConfigKey(group, "num_parameters")));
+
     pEffectSlot->loadEffect(pEffect);
     EXPECT_LE(0, ControlObject::get(ConfigKey(group, "enabled")));
     EXPECT_DOUBLE_EQ(1, ControlObject::get(ConfigKey(group, "num_parameters")));
+    EXPECT_TRUE(pEffect->enabled());
 
-    // Enabled is read-only.
-    ControlObject::set(ConfigKey(group, "enabled"), 0.0);
-    EXPECT_LE(0, ControlObject::get(ConfigKey(group, "enabled")));
+    // loaded is read-only.
+    ControlObject::set(ConfigKey(group, "loaded"), 0.0);
+    EXPECT_LE(0, ControlObject::get(ConfigKey(group, "loaded")));
 
     // num_parameters is read-only.
     ControlObject::set(ConfigKey(group, "num_parameters"), 2.0);

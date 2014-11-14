@@ -52,8 +52,11 @@ SoundSourceFLAC::~SoundSourceFLAC() {
 }
 
 // soundsource overrides
-int SoundSourceFLAC::open() {
-    m_file.open(QIODevice::ReadOnly);
+Result SoundSourceFLAC::open() {
+    if (!m_file.open(QIODevice::ReadOnly)) {
+        qWarning() << "SSFLAC: Could not read file!";
+        return ERR;
+    }
 
     m_decoder = FLAC__stream_decoder_new();
     if (m_decoder == NULL) {
@@ -148,7 +151,7 @@ inline unsigned long SoundSourceFLAC::length() {
     return m_samples * 2; /*m_iChannels*/
 }
 
-int SoundSourceFLAC::parseHeader() {
+Result SoundSourceFLAC::parseHeader() {
     setType("flac");
     QByteArray qBAFilename = m_qFilename.toLocal8Bit();
     TagLib::FLAC::File f(qBAFilename.constData());
@@ -163,6 +166,26 @@ int SoundSourceFLAC::parseHeader() {
     }
 
     return result ? OK : ERR;
+}
+
+QImage SoundSourceFLAC::parseCoverArt() {
+    QImage coverArt;
+    setType("flac");
+    TagLib::FLAC::File f(m_qFilename.toLocal8Bit().constData());
+    coverArt = getCoverInID3v2Tag(f.ID3v2Tag());
+    if (coverArt.isNull()) {
+        coverArt = getCoverInXiphComment(f.xiphComment());
+    }
+    if (coverArt.isNull()) {
+        TagLib::List<TagLib::FLAC::Picture*> covers = f.pictureList();
+        if (!covers.isEmpty()) {
+            std::list<TagLib::FLAC::Picture*>::iterator it = covers.begin();
+            TagLib::FLAC::Picture* cover = *it;
+            coverArt = QImage::fromData(
+                QByteArray(cover->data().data(), cover->data().size()));
+        }
+    }
+    return coverArt;
 }
 
 /**

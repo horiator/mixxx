@@ -52,9 +52,6 @@ class EffectChain : public QObject {
     QString description() const;
     void setDescription(const QString& description);
 
-    double parameter() const;
-    void setParameter(const double& dParameter);
-
     double mix() const;
     void setMix(const double& dMix);
 
@@ -88,9 +85,8 @@ class EffectChain : public QObject {
     void setInsertionType(InsertionType type);
 
     void addEffect(EffectPointer pEffect);
-    void removeEffect(EffectPointer pEffect);
-    void replaceEffect(unsigned int iEffectNumber, EffectPointer pEffect);
-    EffectPointer getEffect(unsigned int i) const;
+    void replaceEffect(unsigned int effectSlotNumber, EffectPointer pEffect);
+    void removeEffect(unsigned int effectSlotNumber);
     const QList<EffectPointer>& effects() const;
     unsigned int numEffects() const;
 
@@ -103,13 +99,11 @@ class EffectChain : public QObject {
 
   signals:
     // Signal that indicates that an effect has been added or removed.
-    void effectAdded();
-    void effectRemoved();
+    void effectsChanged();
     void nameChanged(const QString& name);
     void descriptionChanged(const QString& name);
     void enabledChanged(bool enabled);
     void mixChanged(double v);
-    void parameterChanged(double v);
     void insertionTypeChanged(EffectChain::InsertionType type);
     void groupStatusChanged(const QString& group, bool enabled);
 
@@ -129,7 +123,6 @@ class EffectChain : public QObject {
     QString m_description;
     InsertionType m_insertionType;
     double m_dMix;
-    double m_dParameter;
 
     QSet<QString> m_enabledGroups;
     QList<EffectPointer> m_effects;

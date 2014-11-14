@@ -85,7 +85,7 @@ SoundSourceMediaFoundation::~SoundSourceMediaFoundation()
     CoUninitialize();
 }
 
-int SoundSourceMediaFoundation::open()
+Result SoundSourceMediaFoundation::open()
 {
     if (sDebug) {
         qDebug() << "open()" << m_qFilename;
@@ -373,7 +373,7 @@ inline unsigned long SoundSourceMediaFoundation::length()
     return len % kNumChannels == 0 ? len : len + 1;
 }
 
-int SoundSourceMediaFoundation::parseHeader()
+Result SoundSourceMediaFoundation::parseHeader()
 {
     setType("m4a");
 
@@ -391,6 +391,11 @@ int SoundSourceMediaFoundation::parseHeader()
     return ERR;
 }
 
+QImage SoundSourceMediaFoundation::parseCoverArt() {
+    setType("m4a");
+    TagLib::MP4::File f(getFilename().toLocal8Bit().constData());
+    return getCoverInMP4Tag(f.tag());
+}
 
 // static
 QList<QString> SoundSourceMediaFoundation::supportedFileExtensions()

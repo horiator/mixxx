@@ -4,7 +4,6 @@
 #include <QSharedPointer>
 #include <QDomDocument>
 
-#include "defs.h"
 #include "util.h"
 #include "effects/effectmanifest.h"
 #include "effects/effectparameter.h"
@@ -25,23 +24,32 @@ typedef QSharedPointer<Effect> EffectPointer;
 class Effect : public QObject {
     Q_OBJECT
   public:
-    Effect(QObject* pParent, EffectsManager* pEffectsManager,
+    typedef bool (*ParameterFilterFnc)(EffectParameter*);
+
+    Effect(EffectsManager* pEffectsManager,
            const EffectManifest& manifest,
            EffectInstantiatorPointer pInstantiator);
     virtual ~Effect();
 
     const EffectManifest& getManifest() const;
 
-    unsigned int numParameters() const;
-    EffectParameter* getParameter(unsigned int parameterNumber);
+    unsigned int numKnobParameters() const;
+    unsigned int numButtonParameters() const;
+
+    static bool isButtonParameter(EffectParameter* parameter);
+    static bool isKnobParameter(EffectParameter* parameter);
+
+    EffectParameter* getFilteredParameterForSlot(ParameterFilterFnc filterFnc, unsigned int slotNumber);
+    EffectParameter* getKnobParameterForSlot(unsigned int slotNumber);
+    EffectParameter* getButtonParameterForSlot(unsigned int slotNumber);
+
     EffectParameter* getParameterById(const QString& id) const;
+    EffectParameter* getButtonParameterById(const QString& id) const;
 
     void setEnabled(bool enabled);
     bool enabled() const;
 
     EngineEffect* getEngineEffect();
-
-    void onChainParameterChanged(double chainParameter);
 
     void addToEngine(EngineEffectChain* pChain, int iIndex);
     void removeFromEngine(EngineEffectChain* pChain, int iIndex);
@@ -63,6 +71,7 @@ class Effect : public QObject {
 
     EffectsManager* m_pEffectsManager;
     EffectManifest m_manifest;
+    EffectInstantiatorPointer m_pInstantiator;
     EngineEffect* m_pEngineEffect;
     bool m_bAddedToEngine;
     bool m_bEnabled;

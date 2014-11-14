@@ -28,7 +28,7 @@ class EffectsBackend : public QObject {
     virtual EffectManifest getManifest(const QString& effectId) const;
     virtual bool canInstantiateEffect(const QString& effectId) const;
     virtual EffectPointer instantiateEffect(
-        EffectsManager* pEffectsManager, const QString& effectId);
+            EffectsManager* pEffectsManager, const QString& effectId);
 
   signals:
     void effectRegistered();
@@ -41,10 +41,10 @@ class EffectsBackend : public QObject {
     template <typename EffectProcessorImpl>
     void registerEffect() {
         registerEffect(
-            EffectProcessorImpl::getId(),
-            EffectProcessorImpl::getManifest(),
-            EffectInstantiatorPointer(
-                new EffectProcessorInstantiator<EffectProcessorImpl>()));
+                EffectProcessorImpl::getId(),
+                EffectProcessorImpl::getManifest(),
+                EffectInstantiatorPointer(
+                            new EffectProcessorInstantiator<EffectProcessorImpl>()));
     }
 
   private:

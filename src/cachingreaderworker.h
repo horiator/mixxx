@@ -10,6 +10,7 @@
 #include "trackinfoobject.h"
 #include "engine/engineworker.h"
 #include "util/fifo.h"
+#include "util/types.h"
 
 namespace Mixxx {
     class SoundSource;
@@ -56,7 +57,7 @@ class CachingReaderWorker : public EngineWorker {
 
   public:
     // Construct a CachingReader with the given group.
-    CachingReaderWorker(const char* group,
+    CachingReaderWorker(QString group,
             FIFO<ChunkReadRequest>* pChunkReadRequestFIFO,
             FIFO<ReaderStatusUpdate>* pReaderStatusFIFO);
     virtual ~CachingReaderWorker();
@@ -87,7 +88,7 @@ class CachingReaderWorker : public EngineWorker {
 
   private:
 
-    const char* m_pGroup;
+    QString m_group;
     QString m_tag;
 
     // Thread-safe FIFOs for communication between the engine callback and

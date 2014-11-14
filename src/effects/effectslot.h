@@ -10,8 +10,10 @@
 #include "controlpushbutton.h"
 #include "effects/effect.h"
 #include "effects/effectparameterslot.h"
+#include "effects/effectbuttonparameterslot.h"
 
 class EffectSlot;
+class ControlObjectSlave;
 typedef QSharedPointer<EffectSlot> EffectSlotPointer;
 
 class EffectSlot : public QObject {
@@ -39,6 +41,20 @@ class EffectSlot : public QObject {
     unsigned int numParameterSlots() const;
     EffectParameterSlotPointer addEffectParameterSlot();
     EffectParameterSlotPointer getEffectParameterSlot(unsigned int slotNumber);
+
+    unsigned int numButtonParameterSlots() const;
+    EffectButtonParameterSlotPointer addEffectButtonParameterSlot();
+    EffectButtonParameterSlotPointer getEffectButtonParameterSlot(unsigned int slotNumber);
+
+    void onChainParameterChanged(double parameter);
+
+    // ensures that Softtakover is bypassed for the following
+    // ChainParameterChange. Uses for testing only
+    void syncSofttakeover();
+
+    // Unload the currently loaded effect
+    void clear();
+
 
   public slots:
     // Request that this EffectSlot load the given Effect
@@ -71,10 +87,10 @@ class EffectSlot : public QObject {
     void prevEffect(unsigned int iChainNumber, unsigned int iEffectNumber,
                     EffectPointer pEffect);
 
+
     // Signal that whoever is in charge of this EffectSlot should clear this
     // EffectSlot (by deleting the effect from the underlying chain).
-    void clearEffect(unsigned int iChainNumber, unsigned int iEffectNumber,
-                     EffectPointer pEffect);
+    void clearEffect(unsigned int iEffectNumber);
 
     void updated();
 
@@ -82,9 +98,6 @@ class EffectSlot : public QObject {
     QString debugString() const {
         return QString("EffectSlot(%1,%2)").arg(m_iChainNumber).arg(m_iEffectNumber);
     }
-
-    // Unload the currently loaded effect
-    void clear();
 
     const unsigned int m_iRackNumber;
     const unsigned int m_iChainNumber;
@@ -96,11 +109,15 @@ class EffectSlot : public QObject {
     ControlPushButton* m_pControlEnabled;
     ControlObject* m_pControlNumParameters;
     ControlObject* m_pControlNumParameterSlots;
+    ControlObject* m_pControlNumButtonParameters;
+    ControlObject* m_pControlNumButtonParameterSlots;
     ControlObject* m_pControlNextEffect;
     ControlObject* m_pControlPrevEffect;
     ControlObject* m_pControlEffectSelector;
     ControlObject* m_pControlClear;
     QList<EffectParameterSlotPointer> m_parameters;
+    ControlObjectSlave* m_pCoSuper;
+    QList<EffectButtonParameterSlotPointer> m_buttonParameters;
 
     DISALLOW_COPY_AND_ASSIGN(EffectSlot);
 };

@@ -61,7 +61,7 @@ AutoDJFeature::AutoDJFeature(QObject* parent,
     // from, the auto-DJ queue.
     connect(&m_crateMapper, SIGNAL(mapped(int)),
             this, SLOT(slotAddCrateToAutoDj(int)));
-    m_pRemoveCrateFromAutoDj = new QAction(tr("Remove"), this);
+    m_pRemoveCrateFromAutoDj = new QAction(tr("Remove Crate as Track Source"), this);
     connect(m_pRemoveCrateFromAutoDj, SIGNAL(triggered()),
             this, SLOT(slotRemoveCrateFromAutoDj()));
 
@@ -94,6 +94,9 @@ void AutoDJFeature::bindWidget(WLibrary* libraryWidget,
     connect(m_pAutoDJView, SIGNAL(loadTrackToPlayer(TrackPointer, QString, bool)),
             this, SIGNAL(loadTrackToPlayer(TrackPointer, QString, bool)));
 
+    connect(m_pAutoDJView, SIGNAL(trackSelected(TrackPointer)),
+            this, SIGNAL(trackSelected(TrackPointer)));
+
 #ifdef __AUTODJCRATES__
     // Be informed when the user wants to add another random track.
     connect(m_pAutoDJView, SIGNAL(addRandomButton(bool)),
@@ -114,6 +117,7 @@ void AutoDJFeature::activate() {
     //qDebug() << "AutoDJFeature::activate()";
     emit(switchToView(m_sAutoDJViewName));
     emit(restoreSearch(QString())); //Null String disables search box
+    emit(enableCoverArtDisplay(true));
 }
 
 bool AutoDJFeature::dropAccept(QList<QUrl> urls, QObject* pSource) {
@@ -127,6 +131,7 @@ bool AutoDJFeature::dropAccept(QList<QUrl> urls, QObject* pSource) {
     QList<int> trackIds;
     if (pSource) {
         trackIds = trackDao.getTrackIds(files);
+        trackDao.unhideTracks(trackIds);
     } else {
         trackIds = trackDao.addTracks(files, true);
     }

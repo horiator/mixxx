@@ -20,7 +20,6 @@
 
 #include <QtSql>
 #include <QList>
-#include <QRegExp>
 #include <QSharedPointer>
 #include <QSqlDatabase>
 
@@ -32,6 +31,12 @@
 #include "library/dao/playlistdao.h"
 #include "library/dao/analysisdao.h"
 #include "library/dao/directorydao.h"
+#include "library/dao/libraryhashdao.h"
+
+#ifdef __SQLITE3__
+typedef struct sqlite3_context sqlite3_context;
+typedef struct Mem sqlite3_value;
+#endif
 
 class TrackInfoObject;
 
@@ -47,7 +52,7 @@ class TrackCollection : public QObject
     Q_OBJECT
   public:
     TrackCollection(ConfigObject<ConfigValue>* pConfig);
-    ~TrackCollection();
+    virtual ~TrackCollection();
     bool checkForTables();
 
     void resetLibaryCancellation();
@@ -65,6 +70,28 @@ class TrackCollection : public QObject
         return m_pConfig;
     }
 
+  protected:
+#ifdef __SQLITE3__
+    void installSorting(QSqlDatabase &db);
+    static int sqliteLocaleAwareCompare(void* pArg,
+                                        int len1, const void* data1,
+                                        int len2, const void* data2);
+    static void sqliteLike(sqlite3_context *p,
+                          int aArgc,
+                          sqlite3_value **aArgv);
+    static void makeLatinLow(QChar* c, int count);
+    static int likeCompareLatinLow(
+            QString* pattern,
+            QString* string,
+            const QChar esc);
+    static int likeCompareInner(
+            const QChar* pattern,
+            int patterenSize,
+            const QChar* string,
+            int stringSize,
+            const QChar esc);
+#endif // __SQLITE3__
+
   private:
     ConfigObject<ConfigValue>* m_pConfig;
     QSqlDatabase m_db;
@@ -74,8 +101,8 @@ class TrackCollection : public QObject
     CueDAO m_cueDao;
     DirectoryDAO m_directoryDao;
     AnalysisDao m_analysisDao;
+    LibraryHashDAO m_libraryHashDao;
     TrackDAO m_trackDao;
-    const QRegExp m_supportedFileExtensionsRegex;
 };
 
-#endif
+#endif // TRACKCOLLECTION_H
