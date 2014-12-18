@@ -6,6 +6,7 @@
 #include "library/sidebarmodel.h"
 #include "library/treeitem.h"
 #include "library/browse/browsefeature.h"
+#include "util/assert.h"
 
 SidebarModel::SidebarModel(QObject* parent)
         : QAbstractItemModel(parent),
@@ -107,7 +108,7 @@ QModelIndex SidebarModel::parent(const QModelIndex& index) const {
             // if we have selected an item at the first level of a childnode
 
             if (tree_item_parent) {
-                if (tree_item_parent->data() == "$root"){
+                if (tree_item_parent->data() == "$root") {
                     LibraryFeature* feature = tree_item->getFeature();
                     for (int i = 0; i < m_sFeatures.size(); ++i) {
                         if (feature == m_sFeatures[i]) {
@@ -310,8 +311,10 @@ QModelIndex SidebarModel::translateSourceIndex(const QModelIndex& index) {
      */
 
     const QAbstractItemModel* model = dynamic_cast<QAbstractItemModel*>(sender());
+    DEBUG_ASSERT_AND_HANDLE(model != NULL) {
+        return QModelIndex();
+    }
 
-    Q_ASSERT(model);
     if (index.isValid()) {
        TreeItem* item = (TreeItem*)index.internalPointer();
        translatedIndex = createIndex(index.row(), index.column(), item);

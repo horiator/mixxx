@@ -56,7 +56,7 @@ GoaSlicerEffect::GoaSlicerEffect(EngineEffect* pEffect,
                            const EffectManifest& manifest)
         : m_pLengthParameter(pEffect->getParameterById("length")),
           m_pSlopeParameter(
-              pEffect->getParameterById("slope")),
+                  pEffect->getParameterById("slope")),
           m_pPeriodParameter(pEffect->getParameterById("period")) {
     Q_UNUSED(manifest);
 }
@@ -70,6 +70,7 @@ void GoaSlicerEffect::processGroup(const QString& group,
                                 const CSAMPLE* pInput, CSAMPLE* pOutput,
                                 const unsigned int numSamples,
                                 const unsigned int sampleRate,
+                                const EffectProcessor::EnableState enableState,
                                 const GroupFeatureState& groupFeatures) {
     Q_UNUSED(group);
     unsigned int length = m_pLengthParameter->value() * 8192.0;

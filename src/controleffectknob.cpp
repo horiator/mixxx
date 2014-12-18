@@ -9,7 +9,7 @@ ControlEffectKnob::ControlEffectKnob(ConfigKey key, double dMinValue, double dMa
 
 void ControlEffectKnob::setBehaviour(EffectManifestParameter::ControlHint type,
                                      double dMinValue, double dMaxValue) {
-    if ( m_pControl == NULL) {
+    if (m_pControl == NULL) {
         return;
     }
 
@@ -22,14 +22,17 @@ void ControlEffectKnob::setBehaviour(EffectManifestParameter::ControlHint type,
                 // Volume like control
                 m_pControl->setBehavior(
                         new ControlAudioTaperPotBehavior(-20, 0, 1));
-            } else {
+            } else if (dMaxValue > 1.0) {
                 // Gain like control
                 m_pControl->setBehavior(
                         new ControlAudioTaperPotBehavior(-12, ratio2db(dMaxValue), 0.5));
+            } else {
+                m_pControl->setBehavior(
+                        new ControlLogPotmeterBehavior(dMinValue, dMaxValue, -40));
             }
         } else {
             m_pControl->setBehavior(
-                    new ControlLogPotmeterBehavior(dMinValue, dMaxValue));
+                    new ControlLogPotmeterBehavior(dMinValue, dMaxValue, -40));
         }
     }
 }

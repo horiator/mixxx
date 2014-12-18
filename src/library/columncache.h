@@ -8,8 +8,10 @@
 // column name to index.
 class ColumnCache {
   public:
+
     enum Column {
-        COLUMN_LIBRARYTABLE_ID,
+        COLUMN_LIBRARYTABLE_INVALID = -1,
+        COLUMN_LIBRARYTABLE_ID = 0,
         COLUMN_LIBRARYTABLE_ARTIST,
         COLUMN_LIBRARYTABLE_TITLE,
         COLUMN_LIBRARYTABLE_ALBUM,
@@ -41,6 +43,11 @@ class ColumnCache {
         COLUMN_LIBRARYTABLE_KEY_ID,
         COLUMN_LIBRARYTABLE_BPM_LOCK,
         COLUMN_LIBRARYTABLE_PREVIEW,
+        COLUMN_LIBRARYTABLE_COVERART,
+        COLUMN_LIBRARYTABLE_COVERART_SOURCE,
+        COLUMN_LIBRARYTABLE_COVERART_TYPE,
+        COLUMN_LIBRARYTABLE_COVERART_LOCATION,
+        COLUMN_LIBRARYTABLE_COVERART_HASH,
 
         COLUMN_TRACKLOCATIONSTABLE_FSDELETED,
 
@@ -55,6 +62,7 @@ class ColumnCache {
         COLUMN_CRATETRACKSTABLE_TRACKID,
         COLUMN_CRATETRACKSTABLE_CRATEID,
 
+        // NUM_COLUMNS should always be the last item.
         NUM_COLUMNS
     };
 
@@ -76,7 +84,21 @@ class ColumnCache {
         return m_columnIndexByName.value(columnName, -1);
     }
 
+    inline Column columnForFieldIndex(int index) const {
+        if (index < 0) {
+            return COLUMN_LIBRARYTABLE_INVALID;
+        }
+        return m_columnByIndex[index];
+    }
+
+    inline QString columnName(Column column) const {
+        return m_columnIndexByName.key(fieldIndex(column));
+    }
+
     QMap<QString, int> m_columnIndexByName;
+    // A mapping from logical index aka field index to Column enum.
+    QMap<int, Column> m_columnByIndex;
+    // A mapping from column enum to logical index.
     int m_columnIndexByEnum[NUM_COLUMNS];
 };
 

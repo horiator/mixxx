@@ -15,6 +15,7 @@
 #include "mixxxkeyboard.h"
 #include "widget/wlibrary.h"
 #include "widget/wlibrarytextbrowser.h"
+#include "util/assert.h"
 
 BasePlaylistFeature::BasePlaylistFeature(QObject* parent,
                                          ConfigObject<ConfigValue>* pConfig,
@@ -115,6 +116,7 @@ int BasePlaylistFeature::playlistIdFromIndex(QModelIndex index) {
 void BasePlaylistFeature::activate() {
     emit(switchToView(m_rootViewName));
     emit(restoreSearch(QString())); // Null String disables search box
+    emit(enableCoverArtDisplay(true));
 }
 
 void BasePlaylistFeature::activateChild(const QModelIndex& index) {
@@ -123,6 +125,7 @@ void BasePlaylistFeature::activateChild(const QModelIndex& index) {
     if (playlistId != -1 && m_pPlaylistTableModel) {
         m_pPlaylistTableModel->setTableModel(playlistId);
         emit(showTrackModel(m_pPlaylistTableModel));
+        emit(enableCoverArtDisplay(true));
     }
 }
 
@@ -296,7 +299,9 @@ void BasePlaylistFeature::slotDeletePlaylist() {
     }
 
     if (m_lastRightClickedIndex.isValid()) {
-        Q_ASSERT(playlistId >= 0);
+        DEBUG_ASSERT_AND_HANDLE(playlistId >= 0) {
+            return;
+        }
 
         m_playlistDao.deletePlaylist(playlistId);
         activate();
@@ -347,7 +352,7 @@ void BasePlaylistFeature::slotImportPlaylist() {
     } else {
         return;
     }
-    QList<QString> entries = playlist_parser->parse(playlist_file);
+    QStringList entries = playlist_parser->parse(playlist_file);
 
     // Iterate over the List that holds URLs of playlist entires
     m_pPlaylistTableModel->addTracks(QModelIndex(), entries);
@@ -376,20 +381,28 @@ void BasePlaylistFeature::slotExportPlaylist() {
     // Open a dialog to let the user choose the file location for playlist export.
     // The location is set to the last used directory for import/export and the file
     // name to the playlist name.
-    QString playlist_filename = playlistName;
+    QString filefilter = tr("M3U Playlist (*.m3u)");
     QString file_location = QFileDialog::getSaveFileName(
             NULL,
             tr("Export Playlist"),
-            lastPlaylistDirectory.append("/").append(playlist_filename),
+            lastPlaylistDirectory.append("/").append(playlistName),
             tr("M3U Playlist (*.m3u);;M3U8 Playlist (*.m3u8);;"
-            "PLS Playlist (*.pls);;Text CSV (*.csv);;Readable Text (*.txt)"));
+            "PLS Playlist (*.pls);;Text CSV (*.csv);;Readable Text (*.txt)"),
+            &filefilter);
     // Exit method if user cancelled the open dialog.
     if (file_location.isNull() || file_location.isEmpty()) {
         return;
     }
-
-    // Update the import/export playlist directory
+    // Manually add extension due to bug in QFileDialog
+    // via https://bugreports.qt-project.org/browse/QTBUG-27186
     QFileInfo fileName(file_location);
+    if (fileName.suffix().isNull() || fileName.suffix().isEmpty()) {
+    	QString ext = filefilter.section(".",1,1);
+    	ext.chop(1);
+    	file_location.append(".").append(ext);
+    }
+    // Update the import/export playlist directory
+    //QFileInfo fileName(file_location);
     m_pConfig->set(ConfigKey("[Library]","LastImportExportPlaylistDirectory"),
                 ConfigValue(fileName.dir().absolutePath()));
 
@@ -493,8 +506,8 @@ void BasePlaylistFeature::bindWidget(WLibrary* libraryWidget,
     libraryWidget->registerView(m_rootViewName, edit);
 }
 
-void BasePlaylistFeature::htmlLinkClicked(const QUrl & link) {
-    if (QString(link.path())=="create") {
+void BasePlaylistFeature::htmlLinkClicked(const QUrl& link) {
+    if (QString(link.path()) == "create") {
         slotCreatePlaylist();
     } else {
         qDebug() << "Unknonw playlist link clicked" << link.path();

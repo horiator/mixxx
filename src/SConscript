@@ -147,11 +147,13 @@ def ubuntu_construct_version(build, mixxx_version, branch_name, vcs_revision,
                 return "%s-%s" % (mixxx_version, ubuntu_version)
         elif branch_name.startswith('release-'):
                 return "%s-%s%s" % (mixxx_version, vcs_name, vcs_revision)
-        # In a debug build, include the branch name and revision number and
-        # don't include the Mixxx version.
-        return "%s~%s~%s%s" % (ubuntu_version, branch_name, vcs_name,
-                               vcs_revision)
-
+        # In a debug build, we must include the Mixxx version since it is the
+        # base "upstream" version in the Debian version number. Also include the
+        # branch name and VCS version so we know where the build came from.
+        # See: https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version
+        # e.g. 1.12.0-alpha~master-gitXXXX~ppa1~trusty1
+        return "%s~%s-%s%s-%s" % (mixxx_version, branch_name, vcs_name,
+                                  vcs_revision, ubuntu_version)
 
 def windows_construct_version(build, mixxx_version, branch_name, vcs_revision):
         # In release mode, we only use the version and revision number
@@ -178,9 +180,6 @@ def windows_construct_version(build, mixxx_version, branch_name, vcs_revision):
 binary_files = [mixxx_bin];
 if test_bin is not None:
         binary_files.append(test_bin)
-
-# Mixxx essential resource files
-resource_files = Glob('#res/schema.xml')
 
 #Soundsource plugins
 soundsource_plugin_files = soundsource_plugins
@@ -210,6 +209,9 @@ docs_files += Glob('#./Mixxx-Manual.pdf')
 
 #.desktop file for KDE/GNOME menu
 dotdesktop_files = Glob('#src/mixxx.desktop')
+
+#.appdata.xml file for KDE/GNOME AppStream iniative
+dotappstream_files = Glob('#src/mixxx.appdata.xml')
 
 #Icon file for menu entry
 icon_files = Glob('#res/images/mixxx-icon.png')
@@ -279,7 +281,6 @@ if build.platform_is_linux or build.platform_is_bsd:
                     env.get('LIBDIR', default='lib'))
 
                 binary = env.Install(unix_bin_path, binary_files)
-                resource = env.Install(os.path.join(unix_share_path, 'mixxx'), resource_files)
                 skins = env.Install(os.path.join(unix_share_path, 'mixxx', 'skins'), skin_files)
                 vamp_plugin =  env.Install(
                         os.path.join(unix_lib_path, 'mixxx', 'plugins', 'vamp'),
@@ -292,13 +293,13 @@ if build.platform_is_linux or build.platform_is_bsd:
                 translations = env.Install(os.path.join(unix_share_path, 'mixxx', 'translations'), translation_files)
                 keyboardmappings = env.Install(os.path.join(unix_share_path, 'mixxx', 'keyboard'), keyboardmappings_files)
                 dotdesktop = env.Install(os.path.join(unix_share_path, 'applications'), dotdesktop_files)
+                dotappstream = env.Install(os.path.join(unix_share_path, 'appdata'), dotappstream_files)
                 docs = env.Install(os.path.join(unix_share_path, 'doc', 'mixxx'), docs_files)
                 icon = env.Install(os.path.join(unix_share_path, 'pixmaps'), icon_files)
                 promotracks = env.Install(os.path.join(unix_share_path, 'mixxx', 'promo'), promotracks_files)
 
                 #Makes each of those Install builders get fired off when you run "scons install" :)
                 env.Alias('install', binary)
-                env.Alias('install', resource)
                 env.Alias('install', skins)
                 env.Alias('install', soundsource_plugins)
                 env.Alias('install', controllermappings)
@@ -306,6 +307,7 @@ if build.platform_is_linux or build.platform_is_bsd:
                 env.Alias('install', keyboardmappings)
                 env.Alias('install', docs)
                 env.Alias('install', dotdesktop)
+                env.Alias('install', dotappstream)
                 env.Alias('install', icon)
                 env.Alias('install', promotracks)
                 env.Alias('install', vamp_plugin)
@@ -389,7 +391,6 @@ if build.platform_is_osx and 'bundle' in COMMAND_LINE_TARGETS:
         sources = [mixxx_bin,
                    '#res/osx/application.icns',
                    Dir('#res/skins/'),
-                   File('#res/schema.xml'),
                    Dir('#res/controllers/'),
                    translation_files,
                    Dir('#res/keyboard/'),
@@ -450,7 +451,6 @@ if build.platform_is_osx and 'bundle' in COMMAND_LINE_TARGETS:
 if build.platform_is_windows:
         base_dist_dir = '#' + dist_dir
         skins = env.Install(os.path.join(base_dist_dir, "skins"), skin_files)
-        resource = env.Install(base_dist_dir+"/", resource_files)
         controllermappings = env.Install(os.path.join(base_dist_dir, "controllers"), controllermappings_files)
         translations = env.Install(os.path.join(base_dist_dir, "translations"), translation_files)
         keyboardmappings = env.Install(os.path.join(base_dist_dir, "keyboard"), keyboardmappings_files)
@@ -466,7 +466,6 @@ if build.platform_is_windows:
 
         #Always trigger these install builders when compiling on Windows
         env.Alias('mixxx', skins)
-        env.Alias('mixxx', resource)
         env.Alias('mixxx', controllermappings)
         env.Alias('mixxx', translations)
         env.Alias('mixxx', keyboardmappings)

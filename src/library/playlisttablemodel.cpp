@@ -28,10 +28,13 @@ void PlaylistTableModel::setTableModel(int playlistId) {
     FieldEscaper escaper(m_database);
 
     QStringList columns;
-    columns << PLAYLISTTRACKSTABLE_TRACKID + " as " + LIBRARYTABLE_ID
+    columns << PLAYLISTTRACKSTABLE_TRACKID + " AS " + LIBRARYTABLE_ID
             << PLAYLISTTRACKSTABLE_POSITION
             << PLAYLISTTRACKSTABLE_DATETIMEADDED
-            << "'' as preview";
+            << "'' AS " + LIBRARYTABLE_PREVIEW
+            // For sorting the cover art column we give LIBRARYTABLE_COVERART
+            // the same value as the cover hash.
+            << LIBRARYTABLE_COVERART_HASH + " AS " + LIBRARYTABLE_COVERART;
 
     // We drop files that have been explicitly deleted from mixxx
     // (mixxx_deleted=0) from the view. There was a bug in <= 1.9.0 where
@@ -54,6 +57,7 @@ void PlaylistTableModel::setTableModel(int playlistId) {
 
     columns[0] = LIBRARYTABLE_ID;
     columns[3] = LIBRARYTABLE_PREVIEW;
+    columns[4] = LIBRARYTABLE_COVERART;
     setTable(playlistTableName, columns[0], columns,
             m_pTrackCollection->getTrackSource());
     setSearch("");
@@ -66,7 +70,7 @@ void PlaylistTableModel::setTableModel(int playlistId) {
 
 int PlaylistTableModel::addTracks(const QModelIndex& index,
                                   const QList<QString>& locations) {
-    if (locations.size() == 0) {
+    if (locations.isEmpty()) {
         return 0;
     }
 
@@ -80,7 +84,10 @@ int PlaylistTableModel::addTracks(const QModelIndex& index,
 
     QList<QFileInfo> fileInfoList;
     foreach (QString fileLocation, locations) {
-        fileInfoList.append(QFileInfo(fileLocation));
+        QFileInfo fileInfo(fileLocation);
+        if (fileInfo.exists()) {
+            fileInfoList.append(fileInfo);
+        }
     }
 
     QList<int> trackIds = m_trackDAO.addTracks(fileInfoList, true);
@@ -155,7 +162,7 @@ void PlaylistTableModel::moveTrack(const QModelIndex& sourceIndex,
     m_playlistDao.moveTrack(m_iPlaylistId, oldPosition, newPosition);
 }
 
-bool PlaylistTableModel::isLocked(){
+bool PlaylistTableModel::isLocked() {
     return m_playlistDao.isPlaylistLocked(m_iPlaylistId);
 }
 
@@ -206,7 +213,11 @@ bool PlaylistTableModel::isColumnInternal(int column) {
             column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_KEY_ID)||
             column == fieldIndex(ColumnCache::COLUMN_TRACKLOCATIONSTABLE_FSDELETED) ||
             (PlayerManager::numPreviewDecks() == 0 &&
-             column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_PREVIEW))) {
+             column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_PREVIEW)) ||
+            column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART_SOURCE) ||
+            column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART_TYPE) ||
+            column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART_LOCATION) ||
+            column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART_HASH)) {
         return true;
     }
     return false;
@@ -215,8 +226,10 @@ bool PlaylistTableModel::isColumnInternal(int column) {
 bool PlaylistTableModel::isColumnHiddenByDefault(int column) {
     if (column == fieldIndex(ColumnCache::COLUMN_PLAYLISTTRACKSTABLE_DATETIMEADDED)) {
         return true;
+    } else if (column == fieldIndex(ColumnCache::COLUMN_PLAYLISTTRACKSTABLE_POSITION)) {
+        return false;
     }
-    return false;
+    return BaseSqlTableModel::isColumnHiddenByDefault(column);
 }
 
 TrackModel::CapabilitiesFlags PlaylistTableModel::getCapabilities() const {

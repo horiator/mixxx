@@ -24,7 +24,9 @@ typedef QSharedPointer<Effect> EffectPointer;
 class Effect : public QObject {
     Q_OBJECT
   public:
-    Effect(QObject* pParent, EffectsManager* pEffectsManager,
+    typedef bool (*ParameterFilterFnc)(EffectParameter*);
+
+    Effect(EffectsManager* pEffectsManager,
            const EffectManifest& manifest,
            EffectInstantiatorPointer pInstantiator);
     virtual ~Effect();
@@ -33,8 +35,14 @@ class Effect : public QObject {
 
     unsigned int numKnobParameters() const;
     unsigned int numButtonParameters() const;
+
+    static bool isButtonParameter(EffectParameter* parameter);
+    static bool isKnobParameter(EffectParameter* parameter);
+
+    EffectParameter* getFilteredParameterForSlot(ParameterFilterFnc filterFnc, unsigned int slotNumber);
     EffectParameter* getKnobParameterForSlot(unsigned int slotNumber);
     EffectParameter* getButtonParameterForSlot(unsigned int slotNumber);
+
     EffectParameter* getParameterById(const QString& id) const;
     EffectParameter* getButtonParameterById(const QString& id) const;
 
@@ -63,6 +71,7 @@ class Effect : public QObject {
 
     EffectsManager* m_pEffectsManager;
     EffectManifest m_manifest;
+    EffectInstantiatorPointer m_pInstantiator;
     EngineEffect* m_pEngineEffect;
     bool m_bAddedToEngine;
     bool m_bEnabled;

@@ -97,8 +97,13 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
     // Balance
     m_pBalance = new ControlPotmeter(ConfigKey(group, "balance"), -1., 1.);
 
-    // Master volume
-    m_pMasterVolume = new ControlAudioTaperPot(ConfigKey(group, "volume"), -14, 14, 0.5);
+    // Master gain
+    m_pMasterGain = new ControlAudioTaperPot(ConfigKey(group, "gain"), -14, 14, 0.5);
+
+    // Legacy: the master "gain" control used to be named "volume" in Mixxx
+    // 1.11.0 and earlier. See Bug #1306253.
+    ControlDoublePrivate::insertAlias(ConfigKey(group, "volume"),
+                                      ConfigKey(group, "gain"));
 
     // VU meter:
     m_pVumeter = new EngineVuMeter(group);
@@ -107,7 +112,12 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
     m_pHeadDelay = new EngineDelay(group, ConfigKey(group, "headDelay"));
 
     // Headphone volume
-    m_pHeadVolume = new ControlAudioTaperPot(ConfigKey(group, "headVolume"), -14, 14, 0.5);
+    m_pHeadGain = new ControlAudioTaperPot(ConfigKey(group, "headGain"), -14, 14, 0.5);
+
+    // Legacy: the headphone "headGain" control used to be named "headVolume" in
+    // Mixxx 1.11.0 and earlier. See Bug #1306253.
+    ControlDoublePrivate::insertAlias(ConfigKey(group, "headVolume"),
+                                      ConfigKey(group, "headGain"));
 
     // Headphone mix (left/right)
     m_pHeadMix = new ControlPotmeter(ConfigKey(group, "headMix"),-1.,1.);
@@ -137,14 +147,16 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
     m_pSideChain = bEnableSidechain ? new EngineSideChain(_config) : NULL;
 
     // X-Fader Setup
-    m_pXFaderMode = new ControlPotmeter(
-        ConfigKey("[Mixer Profile]", "xFaderMode"), 0., 1.);
+    m_pXFaderMode = new ControlPushButton(
+            ConfigKey("[Mixer Profile]", "xFaderMode"));
+    m_pXFaderMode->setButtonMode(ControlPushButton::TOGGLE);
     m_pXFaderCurve = new ControlPotmeter(
-        ConfigKey("[Mixer Profile]", "xFaderCurve"), 0., 2.);
+            ConfigKey("[Mixer Profile]", "xFaderCurve"), 0., 2.);
     m_pXFaderCalibration = new ControlPotmeter(
-        ConfigKey("[Mixer Profile]", "xFaderCalibration"), -2., 2.);
-    m_pXFaderReverse = new ControlPotmeter(
-        ConfigKey("[Mixer Profile]", "xFaderReverse"), 0., 1.);
+            ConfigKey("[Mixer Profile]", "xFaderCalibration"), -2., 2.);
+    m_pXFaderReverse = new ControlPushButton(
+            ConfigKey("[Mixer Profile]", "xFaderReverse"));
+    m_pXFaderReverse->setButtonMode(ControlPushButton::TOGGLE);
 
     m_pKeylockEngine = new ControlObject(ConfigKey(group, "keylock_engine"),
                                          true, false, true);
@@ -156,6 +168,9 @@ EngineMaster::EngineMaster(ConfigObject<ConfigValue>* _config,
     m_pMasterMonoMixdown = new ControlObject(ConfigKey(group, "mono_mixdown"),
             true, false, true);  // persist = true
     m_pHeadphoneEnabled = new ControlObject(ConfigKey(group, "headEnabled"));
+
+
+    // Note: the EQ Rack is set in EffectsManager::setupDefaults();
 }
 
 EngineMaster::~EngineMaster() {
@@ -165,8 +180,8 @@ EngineMaster::~EngineMaster() {
     delete m_pBalance;
     delete m_pHeadMix;
     delete m_pHeadSplitEnabled;
-    delete m_pMasterVolume;
-    delete m_pHeadVolume;
+    delete m_pMasterGain;
+    delete m_pHeadGain;
     delete m_pTalkoverDucking;
     delete m_pVumeter;
     delete m_pSideChain;
@@ -224,15 +239,13 @@ void EngineMaster::processChannels(unsigned int* busChannelConnectionFlags,
                                    int iBufferSize) {
     ScopedTimer timer("EngineMaster::processChannels");
 
-    QList<ChannelInfo*>::iterator it = m_channels.begin();
-
     // Clear talkover compressor for the next round of gain calculation.
     m_pTalkoverDucking->clearKeys();
 
     EngineChannel* pMasterChannel = m_pMasterSync->getMaster();
     m_activeChannels.clear();
     m_activeChannels.reserve(m_channels.size());
-    it = m_channels.begin();
+    QList<ChannelInfo*>::iterator it = m_channels.begin();
     for (unsigned int channel_number = 0;
          it != m_channels.end(); ++it, ++channel_number) {
         ChannelInfo* pChannelInfo = *it;
@@ -347,7 +360,7 @@ void EngineMaster::process(const int iBufferSize) {
     EngineXfader::getXfadeGains(m_pCrossfader->get(), m_pXFaderCurve->get(),
                                 m_pXFaderCalibration->get(),
                                 m_pXFaderMode->get() == MIXXX_XFADER_CONSTPWR,
-                                m_pXFaderReverse->get() == 1.0,
+                                m_pXFaderReverse->toBool(),
                                 &c1_gain, &c2_gain);
 
     // Channels with the talkover flag should be mixed with the master signal at
@@ -407,7 +420,7 @@ void EngineMaster::process(const int iBufferSize) {
         }
 
         // Apply master volume after effects.
-        CSAMPLE master_volume = m_pMasterVolume->get();
+        CSAMPLE master_volume = m_pMasterGain->get();
         if (m_bRampingGain) {
             SampleUtil::applyRampingGain(m_pMaster, m_masterVolumeOld,
                                          master_volume, iBufferSize);
@@ -462,7 +475,7 @@ void EngineMaster::process(const int iBufferSize) {
                                              iBufferSize, iSampleRate, headphoneFeatures);
         }
         // Head volume
-        CSAMPLE headphoneVolume = m_pHeadVolume->get();
+        CSAMPLE headphoneVolume = m_pHeadGain->get();
         if (m_bRampingGain) {
             SampleUtil::applyRampingGain(m_pHead, m_headphoneVolumeOld,
                                          headphoneVolume, iBufferSize);

@@ -21,6 +21,7 @@
       <attribute config_key="[Vinylcontrol],show_vinylcontrol">0</attribute>
       <attribute config_key="[PreviewDeck],show_previewdeck">0</attribute>
       <attribute config_key="[Library],show_library">1</attribute>
+      <attribute config_key="[Library],show_coverart">0</attribute>
     </attributes>
   </manifest>
 
@@ -52,6 +53,7 @@
     <Template src="skin:main_decks.xml"/>
     <Template src="skin:sample_decks.xml"/>
     <Template src="skin:effect_rack.xml"/>
+    <Template src="skin:microphone_rack.xml"/>
     <Template src="skin:library.xml"/>
   </Children>
 </skin>

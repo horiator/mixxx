@@ -17,7 +17,6 @@
 		<MaximumSize>-1,45</MaximumSize> 
 		<Children>
 			<EffectParameterName>
-				<MinimumSize>38f,8f</MinimumSize>
 				<Style>
 					WEffectParameter { 
 						font: 10px/8px Lucida Grande, Lucida Sans Unicode, Arial, Verdana, sans-serif;
@@ -33,12 +32,11 @@
 				<Effect><Variable name="effectnum"/></Effect>
 				<EffectParameter><Variable name="effectparameternum"/></EffectParameter>
 			</EffectParameterName>
-	    		<WidgetGroup>
+			<WidgetGroup>
 				<Layout>vertical</Layout>
 				<Size>38,26</Size>
 				<Children>
-					<Knob>    			
-						<TooltipId>master_volume</TooltipId>
+					<Knob>			
 						<Style></Style>
 						<NumberStates>64</NumberStates>
 						<Path>knobs/knob_rotary_s%1.png</Path>

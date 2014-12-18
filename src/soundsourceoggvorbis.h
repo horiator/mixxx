@@ -25,13 +25,14 @@
 
 class SoundSourceOggVorbis : public Mixxx::SoundSource {
  public:
-  SoundSourceOggVorbis(QString qFilename);
+  explicit SoundSourceOggVorbis(QString qFilename);
   ~SoundSourceOggVorbis();
   Result open();
   long seek(long);
   unsigned read(unsigned long size, const SAMPLE*);
   inline long unsigned length();
   Result parseHeader();
+  QImage parseCoverArt();
   static QList<QString> supportedFileExtensions();
  private:
   int channels;

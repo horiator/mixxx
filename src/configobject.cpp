@@ -93,12 +93,12 @@ void ConfigValueKbd::valCopy(const ConfigValueKbd& v)
     QTextStream(&value) << m_qKey.toString();
 }
 
-bool operator==(const ConfigValue & s1, const ConfigValue & s2)
+bool operator==(const ConfigValue& s1, const ConfigValue& s2)
 {
     return (s1.value.toUpper() == s2.value.toUpper());
 }
 
-bool operator==(const ConfigValueKbd & s1, const ConfigValueKbd & s2)
+bool operator==(const ConfigValueKbd& s1, const ConfigValueKbd& s2)
 {
     return (s1.value.toUpper() == s2.value.toUpper());
 }
@@ -192,7 +192,7 @@ ConfigKey *ConfigObject<ValueType>::get(ValueType v)
     while (iterator.hasNext())
     {
         it = iterator.next();
-        if (QString::compare(it->val->value, v.value, Qt::CaseInsensitive) == 0){
+        if (QString::compare(it->val->value, v.value, Qt::CaseInsensitive) == 0) {
             //qDebug() << "ConfigObject #534: QString::compare match for " << it->key->group << it->key->item;
             return it->key;
         }
@@ -274,7 +274,6 @@ template <class ValueType> bool ConfigObject<ValueType>::Parse()
     return true;
 }
 
-
 template <class ValueType> void ConfigObject<ValueType>::clear()
 {
     //Delete the pointers, because that's what we did before we
@@ -333,24 +332,19 @@ template <class ValueType> void ConfigObject<ValueType>::Save()
 }
 
 template <class ValueType>
-QString ConfigObject<ValueType>::getResourcePath() {
-    //
-    // Find the config path, path where midi configuration files, skins etc. are stored.
-    // On Unix the search order is whats listed in mixxx.cfg, then UNIX_SHARE_PATH
-    // On Windows it is always (and only) app dir.
-    // On OS X it is the current directory and then the Resources/ dir in the app bundle
-    //
-    QString qResourcePath; // TODO: this only changes once (on first load) during a run should make this a singleton.
-
+QString ConfigObject<ValueType>::getResourcePath() const {
     // Try to read in the resource directory from the command line
-    qResourcePath = CmdlineArgs::Instance().getResourcePath();
+    QString qResourcePath = CmdlineArgs::Instance().getResourcePath();
 
-    if (qResourcePath.isNull() || qResourcePath.isEmpty()) {
+    if (qResourcePath.isEmpty()) {
         QDir mixxxDir(QCoreApplication::applicationDirPath());
-        // Always check to see if the path is stored in the configuration database.
-        if (getValueString(ConfigKey("[Config]","Path")).length()>0 && QDir(getValueString(ConfigKey("[Config]","Path"))).exists()) {
-            qResourcePath = getValueString(ConfigKey("[Config]","Path"));
-        } else if (mixxxDir.cd("res")) {
+        // We used to support using the mixxx.cfg's [Config],Path setting but
+        // this causes issues if you try and use two different versions of Mixxx
+        // on the same computer. See Bug #1392854. We start by checking if we're
+        // running out of a build root ('res' dir exists or our path ends with
+        // '_build') and if not then we fall back on a platform-specific method
+        // of determining the resource path (see comments below).
+        if (mixxxDir.cd("res")) {
             // We are running out of the repository root.
             qResourcePath = mixxxDir.absolutePath();
         } else if (mixxxDir.absolutePath().endsWith("_build") &&
@@ -384,7 +378,7 @@ QString ConfigObject<ValueType>::getResourcePath() {
         //qDebug() << "Setting qResourcePath from location in resourcePath commandline arg:" << qResourcePath;
     }
 
-    if (qResourcePath.length() == 0) {
+    if (qResourcePath.isEmpty()) {
         reportCriticalErrorAndQuit("qConfigPath is empty, this can not be so -- did our developer forget to define one of __UNIX__, __WINDOWS__, __APPLE__??");
     }
 
@@ -398,9 +392,7 @@ QString ConfigObject<ValueType>::getResourcePath() {
     return qResourcePath;
 }
 
-
 template <class ValueType> ConfigObject<ValueType>::ConfigObject(QDomNode node) {
-
     if (!node.isNull() && node.isElement()) {
         QDomNode ctrl = node.firstChild();
 

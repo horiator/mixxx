@@ -53,10 +53,12 @@
         <Layout>horizontal</Layout>
         <Children>
           <SliderComposed>
+            <TooltipId>crossfader</TooltipId>
             <SizePolicy>me,min</SizePolicy>
             <MinimumSize>-1,40</MinimumSize>
             <MaximumSize>-1,40</MaximumSize>
-            <Handle>handle-horizontal.svg</Handle>
+            <Slider scalemode="STRETCH">slider-horizontal.svg</Slider>
+            <Handle scalemode="STRETCH_ASPECT">handle-horizontal.svg</Handle>
             <Horizontal>true</Horizontal>
             <Connection>
               <ConfigKey>[Master],crossfader</ConfigKey>
@@ -70,8 +72,7 @@
       <ConfigKey>[Master],hide_mixer</ConfigKey>
       <BindProperty>visible</BindProperty>
       <Transform>
-        <Invert/>
-        <Add>1</Add>
+        <Not/>
       </Transform>
     </Connection>
   </WidgetGroup>

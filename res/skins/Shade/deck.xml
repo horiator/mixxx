@@ -176,7 +176,7 @@
 												</Spinny>
 											</Children>
 											<Connection>
-												<ConfigKey>[Spinny1],show_spinny</ConfigKey>
+												<ConfigKey persist="true">[Spinny<Variable name="channum"/>],show_spinny</ConfigKey>
 												<BindProperty>visible</BindProperty>
 											</Connection>
 										</WidgetGroup>
@@ -282,7 +282,7 @@
 												</PushButton>
 											</Children>
 											<Connection>
-												<ConfigKey>[Channel<Variable name="channum"/>],vinylcontrol_enabled</ConfigKey>
+												<ConfigKey persist="true">[Channel<Variable name="channum"/>],vinylcontrol_enabled</ConfigKey>
 												<BindProperty>visible</BindProperty>
 											</Connection>
 										</WidgetGroup>
@@ -337,6 +337,14 @@
 								<EmitOnDownPress>false</EmitOnDownPress>
 							</Connection>
 						</Overview>
+						
+						<CoverArt>
+							<Pos>4,5</Pos>
+							<TooltipId>coverart</TooltipId>
+							<ObjectName>DeckCoverArt</ObjectName>
+							<Size>35f,35f</Size>
+							<Group>[Channel<Variable name="channum"/>]</Group>
+						</CoverArt>
 	
 						<!--
 						**********************************************
@@ -355,7 +363,7 @@
 							</Style>
 							<Property>title</Property>
 							<Channel><Variable name="channum"/></Channel>
-							<Pos>0,4</Pos>
+							<Pos>36,4</Pos>
 							<Size>310f,18</Size>
 						</TrackProperty>
 	
@@ -371,7 +379,7 @@
 							</Style>
 							<Property>artist</Property>
 							<Channel><Variable name="channum"/></Channel>
-							<Pos>0,24</Pos>
+							<Pos>36,24</Pos>
 							<Size>230f,18</Size>
 						</TrackProperty>
 		
@@ -591,7 +599,7 @@
 							</State>
 							<Pos>253,161</Pos>
 							<Connection>
-								<ConfigKey>[Spinny1],show_spinny</ConfigKey>
+								<ConfigKey>[Spinny<Variable name="channum"/>],show_spinny</ConfigKey>
 								<EmitOnPressAndRelease>true</EmitOnPressAndRelease>
 								<ButtonState>LeftButton</ButtonState>
 							</Connection>

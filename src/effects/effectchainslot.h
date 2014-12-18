@@ -21,21 +21,15 @@ class EffectChainSlot : public QObject {
     Q_OBJECT
   public:
     EffectChainSlot(EffectRack* pRack,
-                    const unsigned int iRackNumber,
+                    const QString& group,
                     const unsigned int iChainNumber);
     virtual ~EffectChainSlot();
-
-    static QString formatGroupString(const unsigned int iRackNumber,
-                                     const unsigned int iChainNumber) {
-        return QString("[EffectRack%1_EffectUnit%2]").arg(
-            QString::number(iRackNumber+1), QString::number(iChainNumber+1));
-    }
 
     // Get the ID of the loaded EffectChain
     QString id() const;
 
     unsigned int numSlots() const;
-    EffectSlotPointer addEffectSlot();
+    EffectSlotPointer addEffectSlot(const QString& group);
     EffectSlotPointer getEffectSlot(unsigned int slotNumber);
 
     void loadEffectChain(EffectChainPointer pEffectChain);
@@ -43,8 +37,18 @@ class EffectChainSlot : public QObject {
 
     void registerGroup(const QString& group);
 
+    double getSuperParameter() const;
+    void setSuperParameter(double value);
+    void setSuperParameterDefaultValue(double value);
+
     // Unload the loaded EffectChain.
     void clear();
+
+    unsigned int getChainSlotNumber() const;
+
+    const QString& getGroup() const {
+        return m_group;
+    }
 
   signals:
     // Indicates that the effect pEffect has been loaded into slotNumber of
@@ -86,10 +90,11 @@ class EffectChainSlot : public QObject {
     // Signal that indicates that the EffectChainSlot has been updated.
     void updated();
 
+
   private slots:
     void slotChainEffectsChanged(bool shouldEmit=true);
     void slotChainNameChanged(const QString& name);
-    void slotChainParameterChanged(double parameter);
+    void slotChainSuperParameterChanged(double parameter);
     void slotChainEnabledChanged(bool enabled);
     void slotChainMixChanged(double mix);
     void slotChainInsertionTypeChanged(EffectChain::InsertionType type);
@@ -97,9 +102,7 @@ class EffectChainSlot : public QObject {
 
     void slotEffectLoaded(EffectPointer pEffect, unsigned int slotNumber);
     // Clears the effect in the given position in the loaded EffectChain.
-    void slotClearEffect(unsigned int iChainSlotNumber,
-                         unsigned int iEffectSlotNumber,
-                         EffectPointer pEffect);
+    void slotClearEffect(unsigned int iEffectSlotNumber);
 
     void slotControlClear(double v);
     void slotControlNumEffects(double v);
@@ -107,7 +110,7 @@ class EffectChainSlot : public QObject {
     void slotControlChainLoaded(double v);
     void slotControlChainEnabled(double v);
     void slotControlChainMix(double v);
-    void slotControlChainParameter(double v);
+    void slotControlChainSuperParameter(double v);
     void slotControlChainInsertionType(double v);
     void slotControlChainSelector(double v);
     void slotControlChainNextPreset(double v);
@@ -116,11 +119,10 @@ class EffectChainSlot : public QObject {
 
   private:
     QString debugString() const {
-        return QString("EffectChainSlot(%1)").arg(m_iChainNumber);
+        return QString("EffectChainSlot(%1)").arg(m_group);
     }
 
-    const unsigned int m_iRackNumber;
-    const unsigned int m_iChainNumber;
+    const unsigned int m_iChainSlotNumber;
     const QString m_group;
     EffectRack* m_pEffectRack;
 
@@ -132,7 +134,7 @@ class EffectChainSlot : public QObject {
     ControlObject* m_pControlChainLoaded;
     ControlPushButton* m_pControlChainEnabled;
     ControlObject* m_pControlChainMix;
-    ControlObject* m_pControlChainParameter;
+    ControlObject* m_pControlChainSuperParameter;
     ControlPushButton* m_pControlChainInsertionType;
     ControlObject* m_pControlChainSelector;
     ControlPushButton* m_pControlChainNextPreset;

@@ -23,10 +23,9 @@
 
 #include "library/libraryscannerdlg.h"
 
-LibraryScannerDlg::LibraryScannerDlg(QWidget * parent, Qt::WindowFlags f)
+LibraryScannerDlg::LibraryScannerDlg(QWidget* parent, Qt::WindowFlags f)
         : QWidget(parent, f),
           m_bCancelled(false) {
-
     setWindowIcon(QIcon(":/images/ic_mixxx_window.png"));
 
     QVBoxLayout* pLayout = new QVBoxLayout(this);
@@ -49,12 +48,9 @@ LibraryScannerDlg::LibraryScannerDlg(QWidget * parent, Qt::WindowFlags f)
             pCurrent, SLOT(setText(QString)));
     pLayout->addWidget(pCurrent);
     setLayout(pLayout);
-
-    m_timer.start();
 }
 
 LibraryScannerDlg::~LibraryScannerDlg() {
-    emit(scanCancelled());
 }
 
 void LibraryScannerDlg::slotUpdate(QString path) {
@@ -69,22 +65,36 @@ void LibraryScannerDlg::slotUpdate(QString path) {
     }
 }
 
+void LibraryScannerDlg::slotUpdateCover(QString path) {
+    //qDebug() << "LibraryScannerDlg slotUpdate" << m_timer.elapsed() << path;
+    if (!m_bCancelled && m_timer.elapsed() > 2000) {
+       setVisible(true);
+    }
+
+    if (isVisible()) {
+        QString status = QString("%1: %2")
+                .arg(tr("Scanning cover art (safe to cancel)"))
+                .arg(path);
+        emit(progress(status));
+    }
+}
+
 void LibraryScannerDlg::slotCancel() {
     qDebug() << "Cancelling library scan...";
     m_bCancelled = true;
-
     emit(scanCancelled());
+    hide();
+}
 
-    // Need to use close() or else if you close the Mixxx window and then hit
-    // Cancel, Mixxx will not shutdown.
-    close();
+void LibraryScannerDlg::slotScanStarted() {
+    m_bCancelled = false;
+    m_timer.start();
 }
 
 void LibraryScannerDlg::slotScanFinished() {
-    m_bCancelled = true; //Raise this flag to prevent any
-                         //latent slotUpdates() from showing the dialog again.
+    // Raise this flag to prevent any latent slotUpdates() from showing the
+    // dialog again.
+    m_bCancelled = true;
 
-    // Need to use close() or else if you close the Mixxx window and then hit
-    // Cancel, Mixxx will not shutdown.
-    close();
+    hide();
 }

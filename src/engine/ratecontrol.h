@@ -31,7 +31,7 @@ class PositionScratchController;
 class RateControl : public EngineControl {
     Q_OBJECT
 public:
-    RateControl(const char* _group, ConfigObject<ConfigValue>* _config);
+    RateControl(QString group, ConfigObject<ConfigValue>* _config);
     virtual ~RateControl();
 
     void setBpmControl(BpmControl* bpmcontrol);
@@ -44,7 +44,7 @@ public:
     // Returns the current engine rate.  "reportScratching" is used to tell
     // the caller that the user is currently scratching, and this is used to
     // disable keylock.
-    double calculateRate(double baserate, bool paused,
+    double calculateSpeed(double baserate, bool paused,
                          int iSamplesPerBuffer, bool* reportScratching);
     double getRawRate() const;
 

@@ -43,13 +43,14 @@
 
 class SoundSourceCoreAudio : public Mixxx::SoundSource {
 public:
-    SoundSourceCoreAudio(QString filename);
+    explicit SoundSourceCoreAudio(QString filename);
     ~SoundSourceCoreAudio();
     Result open();
     long seek(long filepos);
     unsigned read(unsigned long size, const SAMPLE *buffer);
     inline long unsigned length();
     Result parseHeader();
+    QImage parseCoverArt();
     static QList<QString> supportedFileExtensions();
 private:
     unsigned int m_samples; // total number of samples

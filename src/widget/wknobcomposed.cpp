@@ -1,5 +1,6 @@
 #include <QStylePainter>
 #include <QStyleOption>
+#include <QTransform>
 
 #include "widget/wknobcomposed.h"
 
@@ -18,15 +19,16 @@ void WKnobComposed::setup(QDomNode node, const SkinContext& context) {
 
     // Set background pixmap if available
     if (context.hasNode(node, "BackPath")) {
-        QString mode_str = context.selectAttributeString(
-                context.selectElement(node, "BackPath"), "scalemode", "TILE");
-        setPixmapBackground(context.getPixmapPath(context.selectNode(node, "BackPath")),
-                            Paintable::DrawModeFromString(mode_str));
+        QDomElement backPathElement = context.selectElement(node, "BackPath");
+        setPixmapBackground(context.getPixmapSource(backPathElement),
+                            context.selectScaleMode(backPathElement, Paintable::TILE));
     }
 
-    // Set background pixmap if available
+    // Set knob pixmap if available
     if (context.hasNode(node, "Knob")) {
-        setPixmapKnob(context.getPixmapPath(context.selectNode(node, "Knob")));
+        QDomElement knobNode = context.selectElement(node, "Knob");
+        setPixmapKnob(context.getPixmapSource(knobNode),
+                      context.selectScaleMode(knobNode, Paintable::STRETCH));
     }
 
     if (context.hasNode(node, "MinAngle")) {
@@ -43,20 +45,21 @@ void WKnobComposed::clear() {
     m_pKnob.clear();
 }
 
-void WKnobComposed::setPixmapBackground(const QString& filename,
+void WKnobComposed::setPixmapBackground(PixmapSource source,
                                         Paintable::DrawMode mode) {
-    m_pPixmapBack = WPixmapStore::getPaintable(filename, mode);
+    m_pPixmapBack = WPixmapStore::getPaintable(source, mode);
     if (m_pPixmapBack.isNull() || m_pPixmapBack->isNull()) {
         qDebug() << metaObject()->className()
-                 << "Error loading background pixmap:" << filename;
+                 << "Error loading background pixmap:" << source.getPath();
     }
 }
 
-void WKnobComposed::setPixmapKnob(const QString& filename) {
-    m_pKnob = WPixmapStore::getPaintable(filename, Paintable::STRETCH);
+void WKnobComposed::setPixmapKnob(PixmapSource source,
+                                  Paintable::DrawMode mode) {
+    m_pKnob = WPixmapStore::getPaintable(source, mode);
     if (m_pKnob.isNull() || m_pKnob->isNull()) {
         qDebug() << metaObject()->className()
-                 << "Error loading knob pixmap:" << filename;
+                 << "Error loading knob pixmap:" << source.getPath();
     }
 }
 
@@ -83,18 +86,25 @@ void WKnobComposed::paintEvent(QPaintEvent* e) {
     p.drawPrimitive(QStyle::PE_Widget, option);
 
     if (m_pPixmapBack) {
-        m_pPixmapBack->draw(0, 0, &p);
+        m_pPixmapBack->draw(rect(), &p);
     }
 
+    QTransform transform;
     if (!m_pKnob.isNull() && !m_pKnob->isNull()) {
-        p.translate(width() / 2.0, height() / 2.0);
+        qreal tx = width() / 2.0;
+        qreal ty = height() / 2.0;
+        transform.translate(-tx, -ty);
+        p.translate(tx, ty);
 
         // We update m_dCurrentAngle since onConnectedControlChanged uses it for
         // no-op detection.
         m_dCurrentAngle = m_dMinAngle + (m_dMaxAngle - m_dMinAngle) * getControlParameterDisplay();
         p.rotate(m_dCurrentAngle);
 
-        m_pKnob->draw(-m_pKnob->width() / 2.0, -m_pKnob->height() / 2.0, &p);
+        // Need to convert from QRect to a QRectF to avoid losing precison.
+        QRectF targetRect = rect();
+        m_pKnob->drawCentered(transform.mapRect(targetRect), &p,
+                              m_pKnob->rect());
     }
 }
 

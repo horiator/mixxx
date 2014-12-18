@@ -5,6 +5,7 @@
 
 #include "library/mixxxlibraryfeature.h"
 
+#include "library/parser.h"
 #include "library/basetrackcache.h"
 #include "library/librarytablemodel.h"
 #include "library/missingtablemodel.h"
@@ -32,28 +33,32 @@ MixxxLibraryFeature::MixxxLibraryFeature(QObject* parent,
             << "library." + LIBRARYTABLE_PLAYED
             << "library." + LIBRARYTABLE_TIMESPLAYED
             //has to be up here otherwise Played and TimesPlayed are not show
+            << "library." + LIBRARYTABLE_ALBUMARTIST
+            << "library." + LIBRARYTABLE_ALBUM
             << "library." + LIBRARYTABLE_ARTIST
             << "library." + LIBRARYTABLE_TITLE
-            << "library." + LIBRARYTABLE_ALBUM
-            << "library." + LIBRARYTABLE_ALBUMARTIST
             << "library." + LIBRARYTABLE_YEAR
-            << "library." + LIBRARYTABLE_DURATION
             << "library." + LIBRARYTABLE_RATING
             << "library." + LIBRARYTABLE_GENRE
             << "library." + LIBRARYTABLE_COMPOSER
             << "library." + LIBRARYTABLE_GROUPING
-            << "library." + LIBRARYTABLE_FILETYPE
             << "library." + LIBRARYTABLE_TRACKNUMBER
             << "library." + LIBRARYTABLE_KEY
             << "library." + LIBRARYTABLE_KEY_ID
-            << "library." + LIBRARYTABLE_DATETIMEADDED
             << "library." + LIBRARYTABLE_BPM
             << "library." + LIBRARYTABLE_BPM_LOCK
+            << "library." + LIBRARYTABLE_DURATION
             << "library." + LIBRARYTABLE_BITRATE
+            << "library." + LIBRARYTABLE_FILETYPE
+            << "library." + LIBRARYTABLE_DATETIMEADDED
             << "track_locations.location"
             << "track_locations.fs_deleted"
             << "library." + LIBRARYTABLE_COMMENT
-            << "library." + LIBRARYTABLE_MIXXXDELETED;
+            << "library." + LIBRARYTABLE_MIXXXDELETED
+            << "library." + LIBRARYTABLE_COVERART_SOURCE
+            << "library." + LIBRARYTABLE_COVERART_TYPE
+            << "library." + LIBRARYTABLE_COVERART_LOCATION
+            << "library." + LIBRARYTABLE_COVERART_HASH;
 
     QSqlQuery query(pTrackCollection->getDatabase());
     QString tableName = "library_cache_view";
@@ -114,15 +119,20 @@ MixxxLibraryFeature::~MixxxLibraryFeature() {
 }
 
 void MixxxLibraryFeature::bindWidget(WLibrary* pLibrary,
-                    MixxxKeyboard* pKeyboard) {
+                                     MixxxKeyboard* pKeyboard) {
     m_pHiddenView = new DlgHidden(pLibrary,
                                   m_pConfig, m_pTrackCollection,
                                   pKeyboard);
     pLibrary->registerView(kHiddenTitle, m_pHiddenView);
+    connect(m_pHiddenView, SIGNAL(trackSelected(TrackPointer)),
+            this, SIGNAL(trackSelected(TrackPointer)));
+
     m_pMissingView = new DlgMissing(pLibrary,
                                   m_pConfig, m_pTrackCollection,
                                   pKeyboard);
     pLibrary->registerView(kMissingTitle, m_pMissingView);
+    connect(m_pMissingView, SIGNAL(trackSelected(TrackPointer)),
+            this, SIGNAL(trackSelected(TrackPointer)));
 }
 
 QVariant MixxxLibraryFeature::title() {
@@ -152,11 +162,13 @@ void MixxxLibraryFeature::refreshLibraryModels() {
 void MixxxLibraryFeature::activate() {
     qDebug() << "MixxxLibraryFeature::activate()";
     emit(showTrackModel(m_pLibraryTableModel));
+    emit(enableCoverArtDisplay(true));
 }
 
 void MixxxLibraryFeature::activateChild(const QModelIndex& index) {
     QString itemName = index.data().toString();
     emit(switchToView(itemName));
+    emit(enableCoverArtDisplay(true));
 }
 
 bool MixxxLibraryFeature::dropAccept(QList<QUrl> urls, QObject* pSource) {
@@ -173,5 +185,6 @@ bool MixxxLibraryFeature::dropAccept(QList<QUrl> urls, QObject* pSource) {
 
 bool MixxxLibraryFeature::dragMoveAccept(QUrl url) {
     QFileInfo file(url.toLocalFile());
-    return SoundSourceProxy::isFilenameSupported(file.fileName());
+    return SoundSourceProxy::isFilenameSupported(file.fileName()) ||
+            Parser::isPlaylistFilenameSupported(file.fileName());
 }

@@ -44,6 +44,26 @@ class BeatMapTest : public testing::Test {
     int m_iFrameSize;
 };
 
+TEST_F(BeatMapTest, Scale) {
+    const double bpm = 60.0;
+    m_pTrack->setBpm(bpm);
+    m_pTrack->setSampleRate(m_iSampleRate);
+    double beatLengthFrames = getBeatLengthFrames(bpm);
+    double startOffsetFrames = 7;
+    const int numBeats = 100;
+    // Note beats must be in frames, not samples.
+    QVector<double> beats = createBeatVector(startOffsetFrames, numBeats, beatLengthFrames);
+    BeatMap* pMap = new BeatMap(m_pTrack, 0, beats);
+
+    EXPECT_DOUBLE_EQ(bpm, pMap->getBpm());
+    pMap->scale(2);
+    EXPECT_DOUBLE_EQ(2 * bpm, pMap->getBpm());
+    pMap->scale(0.5);
+    EXPECT_DOUBLE_EQ(bpm, pMap->getBpm());
+    pMap->scale(0.25);
+    EXPECT_DOUBLE_EQ(0.25 * bpm, pMap->getBpm());
+}
+
 TEST_F(BeatMapTest, TestNthBeat) {
     const double bpm = 60.0;
     m_pTrack->setBpm(bpm);
@@ -181,6 +201,44 @@ TEST_F(BeatMapTest, TestNthBeatWhenNotOnBeat) {
         EXPECT_DOUBLE_EQ(previousBeat - beatLengthSamples*(i-1),
                          pMap->findNthBeat(position, -i));
     }
+}
+
+TEST_F(BeatMapTest, TestBpmAround) {
+    const double filebpm = 60.0;
+    double approx_beat_length = getBeatLengthSamples(filebpm);
+    m_pTrack->setBpm(filebpm);
+    m_pTrack->setSampleRate(m_iSampleRate);
+    const int numBeats = 64;
+
+    QVector<double> beats;
+    double beat_pos = 0;
+    for (unsigned int i = 0, bpm=60; i < numBeats; ++i, ++bpm) {
+        double beat_length = getBeatLengthFrames(bpm);
+        beats.append(beat_pos);
+        beat_pos += beat_length;
+    }
+
+    BeatMap* pMap = new BeatMap(m_pTrack, 0, beats);
+
+    // The average of the first 8 beats should be different than the average
+    // of the last 8 beats.
+    EXPECT_DOUBLE_EQ(64.024390243902445,
+                     pMap->getBpmAroundPosition(4 * approx_beat_length, 4));
+    EXPECT_DOUBLE_EQ(118.98016997167139,
+                     pMap->getBpmAroundPosition(60 * approx_beat_length, 4));
+    // Also test at the beginning and end of the track
+    EXPECT_DOUBLE_EQ(62.968515742128936,
+                     pMap->getBpmAroundPosition(0, 4));
+    EXPECT_DOUBLE_EQ(118.98016997167139,
+                     pMap->getBpmAroundPosition(65 * approx_beat_length, 4));
+    delete pMap;
+
+    // Try a really, really short track
+    beats = createBeatVector(10, 3, getBeatLengthFrames(filebpm));
+    pMap = new BeatMap(m_pTrack, 0, beats);
+
+    EXPECT_DOUBLE_EQ(filebpm, pMap->getBpmAroundPosition(1 * approx_beat_length, 4));
+    delete pMap;
 }
 
 }  // namespace

@@ -46,6 +46,11 @@ void ColumnCache::setColumns(const QStringList& columns) {
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_KEY_ID] = fieldIndex(LIBRARYTABLE_KEY_ID);
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_BPM_LOCK] = fieldIndex(LIBRARYTABLE_BPM_LOCK);
     m_columnIndexByEnum[COLUMN_LIBRARYTABLE_PREVIEW] = fieldIndex(LIBRARYTABLE_PREVIEW);
+    m_columnIndexByEnum[COLUMN_LIBRARYTABLE_COVERART] = fieldIndex(LIBRARYTABLE_COVERART);
+    m_columnIndexByEnum[COLUMN_LIBRARYTABLE_COVERART_SOURCE] = fieldIndex(LIBRARYTABLE_COVERART_SOURCE);
+    m_columnIndexByEnum[COLUMN_LIBRARYTABLE_COVERART_TYPE] = fieldIndex(LIBRARYTABLE_COVERART_TYPE);
+    m_columnIndexByEnum[COLUMN_LIBRARYTABLE_COVERART_LOCATION] = fieldIndex(LIBRARYTABLE_COVERART_LOCATION);
+    m_columnIndexByEnum[COLUMN_LIBRARYTABLE_COVERART_HASH] = fieldIndex(LIBRARYTABLE_COVERART_HASH);
 
     m_columnIndexByEnum[COLUMN_TRACKLOCATIONSTABLE_FSDELETED] = fieldIndex(TRACKLOCATIONSTABLE_FSDELETED);
 
@@ -59,4 +64,13 @@ void ColumnCache::setColumns(const QStringList& columns) {
 
     m_columnIndexByEnum[COLUMN_CRATETRACKSTABLE_TRACKID] = fieldIndex(CRATETRACKSTABLE_TRACKID);
     m_columnIndexByEnum[COLUMN_CRATETRACKSTABLE_CRATEID] = fieldIndex(CRATETRACKSTABLE_CRATEID);
+
+    // Set up the reverse mapping, ignoring columns that don't get displayed.
+    for (int i = 0; i < NUM_COLUMNS; ++i) {
+        int index = m_columnIndexByEnum[i];
+        if (index < 0) {
+            continue;
+        }
+        m_columnByIndex[index] = static_cast<Column>(i);
+    }
 }

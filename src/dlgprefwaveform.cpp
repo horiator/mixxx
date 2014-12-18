@@ -12,9 +12,9 @@ DlgPrefWaveform::DlgPrefWaveform(QWidget* pParent, MixxxMainWindow* pMixxx,
     setupUi(this);
 
     // Waveform overview init
-    waveformOverviewComboBox->addItem( tr("Filtered") ); // "0"
-    waveformOverviewComboBox->addItem( tr("HSV") ); // "1"
-    waveformOverviewComboBox->addItem( tr("RGB") ); // "2"
+    waveformOverviewComboBox->addItem(tr("Filtered")); // "0"
+    waveformOverviewComboBox->addItem(tr("HSV")); // "1"
+    waveformOverviewComboBox->addItem(tr("RGB")); // "2"
 
     // Populate waveform options.
     WaveformWidgetFactory* factory = WaveformWidgetFactory::instance();
@@ -34,13 +34,18 @@ DlgPrefWaveform::DlgPrefWaveform(QWidget* pParent, MixxxMainWindow* pMixxx,
     // slotUpdate can generate rebootMixxxView calls.
     // TODO(XXX): Improve this awkwardness.
     slotUpdate();
-
     connect(frameRateSpinBox, SIGNAL(valueChanged(int)),
             this, SLOT(slotSetFrameRate(int)));
-    connect(frameRateSpinBox, SIGNAL(valueChanged(int)),
-            frameRateSlider, SLOT(setValue(int)));
+    connect(endOfTrackWarningTimeSpinBox, SIGNAL(valueChanged(int)),
+            this, SLOT(slotSetWaveformEndRender(int)));
     connect(frameRateSlider, SIGNAL(valueChanged(int)),
             frameRateSpinBox, SLOT(setValue(int)));
+    connect(frameRateSpinBox, SIGNAL(valueChanged(int)),
+            frameRateSlider, SLOT(setValue(int)));
+    connect(endOfTrackWarningTimeSlider, SIGNAL(valueChanged(int)),
+            endOfTrackWarningTimeSpinBox, SLOT(setValue(int)));
+    connect(endOfTrackWarningTimeSpinBox, SIGNAL(valueChanged(int)),
+            endOfTrackWarningTimeSlider, SLOT(setValue(int)));
 
     connect(waveformTypeComboBox, SIGNAL(activated(int)),
             this, SLOT(slotSetWaveformType(int)));
@@ -84,6 +89,8 @@ void DlgPrefWaveform::slotUpdate() {
 
     frameRateSpinBox->setValue(factory->getFrameRate());
     frameRateSlider->setValue(factory->getFrameRate());
+    endOfTrackWarningTimeSpinBox->setValue(factory->getEndOfTrackWarningTime());
+    endOfTrackWarningTimeSlider->setValue(factory->getEndOfTrackWarningTime());
     synchronizeZoomCheckBox->setChecked(factory->isZoomSync());
     allVisualGain->setValue(factory->getVisualGain(WaveformWidgetFactory::All));
     lowVisualGain->setValue(factory->getVisualGain(WaveformWidgetFactory::Low));
@@ -133,12 +140,15 @@ void DlgPrefWaveform::slotResetToDefaults() {
 
     // 30FPS is the default
     frameRateSlider->setValue(30);
+    endOfTrackWarningTimeSlider->setValue(30);
 }
 
 void DlgPrefWaveform::slotSetFrameRate(int frameRate) {
     WaveformWidgetFactory::instance()->setFrameRate(frameRate);
 }
-
+void DlgPrefWaveform::slotSetWaveformEndRender(int endTime) {
+    WaveformWidgetFactory::instance()->setEndOfTrackWarningTime(endTime);
+}
 void DlgPrefWaveform::slotSetWaveformType(int index) {
     // Ignore sets for -1 since this happens when we clear the combobox.
     if (index < 0) {
@@ -153,7 +163,7 @@ void DlgPrefWaveform::slotSetWaveformOverviewType(int index) {
 }
 
 void DlgPrefWaveform::slotSetDefaultZoom(int index) {
-    WaveformWidgetFactory::instance()->setDefaultZoom( index + 1);
+    WaveformWidgetFactory::instance()->setDefaultZoom(index + 1);
 }
 
 void DlgPrefWaveform::slotSetZoomSynchronization(bool checked) {
@@ -176,7 +186,7 @@ void DlgPrefWaveform::slotSetVisualGainHigh(double gain) {
     WaveformWidgetFactory::instance()->setVisualGain(WaveformWidgetFactory::High,gain);
 }
 
-void DlgPrefWaveform::slotSetNormalizeOverview( bool normalize) {
+void DlgPrefWaveform::slotSetNormalizeOverview(bool normalize) {
     WaveformWidgetFactory::instance()->setOverviewNormalized(normalize);
 }
 

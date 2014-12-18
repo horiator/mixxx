@@ -42,7 +42,6 @@ BeatGrid::BeatGrid(TrackInfoObject* pTrack, int iSampleRate,
           m_iSampleRate(iSampleRate > 0 ? iSampleRate :
                         pTrack->getSampleRate()),
           m_dBeatLength(0.0) {
-    qDebug() << "New BeatGrid";
     if (pByteArray != NULL) {
         readByteArray(pByteArray);
     }
@@ -224,6 +223,17 @@ double BeatGrid::getBpm() const {
 double BeatGrid::getBpmRange(double startSample, double stopSample) const {
     QMutexLocker locker(&m_mutex);
     if (!isValid() || startSample > stopSample) {
+        return -1;
+    }
+    return bpm();
+}
+
+double BeatGrid::getBpmAroundPosition(double curSample, int n) const {
+    Q_UNUSED(curSample);
+    Q_UNUSED(n);
+
+    QMutexLocker locker(&m_mutex);
+    if (!isValid()) {
         return -1;
     }
     return bpm();

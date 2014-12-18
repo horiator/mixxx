@@ -31,20 +31,20 @@
 class SoundSourceSndFile : public Mixxx::SoundSource
 {
 public:
-    SoundSourceSndFile(QString qFilename);
+    explicit SoundSourceSndFile(QString qFilename);
     ~SoundSourceSndFile();
     Result open();
     long seek(long);
     unsigned read(unsigned long size, const SAMPLE*);
     inline long unsigned length();
     Result parseHeader();
+    QImage parseCoverArt();
     static QList<QString> supportedFileExtensions();
 
 private:
-    bool m_bOpened;
-    int channels;
     SNDFILE *fh;
-    SF_INFO *info;
+    SF_INFO info;
+    int channels;
     unsigned long filelength;
 };
 

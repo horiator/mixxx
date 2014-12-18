@@ -30,6 +30,7 @@ class GoaSlicerEffect : public GroupEffectProcessor<GoaSlicerGroupState> {
                       const CSAMPLE* pInput, CSAMPLE *pOutput,
                       const unsigned int numSamples,
                       const unsigned int sampleRate,
+                      const EffectProcessor::EnableState enableState,
                       const GroupFeatureState& groupFeatures);
 
   private:

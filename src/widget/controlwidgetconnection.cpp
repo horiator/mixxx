@@ -4,6 +4,7 @@
 #include "controlobjectslave.h"
 #include "util/debug.h"
 #include "util/valuetransformer.h"
+#include "util/assert.h"
 
 ControlWidgetConnection::ControlWidgetConnection(WBaseWidget* pBaseWidget,
                                                  ControlObjectSlave* pControl,
@@ -11,11 +12,13 @@ ControlWidgetConnection::ControlWidgetConnection(WBaseWidget* pBaseWidget,
         : m_pWidget(pBaseWidget),
           m_pControl(pControl),
           m_pValueTransformer(pTransformer) {
-    // If pControl is NULL then the creator of ControlWidgetConnection has
-    // screwed up badly enough that we should just crash. This will not go
-    // unnoticed in development.
-    Q_ASSERT(pControl);
-    pControl->connectValueChanged(this, SLOT(slotControlValueChanged(double)));
+    // If m_pControl is NULL then the creator of ControlWidgetConnection has
+    // screwed up badly. Assert in development mode. In release mode the
+    // connection will be defunct.
+    DEBUG_ASSERT_AND_HANDLE(!m_pControl.isNull()) {
+        m_pControl.reset(new ControlObjectSlave());
+    }
+    m_pControl->connectValueChanged(this, SLOT(slotControlValueChanged(double)));
 }
 
 ControlWidgetConnection::~ControlWidgetConnection() {
@@ -122,11 +125,17 @@ QString ControlWidgetPropertyConnection::toDebugString() const {
 }
 
 void ControlWidgetPropertyConnection::slotControlValueChanged(double v) {
-    double dParameter = getControlParameterForValue(v);
+    QVariant parameter;
+    QWidget* pWidget = m_pWidget->toQWidget();
+    QVariant property = pWidget->property(m_propertyName.constData());
+    if (property.type() == QVariant::Bool) {
+        parameter = getControlParameterForValue(v) > 0;
+    } else {
+        parameter = getControlParameterForValue(v);
+    }
 
-    if (!m_pWidget->toQWidget()->setProperty(m_propertyName.constData(),
-                                             QVariant(dParameter))) {
+    if (!pWidget->setProperty(m_propertyName.constData(),parameter)) {
         qDebug() << "Setting property" << m_propertyName
-                 << "to widget failed. Value:" << dParameter;
+                << "to widget failed. Value:" << parameter;
     }
 }

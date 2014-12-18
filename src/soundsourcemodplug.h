@@ -21,13 +21,14 @@ namespace ModPlug {
 class SoundSourceModPlug : public Mixxx::SoundSource
 {
   public:
-    SoundSourceModPlug(QString qFilename);
+    explicit SoundSourceModPlug(QString qFilename);
     ~SoundSourceModPlug();
     Result open();
     long seek(long);
     unsigned read(unsigned long size, const SAMPLE*);
     inline long unsigned length();
     Result parseHeader();
+    QImage parseCoverArt();
     static QList<QString> supportedFileExtensions();
 
     // apply settings for decoding

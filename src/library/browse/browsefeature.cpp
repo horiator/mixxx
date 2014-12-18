@@ -47,6 +47,11 @@ BrowseFeature::BrowseFeature(QObject* parent,
 
     m_proxyModel.setFilterCaseSensitivity(Qt::CaseInsensitive);
     m_proxyModel.setSortCaseSensitivity(Qt::CaseInsensitive);
+    // BrowseThread sets the Qt::UserRole of every QStandardItem to the sort key
+    // of the item.
+    m_proxyModel.setSortRole(Qt::UserRole);
+    // Dynamically re-sort contents as we add items to the source model.
+    m_proxyModel.setDynamicSortFilter(true);
 
     // The invisible root item of the child model
     TreeItem* rootItem = new TreeItem();
@@ -142,10 +147,10 @@ void BrowseFeature::slotAddToLibrary() {
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
     // strings are dupes from DlgPrefLibrary
-    msgBox.setWindowTitle(tr("Added Directory"));
-    msgBox.setText(tr(
-        "You added one or more library directories. These files won't be"
-        "available until you rescan. Would you like to rescan now?"));
+    msgBox.setWindowTitle(tr("Music Directory Added"));
+    msgBox.setText(tr("You added one or more music directories. The tracks in "
+                      "these directories won't be available until you rescan "
+                      "your library. Would you like to rescan now?"));
     QPushButton* scanButton = msgBox.addButton(
         tr("Scan"), QMessageBox::AcceptRole);
     msgBox.addButton(QMessageBox::Cancel);
@@ -200,6 +205,7 @@ void BrowseFeature::bindWidget(WLibrary* libraryWidget,
 void BrowseFeature::activate() {
     emit(switchToView("BROWSEHOME"));
     emit(restoreSearch(QString()));
+    emit(enableCoverArtDisplay(false));
 }
 
 // Note: This is executed whenever you single click on an child item
@@ -228,6 +234,7 @@ void BrowseFeature::activateChild(const QModelIndex& index) {
         m_browseModel.setPath(dir);
     }
     emit(showTrackModel(&m_proxyModel));
+    emit(enableCoverArtDisplay(false));
 }
 
 void BrowseFeature::onRightClickChild(const QPoint& globalPos, QModelIndex index) {
@@ -266,7 +273,7 @@ void BrowseFeature::onRightClickChild(const QPoint& globalPos, QModelIndex index
 
 // This is called whenever you double click or use the triangle symbol to expand
 // the subtree. The method will read the subfolders.
-void BrowseFeature::onLazyChildExpandation(const QModelIndex &index){
+void BrowseFeature::onLazyChildExpandation(const QModelIndex& index) {
     TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
     if (!item) {
         return;

@@ -9,7 +9,7 @@ HiddenTableModel::HiddenTableModel(QObject* parent,
 HiddenTableModel::~HiddenTableModel() {
 }
 
-void HiddenTableModel::setTableModel(int id){
+void HiddenTableModel::setTableModel(int id) {
     Q_UNUSED(id);
     QSqlQuery query;
     const QString tableName("hidden_songs");
@@ -77,13 +77,13 @@ bool HiddenTableModel::isColumnInternal(int column) {
             column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_BPM_LOCK) ||
             column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_MIXXXDELETED) ||
             column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_KEY_ID)||
-            column == fieldIndex(ColumnCache::COLUMN_TRACKLOCATIONSTABLE_FSDELETED)) {
+            column == fieldIndex(ColumnCache::COLUMN_TRACKLOCATIONSTABLE_FSDELETED) ||
+            column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART_SOURCE) ||
+            column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART_TYPE) ||
+            column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART_LOCATION) ||
+            column == fieldIndex(ColumnCache::COLUMN_LIBRARYTABLE_COVERART_HASH)) {
         return true;
     }
-    return false;
-}
-bool HiddenTableModel::isColumnHiddenByDefault(int column) {
-    Q_UNUSED(column);
     return false;
 }
 

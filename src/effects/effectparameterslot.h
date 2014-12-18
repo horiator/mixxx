@@ -21,10 +21,7 @@ typedef QSharedPointer<EffectParameterSlot> EffectParameterSlotPointer;
 class EffectParameterSlot : public EffectParameterSlotBase {
     Q_OBJECT
   public:
-    EffectParameterSlot(const unsigned int iRackNumber,
-                        const unsigned int iChainNumber,
-                        const unsigned int iSlotNumber,
-                        const unsigned int iParameterSlotNumber);
+    EffectParameterSlot(const QString& group, const unsigned int iParameterSlotNumber);
     virtual ~EffectParameterSlot();
 
     static QString formatItemPrefix(const unsigned int iParameterSlotNumber) {
@@ -36,12 +33,15 @@ class EffectParameterSlot : public EffectParameterSlotBase {
 
     double getValueParameter() const;
 
-    void onChainParameterChanged(double parameter);
+    void onChainSuperParameterChanged(double parameter, bool force=false);
 
     // Syncs the Super button with the parameter, that the following
     // super button change will be passed to the effect parameter
     // used during test
     void syncSofttakeover();
+
+    // Clear the currently loaded effect
+    void clear();
 
   private slots:
     // Solely for handling control changes
@@ -55,9 +55,6 @@ class EffectParameterSlot : public EffectParameterSlotBase {
         return QString("EffectParameterSlot(%1,%2)").arg(m_group).arg(m_iParameterSlotNumber);
     }
 
-    // Clear the currently loaded effect
-    void clear();
-
     SoftTakeover* m_pSoftTakeover;
 
     // Control exposed to the rest of Mixxx
@@ -68,4 +65,4 @@ class EffectParameterSlot : public EffectParameterSlotBase {
     DISALLOW_COPY_AND_ASSIGN(EffectParameterSlot);
 };
 
-#endif /* EFFECTPARAMETERSLOT_H */
+#endif // EFFECTPARAMETERSLOT_H

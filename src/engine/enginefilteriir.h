@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "engine/engineobject.h"
+#include "sampleutil.h"
 #define MIXXX
 #include <fidlib.h>
 
@@ -16,7 +17,9 @@
 enum IIRPass {
     IIR_LP,
     IIR_BP,
-    IIR_HP
+    IIR_HP,
+    IIR_LPMO,
+    IIR_HPMO,
 };
 
 // length of the 3rd argument to fid_design_coef
@@ -35,14 +38,25 @@ class EngineFilterIIR : public EngineObjectConstIn {
 
     virtual ~EngineFilterIIR() {};
 
+    // this can be called continuously for Filters that have own ramping
+    // or need no fade when disabling
     void pauseFilter() {
         if (!m_doStart) {
-            // Set the current buffers to 0
-            memset(m_buf1, 0, sizeof(m_buf1));
-            memset(m_buf2, 0, sizeof(m_buf2));
-            m_doRamping = true;
-            m_doStart = true;
+            pauseFilterInner();
         }
+    }
+
+    // this is can be used instead off a final process() call before pause
+    // It fades to dry or 0 according to the m_startFromDry parameter
+    // it is an alternative for using pauseFillter() calls
+    void processAndPauseFilter(const CSAMPLE* pIn, CSAMPLE* pOutput,
+                       const int iBufferSize) {
+        process(pIn, pOutput, iBufferSize);
+        SampleUtil::copy2WithRampingGain(pOutput,
+                pOutput, 1.0, 0,  // fade out filtered
+                pIn, 0, m_startFromDry ? 1.0 : 0,  // fade in dry if requested
+                iBufferSize);
+        pauseFilterInner();
     }
 
     void initBuffers() {
@@ -187,7 +201,7 @@ class EngineFilterIIR : public EngineObjectConstIn {
                 double old1;
                 double old2;
                 if (!m_doStart) {
-                    // Process old filter only if we do not do a fresh start
+                    // Process old filter, but only if we do not do a fresh start
                     old1 = processSample(m_oldCoef, m_oldBuf1, pIn[i]);
                     old2 = processSample(m_oldCoef, m_oldBuf2, pIn[i + 1]);
                 } else {
@@ -220,6 +234,13 @@ class EngineFilterIIR : public EngineObjectConstIn {
 
   protected:
     inline double processSample(double* coef, double* buf, register double val);
+    inline void pauseFilterInner() {
+        // Set the current buffers to 0
+        memset(m_buf1, 0, sizeof(m_buf1));
+        memset(m_buf2, 0, sizeof(m_buf2));
+        m_doRamping = true;
+        m_doStart = true;
+    }
 
     double m_coef[SIZE + 1];
     // Old coefficients needed for ramping
@@ -480,4 +501,54 @@ inline double EngineFilterIIR<5, IIR_BP>::processSample(double* coef,
     return val;
 }
 
+template<>
+inline double EngineFilterIIR<4, IIR_LPMO>::processSample(double* coef,
+                                                        double* buf,
+                                                        register double val) {
+   register double tmp, fir, iir;
+   tmp= buf[0]; buf[0] = buf[1]; buf[1] = buf[2]; buf[2] = buf[3];
+   iir= val * coef[0];
+   iir -= coef[1]*tmp; fir= tmp;
+   fir += iir;
+   tmp= buf[0]; buf[0]= iir; val= fir;
+   iir= val;
+   iir -= coef[2]*tmp; fir= tmp;
+   fir += iir;
+   tmp= buf[1]; buf[1]= iir; val= fir;
+   iir= val;
+   iir -= coef[3]*tmp; fir= tmp;
+   fir += iir;
+   tmp= buf[2]; buf[2]= iir; val= fir;
+   iir= val;
+   iir -= coef[4]*tmp; fir= tmp;
+   fir += iir;
+   buf[3]= iir; val= fir;
+   return val;
+}
+
+
+template<>
+inline double EngineFilterIIR<4, IIR_HPMO>::processSample(double* coef,
+                                                        double* buf,
+                                                        register double val) {
+   register double tmp, fir, iir;
+   tmp= buf[0]; buf[0] = buf[1]; buf[1] = buf[2]; buf[2] = buf[3];
+   iir= val * coef[0];
+   iir -= coef[1]*tmp; fir= -tmp;
+   fir += iir;
+   tmp= buf[0]; buf[0]= iir; val= fir;
+   iir= val;
+   iir -= coef[2]*tmp; fir= -tmp;
+   fir += iir;
+   tmp= buf[1]; buf[1]= iir; val= fir;
+   iir= val;
+   iir -= coef[3]*tmp; fir= -tmp;
+   fir += iir;
+   tmp= buf[2]; buf[2]= iir; val= fir;
+   iir= val;
+   iir -= coef[4]*tmp; fir= -tmp;
+   fir += iir;
+   buf[3]= iir; val= fir;
+   return val;
+}
 #endif // ENGINEFILTERIIR_H

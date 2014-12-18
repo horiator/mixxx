@@ -26,7 +26,7 @@ struct ReverbGroupState {
     }
 
     ~ReverbGroupState() {
-        delete crossfade_buffer;
+        SampleUtil::free(crossfade_buffer);
     }
 
     MixxxPlateX2 reverb;
@@ -49,6 +49,7 @@ class ReverbEffect : public GroupEffectProcessor<ReverbGroupState> {
                       const CSAMPLE* pInput, CSAMPLE* pOutput,
                       const unsigned int numSamples,
                       const unsigned int sampleRate,
+                      const EffectProcessor::EnableState enableState,
                       const GroupFeatureState& groupFeatures);
 
   private:

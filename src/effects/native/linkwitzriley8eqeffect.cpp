@@ -18,8 +18,9 @@ EffectManifest LinkwitzRiley8EQEffect::getManifest() {
     manifest.setAuthor("The Mixxx Team");
     manifest.setVersion("1.0");
     manifest.setDescription(QObject::tr(
-        "A Linkwitz-Riley 8th order filter equalizer (optimized crossover, constant phase shift, roll-off -48 db/Oct)"
+        "A Linkwitz-Riley 8th order filter equalizer (optimized crossover, constant phase shift, roll-off -48 db/Oct). "
         "To adjust frequency shelves see the Equalizer preferences."));
+    manifest.setIsMixingEQ(true); 
 
     EffectManifestParameter* low = manifest.addParameter();
     low->setId("low");
@@ -152,6 +153,7 @@ void LinkwitzRiley8EQEffect::processGroup(const QString& group,
         const CSAMPLE* pInput, CSAMPLE* pOutput,
         const unsigned int numSamples,
         const unsigned int sampleRate,
+        const EffectProcessor::EnableState enableState,
         const GroupFeatureState& groupFeatures) {
     Q_UNUSED(group);
     Q_UNUSED(groupFeatures);
@@ -207,7 +209,19 @@ void LinkwitzRiley8EQEffect::processGroup(const QString& group,
                 numSamples);
     }
 
-    pState->old_low = fLow;
-    pState->old_mid = fMid;
-    pState->old_high = fHigh;
+    if (enableState == EffectProcessor::DISABLING) {
+        // we rely on the ramping to dry in EngineEffect
+        // since this EQ is not fully dry at unity
+        pState->m_low1->pauseFilter();
+        pState->m_low2->pauseFilter();
+        pState->m_high1->pauseFilter();
+        pState->m_high2->pauseFilter();
+        pState->old_low = 1.0;
+        pState->old_mid = 1.0;
+        pState->old_high = 1.0;
+    } else {
+        pState->old_low = fLow;
+        pState->old_mid = fMid;
+        pState->old_high = fHigh;
+    }
 }

@@ -34,10 +34,11 @@ class MockEffectProcessor : public EffectProcessor {
   public:
     MockEffectProcessor() {}
 
-    MOCK_METHOD6(process, void(const QString& group, const CSAMPLE* pInput,
+    MOCK_METHOD7(process, void(const QString& group, const CSAMPLE* pInput,
                                CSAMPLE* pOutput,
                                const unsigned int numSamples,
                                const unsigned int sampleRate,
+                               const EffectProcessor::EnableState enableState,
                                const GroupFeatureState& groupFeatures));
 
     MOCK_METHOD1(initialize, void(const QSet<QString>& registeredGroups));
@@ -62,7 +63,7 @@ class BaseEffectTest : public MixxxTest {
         m_pEffectsManager->addEffectsBackend(m_pTestBackend);
     }
 
-    void registerTestEffect(const EffectManifest& manifest);
+    void registerTestEffect(const EffectManifest& manifest, bool willAddToEngine);
 
     // Deleted by EffectsManager. Do not delete.
     TestEffectBackend* m_pTestBackend;

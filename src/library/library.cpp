@@ -6,6 +6,7 @@
 #include <QTranslator>
 #include <QDir>
 
+#include "playermanager.h"
 #include "library/library.h"
 #include "library/library_preferences.h"
 #include "library/libraryfeature.h"
@@ -20,12 +21,13 @@
 #include "library/recording/recordingfeature.h"
 #include "library/itunes/itunesfeature.h"
 #include "library/mixxxlibraryfeature.h"
-#include "library/autodjfeature.h"
+#include "library/autodj/autodjfeature.h"
 #include "library/playlistfeature.h"
 #include "library/traktor/traktorfeature.h"
 #include "library/librarycontrol.h"
 #include "library/setlogfeature.h"
 #include "util/sandbox.h"
+#include "util/assert.h"
 
 #include "widget/wtracktableview.h"
 #include "widget/wlibrary.h"
@@ -38,6 +40,7 @@
 const QString Library::m_sTrackViewName = QString("WTrackTableView");
 
 Library::Library(QObject* parent, ConfigObject<ConfigValue>* pConfig,
+                 PlayerManagerInterface* pPlayerManager,
                  RecordingManager* pRecordingManager) :
         m_pConfig(pConfig),
         m_pSidebarModel(new SidebarModel(parent)),
@@ -51,7 +54,7 @@ Library::Library(QObject* parent, ConfigObject<ConfigValue>* pConfig,
     m_pMixxxLibraryFeature = new MixxxLibraryFeature(this, m_pTrackCollection,m_pConfig);
     addFeature(m_pMixxxLibraryFeature);
 
-    addFeature(new AutoDJFeature(this, pConfig, m_pTrackCollection));
+    addFeature(new AutoDJFeature(this, pConfig, pPlayerManager, m_pTrackCollection));
     m_pPlaylistFeature = new PlaylistFeature(this, m_pTrackCollection, m_pConfig);
     addFeature(m_pPlaylistFeature);
     m_pCrateFeature = new CrateFeature(this, m_pTrackCollection, m_pConfig);
@@ -161,6 +164,9 @@ void Library::bindWidget(WLibrary* pLibraryWidget,
     connect(this, SIGNAL(switchToView(const QString&)),
             pLibraryWidget, SLOT(switchToView(const QString&)));
 
+    connect(pTrackTableView, SIGNAL(trackSelected(TrackPointer)),
+            this, SIGNAL(trackSelected(TrackPointer)));
+
     m_pLibraryControl->bindWidget(pLibraryWidget, pKeyboard);
 
     QListIterator<LibraryFeature*> feature_it(m_features);
@@ -171,7 +177,9 @@ void Library::bindWidget(WLibrary* pLibraryWidget,
 }
 
 void Library::addFeature(LibraryFeature* feature) {
-    Q_ASSERT(feature);
+    DEBUG_ASSERT_AND_HANDLE(feature) {
+        return;
+    }
     m_features.push_back(feature);
     m_pSidebarModel->addLibraryFeature(feature);
     connect(feature, SIGNAL(showTrackModel(QAbstractItemModel*)),
@@ -184,12 +192,18 @@ void Library::addFeature(LibraryFeature* feature) {
             this, SLOT(slotLoadTrackToPlayer(TrackPointer, QString, bool)));
     connect(feature, SIGNAL(restoreSearch(const QString&)),
             this, SLOT(slotRestoreSearch(const QString&)));
+    connect(feature, SIGNAL(enableCoverArtDisplay(bool)),
+            this, SIGNAL(enableCoverArtDisplay(bool)));
+    connect(feature, SIGNAL(trackSelected(TrackPointer)),
+            this, SIGNAL(trackSelected(TrackPointer)));
 }
 
 void Library::slotShowTrackModel(QAbstractItemModel* model) {
     //qDebug() << "Library::slotShowTrackModel" << model;
     TrackModel* trackModel = dynamic_cast<TrackModel*>(model);
-    Q_ASSERT(trackModel);
+    DEBUG_ASSERT_AND_HANDLE(trackModel) {
+        return;
+    }
     emit(showTrackModel(model));
     emit(switchToView(m_sTrackViewName));
     emit(restoreSearch(trackModel->currentSearch()));
@@ -205,20 +219,8 @@ void Library::slotLoadTrack(TrackPointer pTrack) {
 }
 
 void Library::slotLoadLocationToPlayer(QString location, QString group) {
-    TrackDAO& track_dao = m_pTrackCollection->getTrackDAO();
-    int track_id = track_dao.getTrackId(location);
-    if (track_id < 0) {
-        // Add Track to library
-        track_id = track_dao.addTrack(location, true);
-    }
-
-    TrackPointer pTrack;
-    if (track_id < 0) {
-        // Add Track to library failed, create a transient TrackInfoObject
-        pTrack = TrackPointer(new TrackInfoObject(location), &QObject::deleteLater);
-    } else {
-        pTrack = track_dao.getTrack(track_id);
-    }
+    TrackPointer pTrack = m_pTrackCollection->getTrackDAO()
+            .getOrAddTrack(location, true, NULL);
     emit(loadTrackToPlayer(pTrack, group));
 }
 
@@ -266,7 +268,7 @@ void Library::slotRequestAddDir(QString dir) {
     }
     // set at least one directory in the config file so that it will be possible
     // to downgrade from 1.12
-    if (m_pConfig->getValueString(PREF_LEGACY_LIBRARY_DIR).length() < 1){
+    if (m_pConfig->getValueString(PREF_LEGACY_LIBRARY_DIR).length() < 1) {
         m_pConfig->set(PREF_LEGACY_LIBRARY_DIR, dir);
     }
 }
@@ -330,6 +332,6 @@ void Library::slotRequestRelocateDir(QString oldDir, QString newDir) {
     }
 }
 
-QStringList Library::getDirs(){
+QStringList Library::getDirs() {
     return m_pTrackCollection->getDirectoryDAO().getDirs();
 }

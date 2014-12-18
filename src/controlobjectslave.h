@@ -31,7 +31,7 @@ class ControlObjectSlave : public QObject {
     bool connectValueChanged(const QObject* receiver,
             const char* method, Qt::ConnectionType type = Qt::AutoConnection);
     bool connectValueChanged(
-            const char* method, Qt::ConnectionType type = Qt::AutoConnection );
+            const char* method, Qt::ConnectionType type = Qt::AutoConnection);
 
     // Called from update();
     inline void emitValueChanged() {
@@ -43,6 +43,11 @@ class ControlObjectSlave : public QObject {
     // Returns the value of the object. Thread safe, non-blocking.
     inline double get() const {
         return m_pControl ? m_pControl->get() : 0.0;
+    }
+
+    // Returns the bool interpretation of the value
+    inline bool toBool() const {
+        return get() > 0.0;
     }
 
     // Returns the parameterized value of the object. Thread safe, non-blocking.

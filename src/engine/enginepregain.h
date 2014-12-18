@@ -27,14 +27,14 @@ class ControlObject;
 
 class EnginePregain : public EngineObject {
   public:
-    EnginePregain(const char* group);
+    EnginePregain(QString group);
     virtual ~EnginePregain();
 
     void process(CSAMPLE* pInOut, const int iBufferSize);
 
   private:
     float m_fPrevGain;
-    ControlAudioTaperPot* potmeterPregain;
+    ControlAudioTaperPot* m_pPotmeterPregain;
     ControlObject* m_pTotalGain;
     ControlObject* m_pControlReplayGain;
     ControlObject* m_pPassthroughEnabled;

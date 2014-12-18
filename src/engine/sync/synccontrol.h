@@ -20,7 +20,7 @@ class SyncControl : public EngineControl, public Syncable {
     static const double kBpmUnity;
     static const double kBpmHalve;
     static const double kBpmDouble;
-    SyncControl(const char* pGroup, ConfigObject<ConfigValue>* pConfig,
+    SyncControl(QString group, ConfigObject<ConfigValue>* pConfig,
                 EngineChannel* pChannel, SyncableListener* pEngineSync);
     virtual ~SyncControl();
 
@@ -30,12 +30,14 @@ class SyncControl : public EngineControl, public Syncable {
 
     SyncMode getSyncMode() const;
     void notifySyncModeChanged(SyncMode mode);
+    void notifyOnlyPlayingSyncable();
     void requestSyncPhase();
     bool isPlaying() const;
 
     double getBeatDistance() const;
     void setBeatDistance(double beatDistance);
     double getBaseBpm() const;
+    void setLocalBpm(double local_bpm);
 
     // Must never result in a call to
     // SyncableListener::notifyBeatDistanceChanged or signal loops could occur.
@@ -113,6 +115,7 @@ class SyncControl : public EngineControl, public Syncable {
     // multiplier changes and we need to recalculate the target distance.
     double m_unmultipliedTargetBeatDistance;
     double m_beatDistance;
+    double m_prevLocalBpm;
 
     QScopedPointer<ControlPushButton> m_pSyncMode;
     QScopedPointer<ControlPushButton> m_pSyncMasterEnabled;
@@ -121,6 +124,7 @@ class SyncControl : public EngineControl, public Syncable {
 
     QScopedPointer<ControlObjectSlave> m_pPlayButton;
     QScopedPointer<ControlObjectSlave> m_pBpm;
+    QScopedPointer<ControlObjectSlave> m_pLocalBpm;
     QScopedPointer<ControlObjectSlave> m_pFileBpm;
     QScopedPointer<ControlObjectSlave> m_pRateSlider;
     QScopedPointer<ControlObjectSlave> m_pRateDirection;

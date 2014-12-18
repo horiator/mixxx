@@ -25,15 +25,15 @@ class SuperLinkTest : public BaseEffectTest {
         int iChainNumber = 0;
         int iEffectNumber = 0;
 
-        EffectRackPointer pRack = m_pEffectsManager->addEffectRack();
+        StandardEffectRackPointer pRack = m_pEffectsManager->addStandardEffectRack();
         EffectChainSlotPointer pChainSlot = pRack->addEffectChainSlot();
-        // EffectRack::addEffectChainSlot automatically adds 4 effect slots. In the
-        // future we will probably remove this so this will just start segfaulting.
+        // StandardEffectRack::addEffectChainSlot automatically adds 4 effect
+        // slots. In the future we will probably remove this so this will just
+        // start segfaulting.
         m_pEffectSlot = pChainSlot->getEffectSlot(0);
 
-        QString group = EffectSlot::formatGroupString(iRackNumber,
-                                                      iChainNumber,
-                                                      iEffectNumber);
+        QString group = StandardEffectRack::formatEffectSlotGroupString(
+            iRackNumber, iChainNumber, iEffectNumber);
 
         EffectManifest manifest;
         manifest.setId("org.mixxx.test.effect");
@@ -51,7 +51,7 @@ class SuperLinkTest : public BaseEffectTest {
         low->setMinimum(0);
         low->setMaximum(1.0);
 
-        registerTestEffect(manifest);
+        registerTestEffect(manifest, false);
 
         // Check the controls reflect the state of their loaded effect.
         EffectPointer pEffect = m_pEffectsManager->instantiateEffect(manifest.id());
@@ -80,20 +80,20 @@ TEST_F(SuperLinkTest, LinkDefault) {
     // default is not Linked, value must be unchanged
     m_pEffectSlot->syncSofttakeover();
     EXPECT_EQ(1.0, m_pControlValue->get());
-    m_pEffectSlot->onChainParameterChanged(1.0);
+    m_pEffectSlot->onChainSuperParameterChanged(1.0);
     EXPECT_EQ(1.0, m_pControlValue->get());
-    m_pEffectSlot->onChainParameterChanged(0.5);
+    m_pEffectSlot->onChainSuperParameterChanged(0.5);
     EXPECT_EQ(1.0, m_pControlValue->get());
-    m_pEffectSlot->onChainParameterChanged(0.3);
+    m_pEffectSlot->onChainSuperParameterChanged(0.3);
     EXPECT_EQ(1.0, m_pControlValue->get());
 }
 
 TEST_F(SuperLinkTest, LinkLinked) {
     m_pEffectSlot->syncSofttakeover();
     m_pControlLinkType->set(EffectManifestParameter::LINK_LINKED);
-    m_pEffectSlot->onChainParameterChanged(1.0);
+    m_pEffectSlot->onChainSuperParameterChanged(1.0);
     EXPECT_EQ(1.0, m_pControlValue->get());
-    m_pEffectSlot->onChainParameterChanged(0.5);
+    m_pEffectSlot->onChainSuperParameterChanged(0.5);
     EXPECT_EQ(0.25, m_pControlValue->get());
 }
 
@@ -101,18 +101,18 @@ TEST_F(SuperLinkTest, LinkLinkedInverse) {
     m_pEffectSlot->syncSofttakeover();
     m_pControlLinkType->set(EffectManifestParameter::LINK_LINKED);
     m_pControlLinkInverse->set(1.0);
-    m_pEffectSlot->onChainParameterChanged(0.0);
+    m_pEffectSlot->onChainSuperParameterChanged(0.0);
     EXPECT_EQ(1.0, m_pControlValue->get());
-    m_pEffectSlot->onChainParameterChanged(0.5);
+    m_pEffectSlot->onChainSuperParameterChanged(0.5);
     EXPECT_EQ(0.25, m_pControlValue->get());
 }
 
 
 TEST_F(SuperLinkTest, Softtakeover) {
     m_pControlLinkType->set(EffectManifestParameter::LINK_LINKED);
-    m_pEffectSlot->onChainParameterChanged(0.5);
+    m_pEffectSlot->onChainSuperParameterChanged(0.5);
     EXPECT_EQ(1.0, m_pControlValue->get());
     m_pControlValue->set(0.1);
-    m_pEffectSlot->onChainParameterChanged(0.7);
+    m_pEffectSlot->onChainSuperParameterChanged(0.7);
     EXPECT_EQ(0.1, m_pControlValue->get());
 }

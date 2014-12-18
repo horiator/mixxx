@@ -19,16 +19,18 @@
 #include <QDomDocument>
 #include <QDomElement>
 #include <QFileInfo>
+#include <QDirIterator>
+#include <QFile>
 #include <QMutexLocker>
 #include <QString>
 #include <QtDebug>
+#include <QRegExp>
 
 #include "trackinfoobject.h"
 
+#include "controlobject.h"
 #include "soundsourceproxy.h"
 #include "xmlparse.h"
-#include "controlobject.h"
-#include "waveform/waveform.h"
 #include "track/beatfactory.h"
 #include "track/keyfactory.h"
 #include "track/keyutils.h"
@@ -36,37 +38,33 @@
 #include "util/cmdlineargs.h"
 #include "util/time.h"
 #include "util/math.h"
+#include "waveform/waveform.h"
+#include "library/coverartutils.h"
 
 TrackInfoObject::TrackInfoObject(const QString& file,
                                  SecurityTokenPointer pToken,
-                                 bool parseHeader)
+                                 bool parseHeader, bool parseCoverArt)
         : m_fileInfo(file),
           m_pSecurityToken(pToken.isNull() ? Sandbox::openSecurityToken(
                   m_fileInfo, true) : pToken),
           m_qMutex(QMutex::Recursive),
-          m_waveform(new Waveform()),
-          m_waveformSummary(new Waveform()),
           m_analyserProgress(-1) {
-    initialize(parseHeader);
+    initialize(parseHeader, parseCoverArt);
 }
 
 TrackInfoObject::TrackInfoObject(const QFileInfo& fileInfo,
                                  SecurityTokenPointer pToken,
-                                 bool parseHeader)
+                                 bool parseHeader, bool parseCoverArt)
         : m_fileInfo(fileInfo),
           m_pSecurityToken(pToken.isNull() ? Sandbox::openSecurityToken(
                   m_fileInfo, true) : pToken),
           m_qMutex(QMutex::Recursive),
-          m_waveform(new Waveform()),
-          m_waveformSummary(new Waveform()),
           m_analyserProgress(-1) {
-    initialize(parseHeader);
+    initialize(parseHeader, parseCoverArt);
 }
 
 TrackInfoObject::TrackInfoObject(const QDomNode &nodeHeader)
         : m_qMutex(QMutex::Recursive),
-          m_waveform(new Waveform()),
-          m_waveformSummary(new Waveform()),
           m_analyserProgress(-1) {
     QString filename = XmlParse::selectNodeQString(nodeHeader, "Filename");
     QString location = XmlParse::selectNodeQString(nodeHeader, "Filepath") + "/" +  filename;
@@ -103,7 +101,7 @@ TrackInfoObject::TrackInfoObject(const QDomNode &nodeHeader)
     m_bLocationChanged = false;
 }
 
-void TrackInfoObject::initialize(bool parseHeader) {
+void TrackInfoObject::initialize(bool parseHeader, bool parseCoverArt) {
     m_bDirty = false;
     m_bLocationChanged = false;
 
@@ -131,7 +129,7 @@ void TrackInfoObject::initialize(bool parseHeader) {
 
     // parse() parses the metadata from file. This is not a quick operation!
     if (parseHeader) {
-        parse();
+        parse(parseCoverArt);
     }
 }
 
@@ -141,12 +139,9 @@ TrackInfoObject::~TrackInfoObject() {
     // Notifies TrackDAO and other listeners that this track is about to be
     // deleted and should be saved to the database, removed from caches, etc.
     emit(deleted(this));
-
-    delete m_waveform;
-    delete m_waveformSummary;
 }
 
-void TrackInfoObject::parse() {
+void TrackInfoObject::parse(bool parseCoverArt) {
     // Log parsing of header information in developer mode. This is useful for
     // tracking down corrupt files.
     const QString& canonicalLocation = m_fileInfo.canonicalFilePath();
@@ -156,8 +151,8 @@ void TrackInfoObject::parse() {
 
     // Parse the information stored in the sound file.
     SoundSourceProxy proxy(canonicalLocation, m_pSecurityToken);
-    Mixxx::SoundSource* pProxiedSoundSource = proxy.getProxiedSoundSource();
-    if (pProxiedSoundSource != NULL && proxy.parseHeader() == OK) {
+    Mixxx::SoundSourcePointer pSoundSource(proxy.getSoundSource());
+    if (pSoundSource && pSoundSource->parseHeader() == OK) {
 
         // Dump the metadata extracted from the file into the track.
 
@@ -168,47 +163,63 @@ void TrackInfoObject::parse() {
         // If Artist, Title and Type fields are not blank, modify them.
         // Otherwise, keep their current values.
         // TODO(rryan): Should we re-visit this decision?
-        if (!(pProxiedSoundSource->getArtist().isEmpty())) {
-            setArtist(pProxiedSoundSource->getArtist());
+        if (!(pSoundSource->getArtist().isEmpty())) {
+            setArtist(pSoundSource->getArtist());
         } else {
             parseArtist();
         }
 
-        if (!(pProxiedSoundSource->getTitle().isEmpty())) {
-            setTitle(pProxiedSoundSource->getTitle());
+        if (!(pSoundSource->getTitle().isEmpty())) {
+            setTitle(pSoundSource->getTitle());
         } else {
             parseTitle();
         }
 
-        if (!(pProxiedSoundSource->getType().isEmpty())) {
-            setType(pProxiedSoundSource->getType());
+        if (!(pSoundSource->getType().isEmpty())) {
+            setType(pSoundSource->getType());
         }
 
-        setAlbum(pProxiedSoundSource->getAlbum());
-        setAlbumArtist(pProxiedSoundSource->getAlbumArtist());
-        setYear(pProxiedSoundSource->getYear());
-        setGenre(pProxiedSoundSource->getGenre());
-        setComposer(pProxiedSoundSource->getComposer());
-        setGrouping(pProxiedSoundSource->getGrouping());
-        setComment(pProxiedSoundSource->getComment());
-        setTrackNumber(pProxiedSoundSource->getTrackNumber());
-        float replayGain = pProxiedSoundSource->getReplayGain();
+        setAlbum(pSoundSource->getAlbum());
+        setAlbumArtist(pSoundSource->getAlbumArtist());
+        setYear(pSoundSource->getYear());
+        setGenre(pSoundSource->getGenre());
+        setComposer(pSoundSource->getComposer());
+        setGrouping(pSoundSource->getGrouping());
+        setComment(pSoundSource->getComment());
+        setTrackNumber(pSoundSource->getTrackNumber());
+        float replayGain = pSoundSource->getReplayGain();
         if (replayGain != 0) {
             setReplayGain(replayGain);
         }
-        float bpm = pProxiedSoundSource->getBPM();
+        setDuration(pSoundSource->getDuration());
+        setBitrate(pSoundSource->getBitrate());
+        setSampleRate(pSoundSource->getSampleRate());
+        setChannels(pSoundSource->getChannels());
+
+        // Need to set BPM after sample rate since beat grid creation depends on
+        // knowing the sample rate. Bug #1020438.
+        float bpm = pSoundSource->getBPM();
         if (bpm > 0) {
             // do not delete beat grid if bpm is not set in file
             setBpm(bpm);
         }
-        setDuration(pProxiedSoundSource->getDuration());
-        setBitrate(pProxiedSoundSource->getBitrate());
-        setSampleRate(pProxiedSoundSource->getSampleRate());
-        setChannels(pProxiedSoundSource->getChannels());
-        QString key = pProxiedSoundSource->getKey();
+
+        QString key = pSoundSource->getKey();
         if (!key.isEmpty()) {
             setKeyText(key, mixxx::track::io::key::FILE_METADATA);
         }
+
+        if (parseCoverArt) {
+            m_coverArt.image = pSoundSource->parseCoverArt();
+            if (!m_coverArt.image.isNull()) {
+                m_coverArt.info.hash = CoverArtUtils::calculateHash(
+                    m_coverArt.image);
+                m_coverArt.info.coverLocation = QString();
+                m_coverArt.info.type = CoverInfo::METADATA;
+                m_coverArt.info.source = CoverInfo::GUESSED;
+            }
+        }
+
         setHeaderParsed(true);
     } else {
         qDebug() << "TrackInfoObject::parse() error at file"
@@ -456,6 +467,16 @@ QDateTime TrackInfoObject::getDateAdded() const {
 void TrackInfoObject::setDateAdded(const QDateTime& dateAdded) {
     QMutexLocker lock(&m_qMutex);
     m_dateAdded = dateAdded;
+}
+
+QDateTime TrackInfoObject::getFileModifiedTime() const {
+    QMutexLocker lock(&m_qMutex);
+    return m_fileInfo.lastModified();
+}
+
+QDateTime TrackInfoObject::getFileCreationTime() const {
+    QMutexLocker lock(&m_qMutex);
+    return m_fileInfo.created();
 }
 
 int TrackInfoObject::getDuration()  const {
@@ -758,16 +779,21 @@ QString TrackInfoObject::getURL() {
     return m_sURL;
 }
 
-Waveform* TrackInfoObject::getWaveform() {
+ConstWaveformPointer TrackInfoObject::getWaveform() {
     return m_waveform;
 }
 
-Waveform* TrackInfoObject::getWaveformSummary() {
+void TrackInfoObject::setWaveform(ConstWaveformPointer pWaveform) {
+    m_waveform = pWaveform;
+    emit(waveformUpdated());
+}
+
+ConstWaveformPointer TrackInfoObject::getWaveformSummary() const {
     return m_waveformSummary;
 }
 
-// called from the AnalyserQueue Thread
-void TrackInfoObject::waveformSummaryNew() {
+void TrackInfoObject::setWaveformSummary(ConstWaveformPointer pWaveform) {
+    m_waveformSummary = pWaveform;
     emit(waveformSummaryUpdated());
 }
 
@@ -989,4 +1015,35 @@ void TrackInfoObject::setBpmLock(bool bpmLock) {
 bool TrackInfoObject::hasBpmLock() const {
     QMutexLocker lock(&m_qMutex);
     return m_bBpmLock;
+}
+
+void TrackInfoObject::setCoverInfo(const CoverInfo& info) {
+    QMutexLocker lock(&m_qMutex);
+    if (info != m_coverArt.info) {
+        m_coverArt = CoverArt();
+        m_coverArt.info = info;
+        setDirty(true);
+        lock.unlock();
+        emit(coverArtUpdated());
+    }
+}
+
+CoverInfo TrackInfoObject::getCoverInfo() const {
+    QMutexLocker lock(&m_qMutex);
+    return m_coverArt.info;
+}
+
+void TrackInfoObject::setCoverArt(const CoverArt& cover) {
+    QMutexLocker lock(&m_qMutex);
+    if (cover != m_coverArt) {
+        m_coverArt = cover;
+        setDirty(true);
+        lock.unlock();
+        emit(coverArtUpdated());
+    }
+}
+
+CoverArt TrackInfoObject::getCoverArt() const {
+    QMutexLocker lock(&m_qMutex);
+    return m_coverArt;
 }

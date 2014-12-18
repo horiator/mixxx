@@ -68,7 +68,7 @@ ITunesFeature::ITunesFeature(QObject* parent, TrackCollection* pTrackCollection)
     m_isActivated = false;
     m_title = tr("iTunes");
 
-    m_database = QSqlDatabase::cloneDatabase( pTrackCollection->getDatabase(), "ITUNES_SCANNER");
+    m_database = QSqlDatabase::cloneDatabase(pTrackCollection->getDatabase(), "ITUNES_SCANNER");
 
     //Open the database connection in this thread.
     if (!m_database.open()) {
@@ -114,6 +114,7 @@ QIcon ITunesFeature::getIcon() {
 
 void ITunesFeature::activate() {
     activate(false);
+    emit(enableCoverArtDisplay(false));
 }
 
 void ITunesFeature::activate(bool forceReload) {
@@ -173,6 +174,7 @@ void ITunesFeature::activate(bool forceReload) {
     }
 
     emit(showTrackModel(m_pITunesTrackModel));
+    emit(enableCoverArtDisplay(false));
 }
 
 void ITunesFeature::activateChild(const QModelIndex& index) {
@@ -181,6 +183,7 @@ void ITunesFeature::activateChild(const QModelIndex& index) {
     qDebug() << "Activating " << playlist;
     m_pITunesPlaylistModel->setPlaylist(playlist);
     emit(showTrackModel(m_pITunesPlaylistModel));
+    emit(enableCoverArtDisplay(false));
 }
 
 TreeItemModel* ITunesFeature::getChildModel() {
@@ -686,7 +689,6 @@ void ITunesFeature::parsePlaylist(QXmlStreamReader &xml, QSqlQuery &query_insert
                 // When processing playlist entries, playlist name and id have
                 // already been processed and persisted
                 if (key == "Track ID") {
-                    track_reference = -1;
 
                     readNextStartElement(xml);
                     track_reference = xml.readElementText().toInt();

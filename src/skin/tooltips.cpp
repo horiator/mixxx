@@ -46,6 +46,16 @@ void Tooltips::addStandardTooltips() {
             << QString("%1: %2").arg(scrollWheel, tr("Scroll to change the waveform zoom level."))
             << dropTracksHere;
 
+    add("waveform_zoom_up")
+            << tr("Waveform Zoom Out");
+
+    add("waveform_zoom_down")
+            << tr("Waveform Zoom In");
+
+    add("waveform_zoom_set_default")
+            << tr("Waveform Zoom")
+            << QString("%1").arg(resetToDefault);
+    
     add("spinny")
             << tr("Spinning Vinyl")
             << tr("Rotates during playback and shows the position of a track.")
@@ -90,9 +100,15 @@ void Tooltips::addStandardTooltips() {
             << tr("Adjusts the volume of the selected channel.")
             << QString("%1: %2").arg(rightClick, resetToDefault);
 
+    // Legacy control.
     add("master_volume")
             << tr("Master Volume")
             << tr("Adjusts the master output volume.")
+            << QString("%1: %2").arg(rightClick, resetToDefault);
+
+    add("master_gain")
+            << tr("Master Gain")
+            << tr("Adjusts the master output gain.")
             << QString("%1: %2").arg(rightClick, resetToDefault);
 
     add("crossfader")
@@ -106,9 +122,15 @@ void Tooltips::addStandardTooltips() {
             << tr("Adjusts the left/right channel balance on the master output.")
             << QString("%1: %2").arg(rightClick, resetToDefault);
 
+    // Legacy control.
     add("headphone_volume")
             << tr("Headphone Volume")
             << tr("Adjusts the headphone output volume.")
+            << QString("%1: %2").arg(rightClick, resetToDefault);
+
+    add("headphone_gain")
+            << tr("Headphone Gain")
+            << tr("Adjusts the headphone output gain.")
             << QString("%1: %2").arg(rightClick, resetToDefault);
 
     add("headMix")
@@ -116,6 +138,12 @@ void Tooltips::addStandardTooltips() {
             << tr("Controls what you hear on the headphone output.")
             << QString("%1: %2").arg(rightClick, resetToDefault);
 
+    add("headSplit")
+            << tr("Headphone Split Cue")
+            << tr("If activated, the master signal plays in the right channel, while the cueing signal ")
+            << tr("plays in the left channel.")
+            << tr("Adjust the Headphone Mix so in the left channel is not the pure cueing signal.");
+    
     // Note, this is used for samplers and microphone only currently (that's why
     // center is the default).
     add("orientation")
@@ -140,9 +168,38 @@ void Tooltips::addStandardTooltips() {
             << tr("Preview Deck")
             << tr("Show/hide the Preview deck.");
 
+    add("show_coverart")
+            << tr("Cover Art")
+            << tr("Show/hide Cover Art.");
+
+    add("toggle_4decks")
+            << tr("Toggle 4 Decks")
+            << tr("Switches between showing 2 decks and 4 decks.");
+
+    add("show_library")
+            << tr("Show Library")
+            << tr("Show or hide the track library.");
+
+    add("show_effects")
+            << tr("Show Effects Rack")
+            << tr("Show or hide the effects rack.");
+
+    add("toggle_expanded_library")
+            << tr("Toggle Big Library")
+            << tr("Makes the library fill the screen.");
+
+    add("show_mixer")
+            << tr("Toggle Mixer")
+            << tr("Show or hide the mixer.");
+
     add("microphone_volume")
             << tr("Microphone Volume")
             << tr("Adjusts the microphone volume.")
+            << QString("%1: %2").arg(rightClick, resetToDefault);
+
+    add("microphone_pregain")
+            << tr("Microphone Gain")
+            << tr("Adjusts the pre-fader microphone gain.")
             << QString("%1: %2").arg(rightClick, resetToDefault);
 
     add("microphone_talkover")
@@ -248,7 +305,8 @@ void Tooltips::addStandardTooltips() {
 
     add("beats_translate_curpos")
             << tr("Adjust Beatgrid")
-            << tr("Adjust beatgrid so the closest beat is aligned with the current play position.");
+            << QString("%1: %2").arg(leftClick, tr("Adjust beatgrid so the closest beat is aligned with the current play position."))
+            << QString("%1: %2").arg(rightClick, tr("Adjust beatgrid to match another playing deck."));
 
     add("keylock")
             << tr("Key-Lock")
@@ -485,4 +543,13 @@ void Tooltips::addStandardTooltips() {
     add("audio_latency_overload")
             << tr("Audio Latency Overload Indicator")
             << tr("Indicates that the audio buffer is too small to do all audio processing.");
+
+    add("coverart")
+            << tr("Cover Art")
+            << tr("Displays cover artwork of the loaded track.")
+            << QString("%1: %2").arg(rightClick, tr("Displays options for editing cover artwork."));
+
+    add("starrating")
+            << tr("Star Rating")
+            << tr("Assign ratings to individual tracks by clicking the stars.");
 }

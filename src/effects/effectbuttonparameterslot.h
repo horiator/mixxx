@@ -9,7 +9,6 @@
 #include "controlobject.h"
 #include "effects/effect.h"
 #include "effects/effectparameterslotbase.h"
-
 class ControlObject;
 class ControlPushButton;
 
@@ -19,10 +18,7 @@ typedef QSharedPointer<EffectButtonParameterSlot> EffectButtonParameterSlotPoint
 class EffectButtonParameterSlot : public EffectParameterSlotBase {
     Q_OBJECT
   public:
-    EffectButtonParameterSlot(const unsigned int iRackNumber,
-                        const unsigned int iChainNumber,
-                        const unsigned int iSlotNumber,
-                        const unsigned int iParameterSlotNumber);
+    EffectButtonParameterSlot(const QString& group, const unsigned int iParameterSlotNumber);
     virtual ~EffectButtonParameterSlot();
 
     static QString formatItemPrefix(const unsigned int iParameterSlotNumber) {
@@ -31,6 +27,9 @@ class EffectButtonParameterSlot : public EffectParameterSlotBase {
 
     // Load the parameter of the given effect into this EffectButtonParameterSlot
     void loadEffect(EffectPointer pEffect);
+
+    // Clear the currently loaded effect
+    void clear();
 
   private slots:
     // Solely for handling control changes
@@ -41,9 +40,6 @@ class EffectButtonParameterSlot : public EffectParameterSlotBase {
     QString debugString() const {
         return QString("EffectButtonParameterSlot(%1,%2)").arg(m_group).arg(m_iParameterSlotNumber);
     }
-
-    // Clear the currently loaded effect
-    void clear();
 
     // Control exposed to the rest of Mixxx
     ControlPushButton* m_pControlValue;

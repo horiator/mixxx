@@ -101,7 +101,7 @@ void VampAnalyser::initializePluginPaths() {
 #endif
 }
 
-VampAnalyser::VampAnalyser(ConfigObject<ConfigValue>* pconfig)
+VampAnalyser::VampAnalyser()
     : m_iSampleCount(0),
       m_iOUT(0),
       m_iRemainingSamples(0),
@@ -113,8 +113,7 @@ VampAnalyser::VampAnalyser(ConfigObject<ConfigValue>* pconfig)
       m_plugin(NULL),
       m_bDoNotAnalyseMoreSamples(false),
       m_FastAnalysisEnabled(false),
-      m_iMaxSamplesToAnalyse(0),
-      m_pConfig(pconfig) {
+      m_iMaxSamplesToAnalyse(0) {
 }
 
 VampAnalyser::~VampAnalyser() {
@@ -360,8 +359,7 @@ QVector<double> VampAnalyser::GetEndFramesVector() {
          fli != m_Results.end(); ++fli) {
         if (fli->hasDuration) {
             Vamp::RealTime ftime0 = fli->timestamp;
-            Vamp::RealTime ftime1 = ftime0;
-            ftime1 = ftime0 + fli->duration;
+            Vamp::RealTime ftime1 = ftime0 + fli->duration;
             //double ltime1 = ftime1.sec + (double(ftime1.nsec)
             //        / 1000000000.0);
             vectout << static_cast<double>(
