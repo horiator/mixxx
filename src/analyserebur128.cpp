@@ -5,6 +5,7 @@
 #include "trackinfoobject.h"
 #include "analyserebur128.h"
 #include "util/math.h"
+#include "util/timer.h"
 
 static const float kReplayGain2ReferenceLUFS = -18;
 
@@ -54,6 +55,7 @@ void AnalyserEbur128::process(const CSAMPLE *pIn, const int iLen) {
     if (!m_initalized) {
         return;
     }
+    ScopedTimer t("AnalyserEbur128::process()");
     int halfLength = static_cast<int>(iLen / 2);
     if (halfLength > m_iBufferSize) {
         delete [] m_pTempBuffer[0];

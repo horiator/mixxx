@@ -5,6 +5,7 @@
 #include "trackinfoobject.h"
 #include "analyserrg.h"
 #include "util/math.h"
+#include "util/timer.h"
 
 AnalyserGain::AnalyserGain(ConfigObject<ConfigValue> *_config) {
     m_pConfigReplayGain = _config;
@@ -45,8 +46,10 @@ void AnalyserGain::cleanup(TrackPointer tio) {
 }
 
 void AnalyserGain::process(const CSAMPLE *pIn, const int iLen) {
-    if(!m_bStepControl)
+    if(!m_bStepControl) {
         return;
+    }
+    ScopedTimer t("AnalyserGain::process()");
 
     int halfLength = static_cast<int>(iLen / 2);
     if (halfLength > m_iBufferSize) {
@@ -82,6 +85,6 @@ void AnalyserGain::finalise(TrackPointer tio) {
     //qDebug() << "ReplayGain result is" << ReplayGainOutput << "pow:" << fReplayGain_Result;
     //qDebug()<<"ReplayGain outputs "<< ReplayGainOutput << "db for track "<< tio->getFilename();
     tio->setReplayGain(fReplayGain_Result);
-    qDebug() << "ReplayGain1 result is" << ReplayGainOutput << "dB RG1:" << fReplayGain_Result << "for" << tio->getFilename();
+    qDebug() << "ReplayGain1 result is" << -18 - ReplayGainOutput << "dB RG1:" << fReplayGain_Result << "for" << tio->getFilename();
     m_bStepControl=false;
 }
