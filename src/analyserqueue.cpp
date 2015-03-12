@@ -13,6 +13,7 @@
 #include "library/trackcollection.h"
 #include "analyserwaveform.h"
 #include "analyserrg.h"
+#include "analyserebur128.h"
 #include "analyserbeats.h"
 #include "analyserkey.h"
 #include "vamp/vampanalyser.h"
@@ -422,6 +423,7 @@ AnalyserQueue* AnalyserQueue::createDefaultAnalyserQueue(
 
     ret->addAnalyser(new AnalyserWaveform(pConfig));
     ret->addAnalyser(new AnalyserGain(pConfig));
+    ret->addAnalyser(new AnalyserEbur128(pConfig));
     VampAnalyser::initializePluginPaths();
     ret->addAnalyser(new AnalyserBeats(pConfig));
     ret->addAnalyser(new AnalyserKey(pConfig));
@@ -436,6 +438,7 @@ AnalyserQueue* AnalyserQueue::createAnalysisFeatureAnalyserQueue(
     AnalyserQueue* ret = new AnalyserQueue(pTrackCollection);
 
     ret->addAnalyser(new AnalyserGain(pConfig));
+    ret->addAnalyser(new AnalyserEbur128(pConfig));
     VampAnalyser::initializePluginPaths();
     ret->addAnalyser(new AnalyserBeats(pConfig));
     ret->addAnalyser(new AnalyserKey(pConfig));
