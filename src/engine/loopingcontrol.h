@@ -109,6 +109,7 @@ class LoopingControl : public EngineControl {
 
     bool m_bLoopingEnabled;
     bool m_bLoopRollActive;
+    // TODO(DSC) Make the following values double
     int m_iLoopEndSample;
     int m_iLoopStartSample;
     int m_iCurrentSample;

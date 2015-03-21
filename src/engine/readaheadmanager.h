@@ -47,11 +47,12 @@ class ReadAheadManager {
     void addRateControl(RateControl* pRateControl);
 
     // Get the current read-ahead position in samples.
-    virtual inline int getPlaypos() const {
-        return m_iCurrentPosition;
+    // unused in Mixxx, but needed for testing 
+    virtual inline double getPlaypos() const {
+        return m_currentPosition;
     }
 
-    virtual void notifySeek(int iSeekPosition);
+    virtual void notifySeek(double seekPosition);
 
     // hintReader allows the ReadAheadManager to provide hints to the reader to
     // indicate that the given portion of a song is about to be read.
@@ -123,7 +124,7 @@ class ReadAheadManager {
     LoopingControl* m_pLoopingControl;
     RateControl* m_pRateControl;
     QLinkedList<ReadLogEntry> m_readAheadLog;
-    int m_iCurrentPosition;
+    double m_currentPosition;
     CachingReader* m_pReader;
     CSAMPLE* m_pCrossFadeBuffer;
 };
