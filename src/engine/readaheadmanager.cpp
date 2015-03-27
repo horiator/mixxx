@@ -37,7 +37,7 @@ ReadAheadManager::~ReadAheadManager() {
     SampleUtil::free(m_pCrossFadeBuffer);
 }
 
-int ReadAheadManager::getNextSamples(double dRate, CSAMPLE* buffer,
+int ReadAheadManager::getNextSamples(double dRate, CSAMPLE* pOutput,
                                      int requested_samples) {
     if (!even(requested_samples)) {
         qDebug() << "ERROR: Non-even requested_samples to ReadAheadManager::getNextSamples";
@@ -47,7 +47,6 @@ int ReadAheadManager::getNextSamples(double dRate, CSAMPLE* buffer,
 
     //qDebug() << "start" << start_sample << requested_samples;
     int samples_needed = requested_samples;
-    CSAMPLE* base_buffer = buffer;
 
     // A loop will only limit the amount we can read in one shot.
 
@@ -87,7 +86,7 @@ int ReadAheadManager::getNextSamples(double dRate, CSAMPLE* buffer,
     }
 
     int samples_read = m_pReader->read(start_sample, in_reverse, samples_needed,
-                                       base_buffer);
+                                       pOutput);
 
     if (samples_read != samples_needed) {
         qDebug() << "didn't get what we wanted" << samples_read << samples_needed;
@@ -128,7 +127,7 @@ int ReadAheadManager::getNextSamples(double dRate, CSAMPLE* buffer,
 
             // do crossfade from the current buffer into the new loop beginning
             if (samples_read != 0) { // avoid division by zero
-                SampleUtil::linearCrossfadeBuffers(base_buffer, base_buffer, m_pCrossFadeBuffer, samples_read);
+                SampleUtil::linearCrossfadeBuffers(pOutput, pOutput, m_pCrossFadeBuffer, samples_read);
             }
         }
     }
