@@ -986,11 +986,9 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize) {
                 // If testing, we don't have a real log so we fake the position.
                 m_filepos_play += samplesRead;
             } else {
-                // Adjust filepos_play by the amount we processed. TODO(XXX) what
-                // happens if samplesRead is a fraction ?
                 m_filepos_play =
-                        m_pReadAheadManager->getEffectiveVirtualPlaypositionFromLog(
-                                static_cast<int>(m_filepos_play), samplesRead);
+                        m_pReadAheadManager->getFilePlaypositionFromLog(
+                                m_filepos_play, samplesRead);
             }
         } else {
             SampleUtil::clear(pOutput, iBufferSize);

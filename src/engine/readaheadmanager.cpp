@@ -72,7 +72,6 @@ int ReadAheadManager::getNextSamples(double dRate, CSAMPLE* pOutput,
         }
     }
 
-    // TODO(DSC) we probably need to floor and ceil here?
     int start_sample;
     if (in_reverse) {
         start_sample = SampleUtil::roundPlayPosToFrameStart(
@@ -180,7 +179,6 @@ void ReadAheadManager::hintReader(double dRate, HintVector* pHintList) {
     int length_to_cache = 2 * CachingReaderWorker::kSamplesPerChunk;
 
     // this called after the precious chunk was consumed
-    // TODO(DSC) do wee need the floor frame?
     int sample = SampleUtil::roundPlayPosToFrameStart(
             m_currentPosition, kNumChannels);
     current_position.length = length_to_cache;
@@ -213,10 +211,10 @@ void ReadAheadManager::addReadLogEntry(double virtualPlaypositionStart,
     m_readAheadLog.append(newEntry);
 }
 
-int ReadAheadManager::getEffectiveVirtualPlaypositionFromLog(double currentVirtualPlayposition,
+double ReadAheadManager::getFilePlaypositionFromLog(double currentFilePlayposition,
                                                              double numConsumedSamples) {
     if (numConsumedSamples == 0) {
-        return currentVirtualPlayposition;
+        return currentFilePlayposition;
     }
 
     QMutexLocker locker(&m_mutex);
@@ -224,17 +222,16 @@ int ReadAheadManager::getEffectiveVirtualPlaypositionFromLog(double currentVirtu
         // No log entries to read from.
         qDebug() << this << "No read ahead log entries to read from. Case not currently handled.";
         // TODO(rryan) log through a stats pipe eventually
-        return currentVirtualPlayposition;
+        return currentFilePlayposition;
     }
 
-    double virtualPlayposition = 0;
+    double filePlayposition = 0;
     bool shouldNotifySeek = false;
-    bool direction = true;
     while (m_readAheadLog.size() > 0 && numConsumedSamples > 0) {
         ReadLogEntry& entry = m_readAheadLog.first();
-        direction = entry.direction();
 
         // Notify EngineControls that we have taken a seek.
+        // Every new entry start with a seek
         if (shouldNotifySeek) {
             m_pLoopingControl->notifySeek(entry.virtualPlaypositionStart);
             if (m_pRateControl) {
@@ -242,12 +239,9 @@ int ReadAheadManager::getEffectiveVirtualPlaypositionFromLog(double currentVirtu
             }
         }
 
-        double consumed = entry.consume(numConsumedSamples);
-        numConsumedSamples -= consumed;
-
         // Advance our idea of the current virtual playposition to this
         // ReadLogEntry's start position.
-        virtualPlayposition = entry.virtualPlaypositionStart;
+        filePlayposition = entry.advancePlayposition(&numConsumedSamples);
 
         if (entry.length() == 0) {
             // This entry is empty now.
@@ -255,17 +249,6 @@ int ReadAheadManager::getEffectiveVirtualPlaypositionFromLog(double currentVirtu
         }
         shouldNotifySeek = true;
     }
-    int result = 0;
-    if (direction) {
-        result = static_cast<int>(floor(virtualPlayposition));
-        if (!even(result)) {
-            result--;
-        }
-    } else {
-        result = static_cast<int>(ceil(virtualPlayposition));
-        if (!even(result)) {
-            result++;
-        }
-    }
-    return result;
+
+    return filePlayposition;
 }
