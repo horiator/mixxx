@@ -960,19 +960,6 @@ void EngineBuffer::process(CSAMPLE* pOutput, const int iBufferSize) {
 
         // If the buffer is not paused, then scale the audio.
         if (!bCurBufferPaused) {
-            //if (rate == 0) {
-            //    qDebug() << "ramp to rate 0";
-            //}
-
-            // The fileposition should be: (why is this thing a double anyway!?
-            // Integer valued.
-            double playFrame = m_filepos_play / kSamplesPerFrame;
-            double filepos_play_rounded = round(playFrame) * kSamplesPerFrame;
-            DEBUG_ASSERT_AND_HANDLE(filepos_play_rounded == m_filepos_play) {
-                qWarning() << __FILE__ << __LINE__ << "ERROR: filepos_play is not at an even integer sample:" << m_filepos_play;
-                m_filepos_play = filepos_play_rounded;
-            }
-
             // Perform scaling of Reader buffer into buffer.
             double samplesRead = m_pScale->getScaled(pOutput, iBufferSize);
 
