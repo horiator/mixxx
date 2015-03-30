@@ -329,19 +329,19 @@ void SampleUtil::copyClampBuffer(CSAMPLE* _RESTRICT pDest, const _RESTRICT CSAMP
 
 // static
 void SampleUtil::interleaveBuffer(CSAMPLE* _RESTRICT pDest, const CSAMPLE* _RESTRICT pSrc1,
-        const CSAMPLE* _RESTRICT pSrc2, int iNumSamples) {
+        const CSAMPLE* _RESTRICT pSrc2, int iNumFrames) {
     // note: LOOP VECTORIZED.
-    for (int i = 0; i < iNumSamples; ++i) {
+    for (int i = 0; i < iNumFrames; ++i) {
         pDest[2 * i] = pSrc1[i];
         pDest[2 * i + 1] = pSrc2[i];
     }
 }
 
 // static
-void SampleUtil::deinterleaveBuffer(CSAMPLE* pDest1, CSAMPLE* pDest2,
-        const CSAMPLE* pSrc, int iNumSamples) {
+void SampleUtil::deinterleaveBuffer(CSAMPLE* _RESTRICT pDest1, CSAMPLE* _RESTRICT pDest2,
+        const CSAMPLE* _RESTRICT pSrc, int iNumFrames) {
     // note: LOOP VECTORIZED.
-    for (int i = 0; i < iNumSamples; ++i) {
+    for (int i = 0; i < iNumFrames; ++i) {
         pDest1[i] = pSrc[i * 2];
         pDest2[i] = pSrc[i * 2 + 1];
     }
