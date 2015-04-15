@@ -86,6 +86,10 @@
 #include "dlgprefmodplug.h"
 #endif
 
+#ifdef __MPRIS__
+#include "mpris/mpris.h"
+#endif 
+
 // static
 const int MixxxMainWindow::kMicrophoneCount = 4;
 // static
@@ -112,7 +116,11 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
           m_pPrefDlg(NULL),
           m_runtime_timer("MixxxMainWindow::runtime"),
           m_cmdLineArgs(args),
-          m_iNumConfiguredDecks(0) {
+          m_iNumConfiguredDecks(0)
+#ifdef __MPRIS__
+          , m_mpris(NULL)
+#endif
+{
     // We use QSet<int> in signals in the library.
     qRegisterMetaType<QSet<int> >("QSet<int>");
 
@@ -470,6 +478,11 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
             m_pPlayerManager->slotLoadToDeck(musicFiles.at(i), i+1);
         }
     }
+
+#ifdef __MPRIS__
+    m_mpris = new Mpris(); 
+#endif
+
 }
 
 MixxxMainWindow::~MixxxMainWindow() {
@@ -480,6 +493,11 @@ MixxxMainWindow::~MixxxMainWindow() {
     t.start();
 
     qDebug() << "Destroying MixxxMainWindow";
+
+#ifdef __MPRIS__
+    delete m_mpris;
+#endif
+ 
 
     qDebug() << "save config " << qTime.elapsed();
     m_pConfig->Save();
