@@ -118,7 +118,7 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
           m_cmdLineArgs(args),
           m_iNumConfiguredDecks(0)
 #ifdef __MPRIS__
-          , m_mpris(NULL)
+          , m_pMpris(NULL)
 #endif
 {
     // We use QSet<int> in signals in the library.
@@ -480,7 +480,7 @@ MixxxMainWindow::MixxxMainWindow(QApplication* pApp, const CmdlineArgs& args)
     }
 
 #ifdef __MPRIS__
-    m_mpris = new Mpris(); 
+    m_pMpris = new Mpris(this);
 #endif
 
 }
@@ -495,7 +495,7 @@ MixxxMainWindow::~MixxxMainWindow() {
     qDebug() << "Destroying MixxxMainWindow";
 
 #ifdef __MPRIS__
-    delete m_mpris;
+    delete m_pMpris;
 #endif
  
 
