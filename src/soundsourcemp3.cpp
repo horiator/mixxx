@@ -73,10 +73,18 @@ SoundSourceMp3::~SoundSourceMp3()
     m_qSeekList.clear();
 }
 
+//static
 QList<QString> SoundSourceMp3::supportedFileExtensions()
 {
     QList<QString> list;
     list.push_back("mp3");
+    return list;
+}
+
+//static
+QList<QString> SoundSourceMp3::supportedMimeTypes() {
+    QList<QString> list;
+    list.push_back("audio/mpeg");
     return list;
 }
 

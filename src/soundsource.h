@@ -25,14 +25,15 @@
 #include <QString>
 #include <QSharedPointer>
 
-#define MIXXX_SOUNDSOURCE_API_VERSION 6
+#define MIXXX_SOUNDSOURCE_API_VERSION 7
 /** @note SoundSource API Version history:
            1 - Mixxx 1.8.0 Beta 2
            2 - Mixxx 1.9.0 Pre (added key code)
            3 - Mixxx 1.10.0 Pre (added freeing function for extensions)
            4 - Mixxx 1.11.0 Pre (added composer field to SoundSource)
            5 - Mixxx 1.12.0 Pre (added album artist and grouping fields to SoundSource)
-           6 - Mixxx 1.13.0 (added cover art suppport)
+           6 - Mixxx 1.12.0 (added cover art suppport)
+           7 - Mixxx 1.12.0 Mime type support
   */
 
 /** Getter function to be declared by all SoundSource plugins */
@@ -41,10 +42,13 @@ namespace Mixxx {
 }
 typedef Mixxx::SoundSource* (*getSoundSourceFunc)(QString filename);
 typedef char** (*getSupportedFileExtensionsFunc)();
+typedef char** (*getSupportedMimeTypesFunc)();
 typedef int (*getSoundSourceAPIVersionFunc)();
 /* New in version 3 */
 typedef void (*freeFileExtensionsFunc)(char** exts);
-
+/* New in version 7 */
+typedef void (*freeMimetypesFunc)(char** exts);
+typedef char** (*getSupportedMimetypesFunc)();
 
 /*
   Base class for sound sources.

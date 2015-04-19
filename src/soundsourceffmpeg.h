@@ -75,6 +75,7 @@ public:
     inline long unsigned length();
     bool readInput();
     static QList<QString> supportedFileExtensions();
+    static QList<QString> supportedMimeTypes();
     AVCodecContext *getCodecContext();
     AVFormatContext *getFormatContext();
     int getAudioStreamIndex();

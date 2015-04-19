@@ -45,6 +45,7 @@ SoundSourceModPlug::~SoundSourceModPlug()
     }
 }
 
+//static
 QList<QString> SoundSourceModPlug::supportedFileExtensions()
 {
     QList<QString> list;
@@ -57,6 +58,15 @@ QList<QString> SoundSourceModPlug::supportedFileExtensions()
     list.push_back("stm");
     list.push_back("xm");
     list.push_back("it");
+    return list;
+}
+
+//static
+QList<QString> SoundSourceModPlug::supportedMimeTypes()
+{
+    QList<QString> list;
+    list.push_back("audio/x-mod");
+    list.push_back("audio/s3m");
     return list;
 }
 

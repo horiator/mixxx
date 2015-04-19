@@ -37,6 +37,7 @@ public:
     Result parseHeader();
     QImage parseCoverArt();
     static QList<QString> supportedFileExtensions();
+    static QList<QString> supportedMimeTypes();
     explicit SoundSourceFLAC(QString filename);
     // callback methods
     FLAC__StreamDecoderReadStatus flacRead(FLAC__byte buffer[], size_t *bytes);

@@ -30,6 +30,7 @@ class SoundSourceModPlug : public Mixxx::SoundSource
     Result parseHeader();
     QImage parseCoverArt();
     static QList<QString> supportedFileExtensions();
+    static QList<QString> supportedMimeTypes();
 
     // apply settings for decoding
     static void configure(unsigned int bufferSizeLimit,

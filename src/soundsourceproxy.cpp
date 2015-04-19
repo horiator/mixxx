@@ -54,6 +54,7 @@
 QRegExp SoundSourceProxy::m_supportedFileRegex;
 QMap<QString, QLibrary*> SoundSourceProxy::m_plugins;
 QMap<QString, getSoundSourceFunc> SoundSourceProxy::m_extensionsSupportedByPlugins;
+QMap<QString, getSoundSourceFunc> SoundSourceProxy::m_mimeTypesSupportedByPlugins;
 QMutex SoundSourceProxy::m_extensionsMutex;
 
 namespace
@@ -221,9 +222,9 @@ QLibrary* SoundSourceProxy::getPlugin(QString lib_filename)
         return m_plugins.value(lib_filename);
     }
     QScopedPointer<QLibrary> plugin(new QLibrary(lib_filename));
-    if (!plugin->load()) {
-    qDebug() << "Failed to dynamically load" << lib_filename << plugin->errorString();
-    return NULL;
+        if (!plugin->load()) {
+        qDebug() << "Failed to dynamically load" << lib_filename << plugin->errorString();
+        return NULL;
     }
     qDebug() << "Dynamically loaded" << lib_filename;
 
@@ -238,54 +239,81 @@ QLibrary* SoundSourceProxy::getPlugin(QString lib_filename)
         incompatible = true;
     }
     } else {
-    //Missing getSoundSourceAPIVersion symbol
-    incompatible = true;
+        // Missing getSoundSourceAPIVersion symbol
+        incompatible = true;
     }
     if (incompatible)
     {
-    //Plugin is using an older/incompatible version of the
-    //plugin API!
-    qDebug() << "Plugin" << lib_filename << "is incompatible with your version of Mixxx!";
-    return NULL;
+        //Plugin is using an older/incompatible version of the
+        //plugin API!
+        qDebug() << "Plugin" << lib_filename << "is incompatible with your version of Mixxx!";
+        return NULL;
     }
 
     //Map the file extensions this plugin supports onto a function
     //pointer to the "getter" function that gets a SoundSourceBlah.
     getSoundSourceFunc getter = (getSoundSourceFunc)
-        plugin->resolve("getSoundSource");
+            plugin->resolve("getSoundSource");
     // Getter function not found.
     if (getter == NULL) {
-    qDebug() << "ERROR: Couldn't resolve getter function. Plugin"
-         << lib_filename << "corrupt.";
-    return NULL;
+        qDebug() << "ERROR: Couldn't resolve getter function. Plugin"
+             << lib_filename << "corrupt.";
+        return NULL;
     }
 
     // Did you export it properly in your plugin?
     getSupportedFileExtensionsFunc getFileExts = (getSupportedFileExtensionsFunc)
-        plugin->resolve("supportedFileExtensions");
+            plugin->resolve("supportedFileExtensions");
     if (getFileExts == NULL) {
-    qDebug() << "ERROR: Couldn't resolve getFileExts function. Plugin"
-         << lib_filename << "corrupt.";
-    return NULL;
+        qDebug() << "ERROR: Couldn't resolve getFileExts function. Plugin"
+             << lib_filename << "corrupt.";
+        return NULL;
+    }
+
+    // Did you export it properly in your plugin?
+    getSupportedFileExtensionsFunc getMimeTypes = (getSupportedMimeTypesFunc)
+            plugin->resolve("supportedMimeTypes");
+    if (getMimeTypes == NULL) {
+        qDebug() << "ERROR: Couldn't resolve getMimeTypes function. Plugin"
+             << lib_filename << "corrupt.";
+        return NULL;
     }
 
     freeFileExtensionsFunc freeFileExts =
-        reinterpret_cast<freeFileExtensionsFunc>(
-        plugin->resolve("freeFileExtensions"));
+            reinterpret_cast<freeFileExtensionsFunc>(
+                    plugin->resolve("freeFileExtensions"));
     if (freeFileExts == NULL) {
-    qDebug() << "ERROR: Couldn't resolve freeFileExts function. Plugin"
-         << lib_filename << "corrupt.";
-    return NULL;
+        qDebug() << "ERROR: Couldn't resolve freeFileExts function. Plugin"
+             << lib_filename << "corrupt.";
+        return NULL;
     }
 
     char** supportedFileExtensions = getFileExts();
     int i = 0;
     while (supportedFileExtensions[i] != NULL) {
-    qDebug() << "Plugin supports:" << supportedFileExtensions[i];
-    m_extensionsSupportedByPlugins.insert(QString(supportedFileExtensions[i]), getter);
-    i++;
+        qDebug() << "Plugin supports:" << supportedFileExtensions[i];
+        m_extensionsSupportedByPlugins.insert(QString(supportedFileExtensions[i]), getter);
+        i++;
     }
     freeFileExts(supportedFileExtensions);
+
+    freeFileExtensionsFunc freeMimeTypes =
+            reinterpret_cast<freeFileExtensionsFunc>(
+                    plugin->resolve("freeMimeTypes"));
+    if (freeMimeTypes == NULL) {
+        qDebug() << "ERROR: Couldn't resolve freeMimetypes function. Plugin"
+             << lib_filename << "corrupt.";
+        return NULL;
+    }
+
+    char** supportedMimeTypes = getMimeTypes();
+    i = 0;
+    while (supportedMimeTypes[i] != NULL) {
+        qDebug() << "Plugin supports:" << supportedMimeTypes[i];
+        m_mimeTypesSupportedByPlugins.insert(QString(supportedMimeTypes[i]), getter);
+        i++;
+    }
+    freeMimeTypes(supportedMimeTypes);
 
     QLibrary* pPlugin = plugin.take();
     // Add the plugin to our list of loaded QLibraries/plugins and take
@@ -362,6 +390,35 @@ QStringList SoundSourceProxy::supportedFileExtensions()
     supportedFileExtensions.append(SoundSourceModPlug::supportedFileExtensions());
 #endif
     supportedFileExtensions.append(m_extensionsSupportedByPlugins.keys());
+
+    return supportedFileExtensions;
+}
+
+// static
+QStringList SoundSourceProxy::supportedMimeTypes()
+{
+    QMutexLocker locker(&m_extensionsMutex);
+    QList<QString> supportedFileExtensions;
+#ifdef __FFMPEGFILE__
+    supportedFileExtensions.append(SoundSourceFFmpeg::supportedMimeTypes());
+#endif
+#ifdef __MAD__
+    supportedFileExtensions.append(SoundSourceMp3::supportedMimeTypes());
+#endif
+    supportedFileExtensions.append(SoundSourceOggVorbis::supportedMimeTypes());
+#ifdef __OPUS__
+    supportedFileExtensions.append(SoundSourceOpus::supportedMimeTypes());
+#endif
+#ifdef __SNDFILE__
+    supportedFileExtensions.append(SoundSourceSndFile::supportedMimeTypes());
+#endif
+#ifdef __COREAUDIO__
+    supportedFileExtensions.append(SoundSourceCoreAudio::supportedMimeTypes());
+#endif
+#ifdef __MODPLUG__
+    supportedFileExtensions.append(SoundSourceModPlug::supportedMimeTypes());
+#endif
+    supportedFileExtensions.append(m_mimeTypesSupportedByPlugins.keys());
 
     return supportedFileExtensions;
 }

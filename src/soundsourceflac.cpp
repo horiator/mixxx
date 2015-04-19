@@ -241,6 +241,12 @@ QList<QString> SoundSourceFLAC::supportedFileExtensions() {
     return list;
 }
 
+// static
+QList<QString> SoundSourceFLAC::supportedMimeTypes() {
+    QList<QString> list;
+    list.push_back("audio/flac");
+    return list;
+}
 
 // flac callback methods
 FLAC__StreamDecoderReadStatus SoundSourceFLAC::flacRead(FLAC__byte buffer[], size_t *bytes) {

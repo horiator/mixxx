@@ -53,6 +53,7 @@ class SoundSourceM4A : public SoundSource {
         Result parseHeader();
         QImage parseCoverArt();
         static QList<QString> supportedFileExtensions();
+        static QList<QString> supportedMimeType();
     private:
         int trackId;
         unsigned long filelength;
@@ -91,10 +92,32 @@ extern "C" MY_EXPORT char** supportedFileExtensions()
     return c_exts;
 }
 
+extern "C" MY_EXPORT char** supportedMimeTypes()
+{
+    QList<QString> mimes = SoundSourceM4A::supportedMimeTypes();
+    //Convert to C string array.
+    char** c_mime = (char**)malloc((mimes.count() + 1) * sizeof(char*));
+    for (int i = 0; i < mimes.count(); i++)
+    {
+        QByteArray qba = mimes[i].toUtf8();
+        c_mime[i] = strdup(qba.constData());
+        qDebug() << c_mime[i];
+    }
+    c_mime[mimes.count()] = NULL; //NULL terminate the list
+
+    return c_mime;
+}
+
 extern "C" MY_EXPORT void freeFileExtensions(char **exts)
 {
     for (int i(0); exts[i]; ++i) free(exts[i]);
     free(exts);
+}
+
+extern "C" MY_EXPORT void freeMimeTypes(char **mimes)
+{
+    for (int i(0); mimes[i]; ++i) free(mimes[i]);
+    free(mimes);
 }
 
 } // namespace Mixxx

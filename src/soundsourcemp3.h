@@ -61,6 +61,7 @@ public:
     Result parseHeader();
     QImage parseCoverArt();
     static QList<QString> supportedFileExtensions();
+    static QList<QString> supportedMimeTypes();
 
     explicit SoundSourceMp3(QString qFilename);
 private:

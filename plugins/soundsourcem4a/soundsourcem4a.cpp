@@ -218,4 +218,11 @@ QList<QString> SoundSourceM4A::supportedFileExtensions()
     return list;
 }
 
+QList<QString> SoundSourceM4A::supportedMimeType()
+{
+    QList<QString> list;
+    list.push_back("audio/mp4");
+    return list;
+}
+
 }

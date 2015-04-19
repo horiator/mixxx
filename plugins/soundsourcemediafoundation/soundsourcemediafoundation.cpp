@@ -419,6 +419,14 @@ QList<QString> SoundSourceMediaFoundation::supportedFileExtensions()
     return list;
 }
 
+// static
+QList<QString> SoundSourceMediaFoundation::supportedMimeTypes()
+{
+    QList<QString> list;
+    list.push_back("audio/mp4");
+    return list;
+}
+
 
 //-------------------------------------------------------------------
 // configureAudioStream

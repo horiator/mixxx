@@ -45,12 +45,22 @@ SoundSourceSndFile::~SoundSourceSndFile() {
     sf_close(fh);
 }
 
+//static
 QList<QString> SoundSourceSndFile::supportedFileExtensions() {
     QList<QString> list;
     list.push_back("aiff");
     list.push_back("aif");
     list.push_back("wav");
     list.push_back("flac");
+    return list;
+}
+
+//static
+QList<QString> SoundSourceSndFile::supportedMimeTypes() {
+    QList<QString> list;
+    list.push_back("audio/x-aiff");
+    list.push_back("audio/x-wav");
+    list.push_back("audio/flac");
     return list;
 }
 

@@ -264,9 +264,17 @@ inline long unsigned SoundSourceOpus::length() {
     return m_lFilelength;
 }
 
+//static
 QList<QString> SoundSourceOpus::supportedFileExtensions() {
     QList<QString> list;
     list.push_back("opus");
+    return list;
+}
+
+//static
+QList<QString> SoundSourceOpus::supportedMimeTypes() {
+    QList<QString> list;
+    list.push_back("audio/ogg");
     return list;
 }
 

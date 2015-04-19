@@ -42,6 +42,7 @@ public:
     static void loadPlugins();
 
     static QStringList supportedFileExtensions();
+    static QStringList supportedMimeTypes();
     static QStringList supportedFileExtensionsByPlugins();
     static QString supportedFileExtensionsString();
     static QString supportedFileExtensionsRegex();
@@ -63,6 +64,7 @@ private:
     static QRegExp m_supportedFileRegex;
     static QMap<QString, QLibrary*> m_plugins;
     static QMap<QString, getSoundSourceFunc> m_extensionsSupportedByPlugins;
+    static QMap<QString, getSoundSourceFunc> m_mimeTypesSupportedByPlugins;
     static QMutex m_extensionsMutex;
 
     static QLibrary* getPlugin(QString lib_filename);

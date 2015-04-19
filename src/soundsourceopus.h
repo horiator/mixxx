@@ -24,6 +24,7 @@ class SoundSourceOpus : public Mixxx::SoundSource {
     Result parseHeader();
     QImage parseCoverArt();
     static QList<QString> supportedFileExtensions();
+    static QList<QString> supportedMimeTypes();
 
   private:
     OggOpusFile *m_ptrOpusFile;

@@ -278,3 +278,12 @@ QList<QString> SoundSourceCoreAudio::supportedFileExtensions() {
     //XXX: ... but make sure you implement handling for any new format in ParseHeader!!!!!! -- asantoni
     return list;
 }
+
+
+// static
+QList<QString> SoundSourceCoreAudio::supportedMimeTypes() {
+    QList<QString> list;
+    list.push_back("audio/mp4");
+    list.push_back("audio/mpeg");
+    return list;
+}

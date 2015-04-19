@@ -287,9 +287,17 @@ inline long unsigned SoundSourceOggVorbis::length()
     return filelength;
 }
 
+//static
 QList<QString> SoundSourceOggVorbis::supportedFileExtensions()
 {
     QList<QString> list;
     list.push_back("ogg");
+    return list;
+}
+
+//static
+QList<QString> SoundSourceOggVorbis::supportedMimeTypes() {
+    QList<QString> list;
+    list.push_back("audio/ogg");
     return list;
 }

@@ -28,10 +28,19 @@ SoundSourceWV::~SoundSourceWV(){
    }
 }
 
+//static
 QList<QString> SoundSourceWV::supportedFileExtensions()
 {
     QList<QString> list;
     list.push_back("wv");
+    return list;
+}
+
+//static
+QList<QString> SoundSourceWV::supportedMimeType()
+{
+    QList<QString> list;
+    list.push_back("audio/x-wavpack");
     return list;
 }
 
