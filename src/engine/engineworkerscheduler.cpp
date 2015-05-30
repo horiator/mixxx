@@ -41,15 +41,16 @@ void EngineWorkerScheduler::runWorkers() {
 }
 
 void EngineWorkerScheduler::run() {
+    static const QString tag("EngineWorkerScheduler");
     while (!m_bQuit) {
-        Event::start("EngineWorkerScheduler");
+        Event::start(tag);
         EngineWorker* pWorker = NULL;
         while (m_scheduleFIFO.read(&pWorker, 1) == 1) {
             if (pWorker) {
                 pWorker->wake();
             }
         }
-        Event::end("EngineWorkerScheduler");
+        Event::end(tag);
         m_mutex.lock();
         m_waitCondition.wait(&m_mutex); // unlock mutex and wait
         m_mutex.unlock();
