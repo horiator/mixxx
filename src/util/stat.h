@@ -127,7 +127,7 @@ class Stat {
 QDebug operator<<(QDebug dbg, const Stat &stat);
 
 struct StatReport {
-    char* tag;
+    QString* pTag;
     qint64 time;
     Stat::StatType type;
     Stat::ComputeFlags compute;

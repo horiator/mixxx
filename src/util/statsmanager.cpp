@@ -25,7 +25,22 @@ StatsPipe::~StatsPipe() {
     if (m_pManager) {
         m_pManager->onStatsPipeDestroyed(this);
     }
+    QHash<QString, QString*>::iterator i;
+    for (i = m_tags.begin(); i != m_tags.end(); ++i) {
+        delete i.value();
+    }
 }
+
+QString* StatsPipe::getTagPointer(const QString& tag) {
+    QString* pTag = m_tags.value(tag);
+    if (pTag == NULL) {
+        pTag = new QString();
+        *pTag = tag; // implicit share the string content
+        m_tags.insert(tag, pTag);
+    }
+    return pTag;
+}
+
 
 StatsManager::StatsManager()
         : QThread(),
@@ -177,12 +192,13 @@ StatsPipe* StatsManager::getStatsPipeForThread() {
     return pResult;
 }
 
-bool StatsManager::maybeWriteReport(const StatReport& report) {
+bool StatsManager::maybeWriteReport(StatReport* pReport, const QString& tag) {
     StatsPipe* pStatsPipe = getStatsPipeForThread();
     if (pStatsPipe == NULL) {
         return false;
     }
-    bool success = pStatsPipe->write(&report, 1) == 1;
+    pReport->pTag = pStatsPipe->getTagPointer(tag);
+    bool success = pStatsPipe->write(pReport, 1) == 1;
     int space = pStatsPipe->writeAvailable();
     if (space < kProcessLength) {
         m_statsPipeCondition.wakeAll();
@@ -194,23 +210,22 @@ void StatsManager::processIncomingStatReports() {
     StatReport report;
     foreach (StatsPipe* pStatsPipe, m_statsPipes) {
         while (pStatsPipe->read(&report, 1) == 1) {
-            QString tag = QString::fromUtf8(report.tag);
-            Stat& info = m_stats[tag];
-            info.m_tag = tag;
+            Stat& info = m_stats[*report.pTag];
+            info.m_tag = *report.pTag;
             info.m_type = report.type;
             info.m_compute = report.compute;
             info.processReport(report);
             emit(statUpdated(info));
 
             if (report.compute & Stat::STATS_EXPERIMENT) {
-                Stat& experiment = m_experimentStats[tag];
-                experiment.m_tag = tag;
+                Stat& experiment = m_experimentStats[*report.pTag];
+                experiment.m_tag = *report.pTag;
                 experiment.m_type = report.type;
                 experiment.m_compute = report.compute;
                 experiment.processReport(report);
             } else if (report.compute & Stat::STATS_BASE) {
-                Stat& base = m_baseStats[tag];
-                base.m_tag = tag;
+                Stat& base = m_baseStats[*report.pTag];
+                base.m_tag = *report.pTag;
                 base.m_type = report.type;
                 base.m_compute = report.compute;
                 base.processReport(report);
@@ -221,12 +236,11 @@ void StatsManager::processIncomingStatReports() {
                      report.type == Stat::EVENT_START ||
                      report.type == Stat::EVENT_END)) {
                 Event event;
-                event.m_tag = tag;
+                event.m_tag = *report.pTag;
                 event.m_type = report.type;
                 event.m_time = report.time;
                 m_events.append(event);
             }
-            free(report.tag);
         }
     }
 }

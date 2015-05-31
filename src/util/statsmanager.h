@@ -23,8 +23,10 @@ class StatsPipe : public FIFO<StatReport> {
   public:
     StatsPipe(StatsManager* pManager);
     virtual ~StatsPipe();
+    QString* getTagPointer(const QString& tag);
   private:
     StatsManager* m_pManager;
+    QHash<QString, QString*> m_tags;
 };
 
 class StatsManager : public QThread, public Singleton<StatsManager> {
@@ -34,7 +36,7 @@ class StatsManager : public QThread, public Singleton<StatsManager> {
     virtual ~StatsManager();
 
     // Returns true if write succeeds.
-    bool maybeWriteReport(const StatReport& report);
+    bool maybeWriteReport(StatReport* pReport, const QString& tag);
 
     static bool s_bStatsManagerEnabled;
 
