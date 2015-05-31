@@ -14,10 +14,10 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                unsigned int iBufferSize) {
     int totalActive = activeChannels->size();
     if (totalActive == 0) {
-        ScopedTimer t("EngineMaster::mixChannels_0active");
+        //ScopedTimer t("EngineMaster::mixChannels_0active");
         SampleUtil::clear(pOutput, iBufferSize);
     } else if (totalActive == 1) {
-        ScopedTimer t("EngineMaster::mixChannels_1active");
+        //ScopedTimer t("EngineMaster::mixChannels_1active");
         CSAMPLE_GAIN newGain[1];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -34,7 +34,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer0, newGain[0],
                                   iBufferSize);
     } else if (totalActive == 2) {
-        ScopedTimer t("EngineMaster::mixChannels_2active");
+        //ScopedTimer t("EngineMaster::mixChannels_2active");
         CSAMPLE_GAIN newGain[2];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -63,7 +63,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer1, newGain[1],
                                   iBufferSize);
     } else if (totalActive == 3) {
-        ScopedTimer t("EngineMaster::mixChannels_3active");
+        //ScopedTimer t("EngineMaster::mixChannels_3active");
         CSAMPLE_GAIN newGain[3];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -104,7 +104,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer2, newGain[2],
                                   iBufferSize);
     } else if (totalActive == 4) {
-        ScopedTimer t("EngineMaster::mixChannels_4active");
+        //ScopedTimer t("EngineMaster::mixChannels_4active");
         CSAMPLE_GAIN newGain[4];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -157,7 +157,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer3, newGain[3],
                                   iBufferSize);
     } else if (totalActive == 5) {
-        ScopedTimer t("EngineMaster::mixChannels_5active");
+        //ScopedTimer t("EngineMaster::mixChannels_5active");
         CSAMPLE_GAIN newGain[5];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -222,7 +222,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer4, newGain[4],
                                   iBufferSize);
     } else if (totalActive == 6) {
-        ScopedTimer t("EngineMaster::mixChannels_6active");
+        //ScopedTimer t("EngineMaster::mixChannels_6active");
         CSAMPLE_GAIN newGain[6];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -299,7 +299,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer5, newGain[5],
                                   iBufferSize);
     } else if (totalActive == 7) {
-        ScopedTimer t("EngineMaster::mixChannels_7active");
+        //ScopedTimer t("EngineMaster::mixChannels_7active");
         CSAMPLE_GAIN newGain[7];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -388,7 +388,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer6, newGain[6],
                                   iBufferSize);
     } else if (totalActive == 8) {
-        ScopedTimer t("EngineMaster::mixChannels_8active");
+        //ScopedTimer t("EngineMaster::mixChannels_8active");
         CSAMPLE_GAIN newGain[8];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -489,7 +489,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer7, newGain[7],
                                   iBufferSize);
     } else if (totalActive == 9) {
-        ScopedTimer t("EngineMaster::mixChannels_9active");
+        //ScopedTimer t("EngineMaster::mixChannels_9active");
         CSAMPLE_GAIN newGain[9];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -602,7 +602,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                   pBuffer8, newGain[8],
                                   iBufferSize);
     } else if (totalActive == 10) {
-        ScopedTimer t("EngineMaster::mixChannels_10active");
+        //ScopedTimer t("EngineMaster::mixChannels_10active");
         CSAMPLE_GAIN newGain[10];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -727,7 +727,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer9, newGain[9],
                                    iBufferSize);
     } else if (totalActive == 11) {
-        ScopedTimer t("EngineMaster::mixChannels_11active");
+        //ScopedTimer t("EngineMaster::mixChannels_11active");
         CSAMPLE_GAIN newGain[11];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -864,7 +864,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer10, newGain[10],
                                    iBufferSize);
     } else if (totalActive == 12) {
-        ScopedTimer t("EngineMaster::mixChannels_12active");
+        //ScopedTimer t("EngineMaster::mixChannels_12active");
         CSAMPLE_GAIN newGain[12];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -1013,7 +1013,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer11, newGain[11],
                                    iBufferSize);
     } else if (totalActive == 13) {
-        ScopedTimer t("EngineMaster::mixChannels_13active");
+        //ScopedTimer t("EngineMaster::mixChannels_13active");
         CSAMPLE_GAIN newGain[13];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -1174,7 +1174,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer12, newGain[12],
                                    iBufferSize);
     } else if (totalActive == 14) {
-        ScopedTimer t("EngineMaster::mixChannels_14active");
+        //ScopedTimer t("EngineMaster::mixChannels_14active");
         CSAMPLE_GAIN newGain[14];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -1347,7 +1347,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer13, newGain[13],
                                    iBufferSize);
     } else if (totalActive == 15) {
-        ScopedTimer t("EngineMaster::mixChannels_15active");
+        //ScopedTimer t("EngineMaster::mixChannels_15active");
         CSAMPLE_GAIN newGain[15];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -1532,7 +1532,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer14, newGain[14],
                                    iBufferSize);
     } else if (totalActive == 16) {
-        ScopedTimer t("EngineMaster::mixChannels_16active");
+        //ScopedTimer t("EngineMaster::mixChannels_16active");
         CSAMPLE_GAIN newGain[16];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -1729,7 +1729,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer15, newGain[15],
                                    iBufferSize);
     } else if (totalActive == 17) {
-        ScopedTimer t("EngineMaster::mixChannels_17active");
+        //ScopedTimer t("EngineMaster::mixChannels_17active");
         CSAMPLE_GAIN newGain[17];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -1938,7 +1938,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer16, newGain[16],
                                    iBufferSize);
     } else if (totalActive == 18) {
-        ScopedTimer t("EngineMaster::mixChannels_18active");
+        //ScopedTimer t("EngineMaster::mixChannels_18active");
         CSAMPLE_GAIN newGain[18];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -2159,7 +2159,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer17, newGain[17],
                                    iBufferSize);
     } else if (totalActive == 19) {
-        ScopedTimer t("EngineMaster::mixChannels_19active");
+        //ScopedTimer t("EngineMaster::mixChannels_19active");
         CSAMPLE_GAIN newGain[19];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -2392,7 +2392,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer18, newGain[18],
                                    iBufferSize);
     } else if (totalActive == 20) {
-        ScopedTimer t("EngineMaster::mixChannels_20active");
+        //ScopedTimer t("EngineMaster::mixChannels_20active");
         CSAMPLE_GAIN newGain[20];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -2637,7 +2637,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer19, newGain[19],
                                    iBufferSize);
     } else if (totalActive == 21) {
-        ScopedTimer t("EngineMaster::mixChannels_21active");
+        //ScopedTimer t("EngineMaster::mixChannels_21active");
         CSAMPLE_GAIN newGain[21];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -2894,7 +2894,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer20, newGain[20],
                                    iBufferSize);
     } else if (totalActive == 22) {
-        ScopedTimer t("EngineMaster::mixChannels_22active");
+        //ScopedTimer t("EngineMaster::mixChannels_22active");
         CSAMPLE_GAIN newGain[22];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -3163,7 +3163,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer21, newGain[21],
                                    iBufferSize);
     } else if (totalActive == 23) {
-        ScopedTimer t("EngineMaster::mixChannels_23active");
+        //ScopedTimer t("EngineMaster::mixChannels_23active");
         CSAMPLE_GAIN newGain[23];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -3444,7 +3444,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer22, newGain[22],
                                    iBufferSize);
     } else if (totalActive == 24) {
-        ScopedTimer t("EngineMaster::mixChannels_24active");
+        //ScopedTimer t("EngineMaster::mixChannels_24active");
         CSAMPLE_GAIN newGain[24];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -3737,7 +3737,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer23, newGain[23],
                                    iBufferSize);
     } else if (totalActive == 25) {
-        ScopedTimer t("EngineMaster::mixChannels_25active");
+        //ScopedTimer t("EngineMaster::mixChannels_25active");
         CSAMPLE_GAIN newGain[25];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -4042,7 +4042,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer24, newGain[24],
                                    iBufferSize);
     } else if (totalActive == 26) {
-        ScopedTimer t("EngineMaster::mixChannels_26active");
+        //ScopedTimer t("EngineMaster::mixChannels_26active");
         CSAMPLE_GAIN newGain[26];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -4359,7 +4359,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer25, newGain[25],
                                    iBufferSize);
     } else if (totalActive == 27) {
-        ScopedTimer t("EngineMaster::mixChannels_27active");
+        //ScopedTimer t("EngineMaster::mixChannels_27active");
         CSAMPLE_GAIN newGain[27];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -4688,7 +4688,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer26, newGain[26],
                                    iBufferSize);
     } else if (totalActive == 28) {
-        ScopedTimer t("EngineMaster::mixChannels_28active");
+        //ScopedTimer t("EngineMaster::mixChannels_28active");
         CSAMPLE_GAIN newGain[28];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -5029,7 +5029,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer27, newGain[27],
                                    iBufferSize);
     } else if (totalActive == 29) {
-        ScopedTimer t("EngineMaster::mixChannels_29active");
+        //ScopedTimer t("EngineMaster::mixChannels_29active");
         CSAMPLE_GAIN newGain[29];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -5382,7 +5382,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer28, newGain[28],
                                    iBufferSize);
     } else if (totalActive == 30) {
-        ScopedTimer t("EngineMaster::mixChannels_30active");
+        //ScopedTimer t("EngineMaster::mixChannels_30active");
         CSAMPLE_GAIN newGain[30];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -5747,7 +5747,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer29, newGain[29],
                                    iBufferSize);
     } else if (totalActive == 31) {
-        ScopedTimer t("EngineMaster::mixChannels_31active");
+        //ScopedTimer t("EngineMaster::mixChannels_31active");
         CSAMPLE_GAIN newGain[31];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -6124,7 +6124,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer30, newGain[30],
                                    iBufferSize);
     } else if (totalActive == 32) {
-        ScopedTimer t("EngineMaster::mixChannels_32active");
+        //ScopedTimer t("EngineMaster::mixChannels_32active");
         CSAMPLE_GAIN newGain[32];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
         const int channelIndex0 = pChannel0->m_index;
@@ -6513,7 +6513,7 @@ void ChannelMixer::mixChannels(const EngineMaster::GainCalculator& gainCalculato
                                    pBuffer31, newGain[31],
                                    iBufferSize);
     } else {
-        ScopedTimer t("EngineMaster::mixChannels_%1active", activeChannels->size());
+        //ScopedTimer t("EngineMaster::mixChannels_%1active", activeChannels->size());
         // Set pOutput to all 0s
         SampleUtil::clear(pOutput, iBufferSize);
         for (int i = 0; i < activeChannels->size(); ++i) {
@@ -6540,10 +6540,10 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                       unsigned int iBufferSize) {
     int totalActive = activeChannels->size();
     if (totalActive == 0) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_0active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_0active");
         SampleUtil::clear(pOutput, iBufferSize);
     } else if (totalActive == 1) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_1active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_1active");
         CSAMPLE_GAIN oldGain[1];
         CSAMPLE_GAIN newGain[1];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -6574,7 +6574,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 2) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_2active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_2active");
         CSAMPLE_GAIN oldGain[2];
         CSAMPLE_GAIN newGain[2];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -6619,7 +6619,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 3) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_3active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_3active");
         CSAMPLE_GAIN oldGain[3];
         CSAMPLE_GAIN newGain[3];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -6678,7 +6678,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 4) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_4active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_4active");
         CSAMPLE_GAIN oldGain[4];
         CSAMPLE_GAIN newGain[4];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -6751,7 +6751,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 5) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_5active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_5active");
         CSAMPLE_GAIN oldGain[5];
         CSAMPLE_GAIN newGain[5];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -6838,7 +6838,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 6) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_6active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_6active");
         CSAMPLE_GAIN oldGain[6];
         CSAMPLE_GAIN newGain[6];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -6939,7 +6939,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 7) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_7active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_7active");
         CSAMPLE_GAIN oldGain[7];
         CSAMPLE_GAIN newGain[7];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -7054,7 +7054,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 8) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_8active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_8active");
         CSAMPLE_GAIN oldGain[8];
         CSAMPLE_GAIN newGain[8];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -7183,7 +7183,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 9) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_9active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_9active");
         CSAMPLE_GAIN oldGain[9];
         CSAMPLE_GAIN newGain[9];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -7326,7 +7326,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                              iBufferSize);
         }
     } else if (totalActive == 10) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_10active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_10active");
         CSAMPLE_GAIN oldGain[10];
         CSAMPLE_GAIN newGain[10];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -7483,7 +7483,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 11) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_11active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_11active");
         CSAMPLE_GAIN oldGain[11];
         CSAMPLE_GAIN newGain[11];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -7654,7 +7654,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 12) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_12active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_12active");
         CSAMPLE_GAIN oldGain[12];
         CSAMPLE_GAIN newGain[12];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -7839,7 +7839,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 13) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_13active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_13active");
         CSAMPLE_GAIN oldGain[13];
         CSAMPLE_GAIN newGain[13];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -8038,7 +8038,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 14) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_14active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_14active");
         CSAMPLE_GAIN oldGain[14];
         CSAMPLE_GAIN newGain[14];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -8251,7 +8251,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 15) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_15active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_15active");
         CSAMPLE_GAIN oldGain[15];
         CSAMPLE_GAIN newGain[15];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -8478,7 +8478,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 16) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_16active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_16active");
         CSAMPLE_GAIN oldGain[16];
         CSAMPLE_GAIN newGain[16];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -8719,7 +8719,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 17) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_17active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_17active");
         CSAMPLE_GAIN oldGain[17];
         CSAMPLE_GAIN newGain[17];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -8974,7 +8974,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 18) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_18active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_18active");
         CSAMPLE_GAIN oldGain[18];
         CSAMPLE_GAIN newGain[18];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -9243,7 +9243,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 19) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_19active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_19active");
         CSAMPLE_GAIN oldGain[19];
         CSAMPLE_GAIN newGain[19];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -9526,7 +9526,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 20) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_20active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_20active");
         CSAMPLE_GAIN oldGain[20];
         CSAMPLE_GAIN newGain[20];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -9823,7 +9823,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 21) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_21active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_21active");
         CSAMPLE_GAIN oldGain[21];
         CSAMPLE_GAIN newGain[21];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -10134,7 +10134,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 22) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_22active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_22active");
         CSAMPLE_GAIN oldGain[22];
         CSAMPLE_GAIN newGain[22];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -10459,7 +10459,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 23) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_23active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_23active");
         CSAMPLE_GAIN oldGain[23];
         CSAMPLE_GAIN newGain[23];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -10798,7 +10798,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 24) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_24active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_24active");
         CSAMPLE_GAIN oldGain[24];
         CSAMPLE_GAIN newGain[24];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -11151,7 +11151,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 25) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_25active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_25active");
         CSAMPLE_GAIN oldGain[25];
         CSAMPLE_GAIN newGain[25];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -11518,7 +11518,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 26) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_26active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_26active");
         CSAMPLE_GAIN oldGain[26];
         CSAMPLE_GAIN newGain[26];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -11899,7 +11899,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 27) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_27active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_27active");
         CSAMPLE_GAIN oldGain[27];
         CSAMPLE_GAIN newGain[27];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -12294,7 +12294,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 28) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_28active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_28active");
         CSAMPLE_GAIN oldGain[28];
         CSAMPLE_GAIN newGain[28];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -12703,7 +12703,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 29) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_29active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_29active");
         CSAMPLE_GAIN oldGain[29];
         CSAMPLE_GAIN newGain[29];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -13126,7 +13126,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 30) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_30active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_30active");
         CSAMPLE_GAIN oldGain[30];
         CSAMPLE_GAIN newGain[30];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -13563,7 +13563,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 31) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_31active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_31active");
         CSAMPLE_GAIN oldGain[31];
         CSAMPLE_GAIN newGain[31];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -14014,7 +14014,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else if (totalActive == 32) {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_32active");
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_32active");
         CSAMPLE_GAIN oldGain[32];
         CSAMPLE_GAIN newGain[32];
         EngineMaster::ChannelInfo* pChannel0 = activeChannels->at(0);
@@ -14479,7 +14479,7 @@ void ChannelMixer::mixChannelsRamping(const EngineMaster::GainCalculator& gainCa
                                               iBufferSize);
         }
     } else {
-        ScopedTimer t("EngineMaster::mixChannelsRamping_%1active", activeChannels->size());
+        //ScopedTimer t("EngineMaster::mixChannelsRamping_%1active", activeChannels->size());
         // Set pOutput to all 0s
         SampleUtil::clear(pOutput, iBufferSize);
         for (int i = 0; i < activeChannels->size(); ++i) {

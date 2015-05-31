@@ -54,12 +54,12 @@ def write_channelmixer_autogen(output, num_channels):
         write('int totalActive = activeChannels->size();', depth=1)
 
         write('if (totalActive == 0) {', depth=1)
-        write('ScopedTimer t("EngineMaster::mixChannels%(variant)s_0active");' %
+        write('//ScopedTimer t("EngineMaster::mixChannels%(variant)s_0active");' %
               {'variant': 'Ramping' if ramping else ''}, depth=2)
         write('SampleUtil::clear(pOutput, iBufferSize);', depth=2)
         for i in xrange(1, num_channels+1):
             write('} else if (totalActive == %d) {' % i, depth=1)
-            write('ScopedTimer t("EngineMaster::mixChannels%(variant)s_%(i)dactive");' %
+            write('//ScopedTimer t("EngineMaster::mixChannels%(variant)s_%(i)dactive");' %
                   {'variant': 'Ramping' if ramping else '', 'i': i}, depth=2)
             if ramping:
                 write('CSAMPLE_GAIN oldGain[%(i)d];' % {'i': i}, depth=2)
@@ -100,7 +100,7 @@ def write_channelmixer_autogen(output, num_channels):
                 output.extend(hanging_indent(call_prefix, arg_groups, ',', ');', depth=2))
 
         write('} else {', depth=1)
-        write('ScopedTimer t("EngineMaster::mixChannels%(variant)s_%%1active", activeChannels->size());' %
+        write('//ScopedTimer t("EngineMaster::mixChannels%(variant)s_%%1active", activeChannels->size());' %
               {'variant': 'Ramping' if ramping else ''}, depth=2)
         write('// Set pOutput to all 0s', depth=2)
         write('SampleUtil::clear(pOutput, iBufferSize);', depth=2)
