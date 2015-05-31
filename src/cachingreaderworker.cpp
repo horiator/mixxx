@@ -101,7 +101,7 @@ void CachingReaderWorker::run() {
     ChunkReadRequest request;
     ReaderStatusUpdate status;
 
-    Event::start(m_tag);
+    //Event::start(m_tag);
     while (!load_atomic(m_stop)) {
         if (m_newTrack) {
             m_newTrackMutex.lock();
@@ -114,9 +114,9 @@ void CachingReaderWorker::run() {
             processChunkReadRequest(&request, &status);
             m_pReaderStatusFIFO->writeBlocking(&status, 1);
         } else {
-            Event::end(m_tag);
+            //Event::end(m_tag);
             m_semaRun.acquire();
-            Event::start(m_tag);
+            //Event::start(m_tag);
         }
     }
 }

@@ -117,9 +117,9 @@ bool AnalyserQueue::isLoadedTrackWaiting(TrackPointer tio) {
 TrackPointer AnalyserQueue::dequeueNextBlocking() {
     m_qm.lock();
     if (m_tioq.isEmpty()) {
-        Event::end("AnalyserQueue process");
+        //Event::end("AnalyserQueue process");
         m_qwait.wait(&m_qm);
-        Event::start("AnalyserQueue process");
+        //Event::start("AnalyserQueue process");
 
         if (m_exit) {
             m_qm.unlock();
